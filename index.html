@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>System Sort</title>
+<style>
+:root{
+  --bg0:#0b0f14; --bg1:#10161f; --text:#d7e3f0; --muted:#8fa3b8;
+  --violet:#b15cff; --crimson:#ff3b4a; --amber:#ffd21a; --verdant:#33e06d; --cyan:#2da8ff;
+  --shadow: 0 14px 40px rgba(0,0,0,.45);
+  --radius: 18px;
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html,body{ height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--text); }
+body{
+  background:
+    radial-gradient(1200px 800px at 50% 15%, rgba(55,110,160,.18), transparent 55%),
+    radial-gradient(900px 600px at 12% 88%, rgba(180,70,200,.10), transparent 55%),
+    radial-gradient(900px 600px at 92% 84%, rgba(50,200,120,.10), transparent 55%),
+    linear-gradient(180deg, var(--bg1), var(--bg0));
+  display:flex; justify-content:center; align-items:center; padding:14px;
+}
+.app{
+  width:min(980px, 100%); max-width:980px;
+  background: linear-gradient(180deg, rgba(20,28,38,.92), rgba(14,19,27,.92));
+  border:1px solid rgba(110,150,190,.18);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow:hidden; position:relative;
+}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 14px 10px;
+  border-bottom:1px solid rgba(140,175,210,.14);
+  background: linear-gradient(180deg, rgba(25,36,50,.85), rgba(18,26,36,.35));
+}
+.badge{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:14px;
+  border:1px solid rgba(140,175,210,.18);
+  background: linear-gradient(180deg, rgba(24,34,48,.7), rgba(12,16,22,.5));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  user-select:none; white-space:nowrap;
+}
+.badge .label{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.badge .value{ font-weight:800; font-size:16px; letter-spacing:.02em; }
+.title{ text-align:center; flex:1; user-select:none; padding:0 6px; min-width:180px; }
+.title .name{ font-weight:900; letter-spacing:.18em; text-transform:uppercase; font-size:16px; }
+.title .sub{ margin-top:2px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+
+.content{ padding:16px 14px 10px; overflow:hidden; }
+.prompt{
+  text-align:center; user-select:none; margin:2px 0 14px;
+  letter-spacing:.28em; text-transform:uppercase;
+  color:rgba(220,235,250,.88);
+  font-weight:800; font-size:14px;
+}
+.board{
+  display:flex; justify-content:center; align-items:flex-end;
+  gap:14px; padding:12px 6px 8px;
+  flex-wrap:nowrap;
+  overflow-x:auto; overflow-y:hidden;
+  overscroll-behavior: contain;
+}
+
+/* --- Tubes (premium, assetless, compatible) --- */
+.tube{
+  width: min(160px, 18vw); min-width:130px; height:360px;
+  position:relative; border-radius:26px; user-select:none; flex:0 0 auto;
+  filter: drop-shadow(0 14px 16px rgba(0,0,0,.25));
+}
+.tube .frame{
+  position:absolute; inset:0; border-radius:26px;
+  background: none; border:none; box-shadow:none;
+}
+.tube .glass{
+  position:absolute; inset:0; border-radius:26px;
+  border:1px solid rgba(200,230,255,.08);
+  background:
+    radial-gradient(220px 320px at 50% 30%, rgba(255,255,255,.06), transparent 62%),
+    radial-gradient(240px 320px at 50% 80%, rgba(0,0,0,.28), transparent 60%),
+    linear-gradient(90deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 16%, rgba(0,0,0,.10) 50%, rgba(255,255,255,.02) 84%, rgba(255,255,255,.07) 100%),
+    linear-gradient(180deg, rgba(18,26,36,.82), rgba(10,14,20,.88));
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.35),
+    inset 0 18px 30px rgba(0,0,0,.35),
+    inset 0 -24px 34px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+.tube .glass::before, .tube .glass::after{
+  content:""; position:absolute; left:-10px; right:-10px; height:52px;
+  border-radius:22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.25)),
+    linear-gradient(90deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.03) 18%, rgba(0,0,0,.25) 50%, rgba(255,255,255,.03) 82%, rgba(255,255,255,.10) 100%),
+    linear-gradient(180deg, rgba(48,66,86,.85), rgba(18,24,34,.92));
+  border:1px solid rgba(180,210,240,.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -10px 18px rgba(0,0,0,.35);
+  pointer-events:none; z-index:2;
+}
+.tube .glass::before{ top:-10px; }
+.tube .glass::after{
+  bottom:-14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), inset 0 -10px 18px rgba(0,0,0,.45), 0 18px 34px rgba(0,0,0,.45);
+}
+.tube .base{ display:none; }
+
+.tube .lamp{
+  position:absolute; left:22px; right:22px; bottom:18px; height:12px;
+  border-radius:999px; border:1px solid rgba(255,255,255,.10);
+  background: rgba(235,245,255,.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  z-index:3;
+}
+.tube::after{
+  content:""; position:absolute; left:16px; right:16px; bottom:-14px; height:22px;
+  border-radius:999px;
+  background: radial-gradient(60px 22px at 50% 50%, rgba(255,255,255,.22), transparent 70%);
+  opacity:.18; pointer-events:none; z-index:1;
+}
+.tube[data-glow="violet"] .lamp{ background: rgba(177,92,255,.22); box-shadow: 0 0 22px rgba(177,92,255,.45); }
+.tube[data-glow="crimson"] .lamp{ background: rgba(255,59,74,.22); box-shadow: 0 0 22px rgba(255,59,74,.45); }
+.tube[data-glow="amber"]  .lamp{ background: rgba(255,210,26,.22); box-shadow: 0 0 22px rgba(255,210,26,.45); }
+.tube[data-glow="verdant"] .lamp{ background: rgba(51,224,109,.22); box-shadow: 0 0 22px rgba(51,224,109,.45); }
+.tube[data-glow="cyan"]   .lamp{ background: rgba(45,168,255,.22); box-shadow: 0 0 22px rgba(45,168,255,.45); }
+
+.slots{
+  position:absolute; left:16px; right:16px;
+  top:60px; bottom:82px;
+  display:flex; flex-direction:column-reverse;
+  gap:10px; padding:10px 10px; z-index:1;
+}
+.slot{
+  height:82px; border-radius:16px; background:transparent; box-shadow:none;
+  display:flex; align-items:center; justify-content:center; position:relative;
+}
+.block{
+  width:86%; height:82%;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -10px 18px rgba(0,0,0,.20),
+    0 14px 22px rgba(0,0,0,.30);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900; letter-spacing:.08em; text-transform:uppercase;
+  color: rgba(10,15,20,.78);
+  position:absolute; left:50%; top:50%;
+  transform: translate(-50%, -50%);
+  touch-action:none;
+}
+.block::after{
+  content:""; position:absolute; inset:12px; border-radius:10px;
+  background: radial-gradient(120px 90px at 30% 25%, rgba(255,255,255,.22), transparent 60%);
+  pointer-events:none;
+}
+.block.violet{ background: radial-gradient(180px 120px at 30% 20%, rgba(255,255,255,.16), transparent 60%), var(--violet); }
+.block.crimson{ background: radial-gradient(180px 120px at 30% 20%, rgba(255,255,255,.16), transparent 60%), var(--crimson); }
+.block.amber{ background: radial-gradient(180px 120px at 30% 20%, rgba(255,255,255,.20), transparent 60%), var(--amber); }
+.block.verdant{ background: radial-gradient(180px 120px at 30% 20%, rgba(255,255,255,.16), transparent 60%), var(--verdant); }
+.block.cyan{ background: radial-gradient(180px 120px at 30% 20%, rgba(255,255,255,.16), transparent 60%), var(--cyan); }
+
+.tube.selected .glass{
+  outline:2px solid rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.35),
+    inset 0 18px 30px rgba(0,0,0,.35),
+    inset 0 -24px 34px rgba(0,0,0,.55),
+    0 0 0 4px rgba(255,255,255,.06);
+}
+.tube.drop-ok .glass{
+  outline:2px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.35),
+    inset 0 18px 30px rgba(0,0,0,.35),
+    inset 0 -24px 34px rgba(0,0,0,.55),
+    0 0 0 4px rgba(255,255,255,.05);
+}
+
+.footer{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px 14px 14px;
+  border-top:1px solid rgba(140,175,210,.12);
+  background: linear-gradient(180deg, rgba(12,16,22,.15), rgba(18,26,36,.35));
+  flex-wrap:wrap;
+}
+.hint{ color:rgba(210,230,250,.70); font-size:12px; letter-spacing:.10em; text-transform:uppercase; user-select:none; }
+.controls{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+button{
+  appearance:none; border:none; cursor:pointer; user-select:none;
+  padding:10px 12px; border-radius:14px;
+  background: linear-gradient(180deg, rgba(40,56,74,.75), rgba(18,25,35,.75));
+  border:1px solid rgba(160,200,235,.18);
+  color: rgba(225,240,255,.92);
+  font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:12px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+button:active{ transform: translateY(1px); }
+button.primary{
+  background: linear-gradient(180deg, rgba(38,70,105,.92), rgba(24,45,70,.92));
+  border:1px solid rgba(120,190,255,.26);
+}
+button.ghost{
+  background: rgba(20,28,38,.35);
+  border:1px solid rgba(160,200,235,.14);
+}
+
+.overlay{
+  position:absolute; inset:0; background: rgba(0,0,0,.55);
+  display:none; align-items:center; justify-content:center; padding:14px;
+}
+.overlay.show{ display:flex; }
+.modal{
+  width:min(520px, 96vw);
+  background: linear-gradient(180deg, rgba(28,40,56,.95), rgba(14,19,27,.95));
+  border:1px solid rgba(160,200,235,.18);
+  border-radius:18px; box-shadow: var(--shadow); padding:16px;
+}
+.modal h2{ margin:0 0 6px; font-size:16px; letter-spacing:.18em; text-transform:uppercase; }
+.modal p{ margin:0 0 14px; color: rgba(215,230,245,.80); line-height:1.35; font-size:13px; }
+.modal .row{ display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+
+@media (max-width:520px){
+  .tube{ min-width:118px; height:330px; }
+  .slots{ bottom:78px; }
+}
+/* --- v6 premium polish --- */
+.tube{ filter: drop-shadow(0 18px 18px rgba(0,0,0,.30)); }
+.tube .glass{
+  background:
+    radial-gradient(260px 360px at 50% 18%, rgba(255,255,255,.07), transparent 60%),
+    radial-gradient(260px 360px at 50% 86%, rgba(0,0,0,.30), transparent 62%),
+    linear-gradient(90deg,
+      rgba(255,255,255,.11) 0%,
+      rgba(255,255,255,.04) 14%,
+      rgba(0,0,0,.18) 48%,
+      rgba(255,255,255,.03) 78%,
+      rgba(255,255,255,.09) 100%),
+    linear-gradient(180deg, rgba(18,26,36,.86), rgba(8,11,16,.92));
+}
+.tube .glass::before, .tube .glass::after{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.30)),
+    linear-gradient(90deg,
+      rgba(255,255,255,.14) 0%,
+      rgba(255,255,255,.04) 18%,
+      rgba(0,0,0,.32) 50%,
+      rgba(255,255,255,.04) 82%,
+      rgba(255,255,255,.14) 100%),
+    linear-gradient(180deg, rgba(64,86,110,.92), rgba(16,20,26,.96));
+  border:1px solid rgba(205,230,255,.14);
+}
+.tube .lamp{ background: rgba(235,245,255,.12); }
+
+.tube::before{
+  content:"";
+  position:absolute;
+  inset:10px;
+  border-radius:22px;
+  pointer-events:none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+  opacity:.9;
+}
+
+/* Colored spill under each tube (adds 'device' feel) */
+.tube[data-glow="violet"]::after{ background: radial-gradient(70px 26px at 50% 50%, rgba(177,92,255,.55), transparent 72%); opacity:.32; }
+.tube[data-glow="crimson"]::after{ background: radial-gradient(70px 26px at 50% 50%, rgba(255,59,74,.55), transparent 72%); opacity:.32; }
+.tube[data-glow="amber"]::after{ background: radial-gradient(70px 26px at 50% 50%, rgba(255,210,26,.55), transparent 72%); opacity:.30; }
+.tube[data-glow="verdant"]::after{ background: radial-gradient(70px 26px at 50% 50%, rgba(51,224,109,.55), transparent 72%); opacity:.32; }
+.tube[data-glow="cyan"]::after{ background: radial-gradient(70px 26px at 50% 50%, rgba(45,168,255,.55), transparent 72%); opacity:.32; }
+
+/* Blocks: slightly squarer + subtle texture */
+.block{
+  border-radius: 12px;
+  background-blend-mode: overlay;
+}
+.block::after{
+  inset:10px;
+  border-radius: 9px;
+}
+.block::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 2px, transparent 2px 6px);
+  opacity:.10;
+  pointer-events:none;
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="badge" title="Current Level">
+      <div class="label">Level</div>
+      <div class="value" id="levelText">01</div>
+    </div>
+    <div class="title">
+      <div class="name">System Sort</div>
+      <div class="sub">No Timer</div>
+    </div>
+    <div class="badge" title="Moves made this level (no limit)">
+      <div class="label">Moves</div>
+      <div class="value" id="movesText">0</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="prompt">Arrange</div>
+    <div class="board" id="board" aria-label="Game board"></div>
+  </div>
+
+  <div class="footer">
+    <div class="hint">Tip: one type per container</div>
+    <div class="controls">
+      
+      <button class="ghost" id="modeBtn" title="Toggle difficulty feel (Standard = puzzle-easy, Zen = teaching-easy)">Mode: Standard</button>
+      <button class="ghost" id="resetProgressBtn" title="Reset back to Level 1 and clear saved progress">Reset Progress</button>
+<button class="ghost" id="undoBtn">Undo</button>
+      <button class="ghost" id="resetBtn">Reset</button>
+      <button class="primary" id="nextBtn" style="display:none;">Next</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="modalTitle">System Balanced</h2>
+      <p id="modalBody">All energy chambers stabilized.</p>
+      <div class="row">
+        <button class="ghost" id="closeModalBtn">Close</button>
+        <button class="primary" id="modalNextBtn">Next Level</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const ENERGY = [
+  { key: "violet",  css: "violet",  name: "Violet"  },
+  { key: "crimson", css: "crimson", name: "Crimson" },
+  { key: "amber",   css: "amber",   name: "Amber"   },
+  { key: "verdant", css: "verdant", name: "Verdant" },
+  { key: "cyan",    css: "cyan",    name: "Cyan"    },
+];
+
+
+
+const CAPACITY = 6;
+function levelSpec(level){
+  const zen = (state.mode === "zen");
+
+  // In classic sort, number of filled tubes equals number of colors.
+  // We add empty tubes for maneuvering (usually 2).
+  let types;
+  if (level <= 8) types = 3;
+  else if (level <= 25) types = 4;
+  else if (level <= 60) types = 5;
+  else types = 6;
+
+  if (zen){
+    // Zen ramps slower
+    if (level <= 12) types = 3;
+    else if (level <= 35) types = 4;
+    else if (level <= 75) types = 5;
+    else types = 6;
+  }
+
+  const empty = 2;
+  const containers = types + empty;
+
+  // Scramble target: higher means more mixed, but still calm.
+  const targetMix = (zen ? 14 : 18) + Math.floor(level * (zen ? 0.28 : 0.40));
+
+  return { containers, types, empty, targetMix };
+}
+
+
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function randInt(rng, n){ return Math.floor(rng() * n); }
+
+const state = {
+  level: 1, spec: null,
+  containers: [], startSnapshot: null,
+  moves: 0, history: [],
+  selectedTube: null,
+  dragging: null,
+  win: false
+};
+
+const boardEl = document.getElementById("board");
+const levelText = document.getElementById("levelText");
+const movesText = document.getElementById("movesText");
+const undoBtn = document.getElementById("undoBtn");
+const resetBtn = document.getElementById("resetBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+
+
+const modeBtn = document.getElementById("modeBtn");
+const resetProgressBtn = document.getElementById("resetProgressBtn");
+const overlay = document.getElementById("overlay");
+const modalTitle = document.getElementById("modalTitle");
+const modalBody = document.getElementById("modalBody");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const modalNextBtn = document.getElementById("modalNextBtn");
+
+const STORAGE_KEY = "system_sort_progress_v1";
+
+
+
+const MODE_KEY = "system_sort_mode_v1";
+
+state.mode = "standard"; // "standard" (puzzle-easy) | "zen" (teaching-easy)
+
+function loadMode(){
+  try{
+    const raw = localStorage.getItem(MODE_KEY);
+    if (raw === "zen" || raw === "standard") state.mode = raw;
+  }catch(e){}
+}
+function saveMode(){
+  try{ localStorage.setItem(MODE_KEY, state.mode); }catch(e){}
+}
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if (data && Number.isInteger(data.level) && data.level >= 1) state.level = data.level;
+  }catch(e){}
+}
+function saveProgress(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ level: state.level })); }catch(e){}
+}
+
+function topEnergy(container){
+  return container.length ? container[container.length - 1] : null;
+}
+
+function isMoveValid(fromIdx, toIdx){
+  if (fromIdx === toIdx) return false;
+  const from = state.containers[fromIdx];
+  const to = state.containers[toIdx];
+  if (!from.length) return false;
+  if (to.length >= CAPACITY) return false;
+  const moving = topEnergy(from);
+  if (!to.length) return true;
+  return topEnergy(to) === moving;
+}
+
+function anyValidMoves(){
+  for (let i=0;i<state.containers.length;i++){
+    if (!state.containers[i].length) continue;
+    for (let j=0;j<state.containers.length;j++){
+      if (isMoveValid(i,j)) return true;
+    }
+  }
+  return false;
+}
+
+function isSolved(){
+  for (const c of state.containers){
+    if (c.length === 0) continue;
+    if (c.length !== CAPACITY) return false;
+    const a = c[0];
+    for (let i=1;i<c.length;i++){
+      if (c[i] !== a) return false;
+    }
+  }
+  return true;
+}
+
+
+/* --- Generator helpers (global scope, always defined) --- */
+function countSolvedLike(containers){
+  let solved = 0;
+  for (const c of containers){
+    if (c.length === CAPACITY && c[0] === c[1] && c[1] === c[2]) solved++;
+  }
+  return solved;
+}
+function countMixed(containers){
+  let mixed = 0;
+  for (const c of containers){
+    if (c.length >= 2){
+      const a = c[0];
+      let uniform = true;
+      for (const e of c){ if (e !== a){ uniform = false; break; } }
+      if (!uniform) mixed++;
+    }
+  }
+  return mixed;
+}
+function countPartials(containers){
+  let p = 0;
+  for (const c of containers){
+    if (c.length > 0 && c.length < CAPACITY) p++;
+  }
+  return p;
+}
+function disorderThreshold(level){
+  const zen = (state.mode === "zen");
+  if (level <= 2) return 1;
+  if (level <= 5) return zen ? 1 : 2;
+  if (level <= 10) return zen ? 2 : 3;
+  if (level <= 30) return zen ? 3 : 4;
+  return zen ? 4 : 5;
+}
+
+function generateLevel(level){
+  const spec = levelSpec(level);
+  state.spec = spec;
+
+  const rng = mulberry32((level * 2654435761) >>> 0);
+
+  // Choose energy types
+  const pool = ENERGY.map(e => e.key);
+  const chosen = [];
+  while (chosen.length < spec.types){
+    const pick = pool.splice(randInt(rng, pool.length), 1)[0];
+    chosen.push(pick);
+  }
+
+  // Build multiset: each chosen type appears CAPACITY times
+  const blocks = [];
+  for (const t of chosen){
+    for (let i=0;i<CAPACITY;i++) blocks.push(t);
+  }
+
+  function shuffle(arr){
+    for (let i=arr.length-1;i>0;i--){
+      const j = randInt(rng, i+1);
+      const tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+    }
+  }
+
+  function isTubeSolved(c){
+    if (c.length !== CAPACITY) return false;
+    for (let i=1;i<c.length;i++){
+      if (c[i] !== c[0]) return false;
+    }
+    return true;
+  }
+
+  function topRun(c){
+    if (c.length === 0) return 0;
+    let run = 1;
+    for (let i=c.length-2;i>=0;i--){
+      if (c[i] === c[c.length-1]) run++;
+      else break;
+    }
+    return run;
+  }
+
+  function mixScore(containers){
+    // Reward transitions (more mixed), lightly reward empties, penalize huge top runs
+    let score = 0;
+    for (const c of containers){
+      if (c.length === 0){ score += 0.8; continue; }
+      let transitions = 0;
+      for (let i=1;i<c.length;i++){
+        if (c[i] !== c[i-1]) transitions++;
+      }
+      score += transitions;
+      const run = topRun(c);
+      if (run >= 4) score -= (run-3) * 2.0;
+      else if (run >= 3) score -= 1.2;
+    }
+    return score;
+  }
+
+  const filledCount = spec.types;      // one full tube per type
+  const emptyCount  = spec.empty;      // maneuver tubes
+  const total = filledCount + emptyCount;
+
+  let best = null;
+  let bestScore = -1;
+
+  const attempts = 260;
+  for (let a=0;a<attempts;a++){
+    const b = blocks.slice();
+    shuffle(b);
+
+    const containers = [];
+    let idx = 0;
+    for (let k=0;k<filledCount;k++){
+      containers.push(b.slice(idx, idx+CAPACITY));
+      idx += CAPACITY;
+    }
+    for (let e=0;e<emptyCount;e++) containers.push([]);
+
+    // Hard rules: no solved tube on spawn; avoid ultra-easy tops
+    let bad = false;
+    for (const c of containers){
+      if (isTubeSolved(c)) { bad = true; break; }
+      if (topRun(c) >= 4) { bad = true; break; }
+    }
+    if (bad) continue;
+
+    const s = mixScore(containers);
+    if (s > bestScore){
+      bestScore = s;
+      best = containers;
+    }
+    if (s >= spec.targetMix){
+      best = containers;
+      break;
+    }
+  }
+
+  // Fallback: last mixed attempt even if below target
+  if (!best){
+    const b = blocks.slice();
+    shuffle(b);
+    best = [];
+    let idx = 0;
+    for (let k=0;k<filledCount;k++){
+      best.push(b.slice(idx, idx+CAPACITY));
+      idx += CAPACITY;
+    }
+    for (let e=0;e<emptyCount;e++) best.push([]);
+  }
+
+  // Ensure total count
+  while (best.length < total) best.push([]);
+
+  return { containers: best, chosenTypes: chosen };
+}
+
+
+/* --- Rendering --- */
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function computeGlowKey(container){
+  if (!container.length) return "neutral";
+  // Use top color as identity glow for clarity
+  return container[container.length - 1];
+}
+
+function render(){
+  levelText.textContent = pad2(state.level);
+  movesText.textContent = String(state.moves);
+
+  
+
+  if (modeBtn) modeBtn.textContent = "Mode: " + (state.mode === "zen" ? "Zen" : "Standard");
+boardEl.innerHTML = "";
+  const n = state.containers.length;
+
+  for (let i=0;i<n;i++){
+    const tube = document.createElement("div");
+    tube.className = "tube";
+    tube.dataset.index = String(i);
+    tube.dataset.glow = computeGlowKey(state.containers[i]);
+    if (state.selectedTube === i) tube.classList.add("selected");
+
+    const frame = document.createElement("div"); frame.className = "frame";
+    const glass = document.createElement("div"); glass.className = "glass";
+    const base = document.createElement("div"); base.className = "base";
+    const lamp = document.createElement("div"); lamp.className = "lamp";
+
+    const slots = document.createElement("div"); slots.className = "slots";
+    for (let s=0;s<CAPACITY;s++){
+      const slot = document.createElement("div");
+      slot.className = "slot";
+      slots.appendChild(slot);
+    }
+
+    const c = state.containers[i];
+    for (let k=0;k<c.length;k++){
+      const energyKey = c[k];
+      const block = document.createElement("div");
+      block.className = "block " + energyKey;
+      block.dataset.energy = energyKey;
+      block.dataset.from = String(i);
+      block.dataset.pos = String(k);
+
+      if (k === c.length - 1){
+        block.style.cursor = "grab";
+        block.addEventListener("pointerdown", onBlockPointerDown);
+      } else {
+        block.style.opacity = "0.92";
+      }
+      const slotEl = slots.children[k];
+      slotEl.appendChild(block);
+    }
+
+    tube.addEventListener("click", () => onTubeTap(i));
+
+    tube.appendChild(frame);
+    tube.appendChild(glass);
+    tube.appendChild(slots);
+    tube.appendChild(base);
+    tube.appendChild(lamp);
+
+    boardEl.appendChild(tube);
+  }
+
+  undoBtn.disabled = state.history.length === 0;
+
+  const solved = isSolved();
+  if (solved && !state.win){ state.win = true; showWin(); }
+  if (!solved && state.win){ state.win = false; hideWinUi(); }
+
+  if (!solved && !anyValidMoves()){ showLoss(); }
+
+  updateDropHighlights();
+  nextBtn.style.display = state.win ? "inline-flex" : "none";
+}
+
+function updateDropHighlights(){
+  const tubes = boardEl.querySelectorAll(".tube");
+  for (const t of tubes) t.classList.remove("drop-ok");
+  if (state.selectedTube === null) return;
+  for (let j=0;j<state.containers.length;j++){
+    if (isMoveValid(state.selectedTube, j)){
+      const t = boardEl.querySelector('.tube[data-index="' + j + '"]');
+      if (t) t.classList.add("drop-ok");
+    }
+  }
+}
+
+/* --- Actions --- */
+function pushHistory(){
+  state.history.push({
+    containers: state.containers.map(c => c.slice()),
+    moves: state.moves,
+    selectedTube: state.selectedTube
+  });
+  if (state.history.length > 200) state.history.shift();
+}
+
+function move(fromIdx, toIdx){
+  if (!isMoveValid(fromIdx, toIdx)) return false;
+  pushHistory();
+
+  const e = state.containers[fromIdx].pop();
+  state.containers[toIdx].push(e);
+  state.moves++;
+
+  // After a completed move, clear selection so the next click starts a fresh action.
+  state.selectedTube = null;
+
+  render();
+  return true;
+}
+
+function resetLevel(){
+  if (!state.startSnapshot) return;
+  state.containers = state.startSnapshot.map(c => c.slice());
+  state.moves = 0; state.history = [];
+  state.selectedTube = null; state.win = false;
+  hideOverlay();
+  render();
+}
+
+function undo(){
+  const last = state.history.pop();
+  if (!last) return;
+  state.containers = last.containers.map(c => c.slice());
+  state.moves = last.moves;
+  state.selectedTube = last.selectedTube;
+  state.win = false;
+  hideOverlay();
+  render();
+}
+
+function nextLevel(){
+  state.level++;
+  saveProgress();
+  startLevel(state.level);
+}
+
+/* --- Input --- */
+function onTubeTap(idx){
+  if (overlay.classList.contains("show")) return;
+  if (state.dragging) return;
+
+  if (state.selectedTube === null){
+    if (state.containers[idx].length){
+      state.selectedTube = idx;
+      render();
+    }
+    return;
+  }
+
+  if (state.selectedTube === idx){
+    state.selectedTube = null;
+    render();
+    return;
+  }
+
+  const moved = move(state.selectedTube, idx);
+  if (!moved){
+    if (state.containers[idx].length){
+      state.selectedTube = idx;
+      render();
+    }
+  }
+}
+
+function onBlockPointerDown(ev){
+  if (overlay.classList.contains("show")) return;
+
+  const block = ev.currentTarget;
+  const fromIdx = Number(block.dataset.from);
+
+  state.selectedTube = fromIdx;
+  render();
+
+  try{ block.setPointerCapture(ev.pointerId); }catch(e){}
+  state.dragging = { fromIdx: fromIdx, pointerId: ev.pointerId };
+
+  const startX = ev.clientX, startY = ev.clientY;
+
+  const clone = block.cloneNode(true);
+  clone.style.position = "fixed";
+  clone.style.left = startX + "px";
+  clone.style.top = startY + "px";
+  clone.style.transform = "translate(-50%, -50%) scale(1.02)";
+  clone.style.zIndex = 9999;
+  clone.style.pointerEvents = "none";
+  document.body.appendChild(clone);
+  state.dragging.clone = clone;
+
+  const onMove = (e) => {
+    if (!state.dragging || e.pointerId !== state.dragging.pointerId) return;
+    clone.style.left = e.clientX + "px";
+    clone.style.top = e.clientY + "px";
+
+    const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+    const overTube = (elAtPoint && elAtPoint.closest) ? elAtPoint.closest(".tube") : null;
+
+    const tubes = boardEl.querySelectorAll(".tube");
+    for (const t of tubes) t.classList.remove("drop-ok");
+
+    if (overTube){
+      const toIdx = Number(overTube.dataset.index);
+      if (isMoveValid(fromIdx, toIdx)) overTube.classList.add("drop-ok");
+    }else{
+      updateDropHighlights();
+    }
+  };
+
+  const onUp = (e) => {
+    if (!state.dragging || e.pointerId !== state.dragging.pointerId) return;
+
+    const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+    const overTube = (elAtPoint && elAtPoint.closest) ? elAtPoint.closest(".tube") : null;
+
+    let didMove = false;
+    if (overTube){
+      const toIdx = Number(overTube.dataset.index);
+      didMove = move(fromIdx, toIdx);
+    }
+
+    try{ block.releasePointerCapture(e.pointerId); }catch(err){}
+    if (state.dragging.clone) state.dragging.clone.remove();
+    state.dragging = null;
+
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
+
+    if (!didMove) render();
+  };
+
+  window.addEventListener("pointermove", onMove, { passive: true });
+  window.addEventListener("pointerup", onUp, { passive: true });
+  window.addEventListener("pointercancel", onUp, { passive: true });
+}
+
+/* --- Overlay --- */
+function showOverlay(title, body, isWin){
+  modalTitle.textContent = title;
+  modalBody.textContent = body;
+  overlay.classList.add("show");
+  modalNextBtn.style.display = isWin ? "inline-flex" : "none";
+}
+function hideOverlay(){ overlay.classList.remove("show"); }
+function showWin(){ hideWinUi(); nextBtn.style.display = "inline-flex"; showOverlay("System Balanced", "All energy chambers stabilized.", true); }
+function showLoss(){ showOverlay("System Locked", "No valid moves remain. You can undo or reset.", false); }
+function hideWinUi(){ nextBtn.style.display = "none"; }
+
+/* --- Boot --- */
+function startLevel(level){
+  state.level = level;
+  state.moves = 0; state.history = [];
+  state.selectedTube = null; state.win = false;
+  hideOverlay();
+
+  const generated = generateLevel(level);
+  state.containers = generated.containers.map(c => c.slice());
+  state.startSnapshot = state.containers.map(c => c.slice());
+  render();
+}
+
+undoBtn.addEventListener("click", () => undo());
+resetBtn.addEventListener("click", () => resetLevel());
+nextBtn.addEventListener("click", () => nextLevel());
+
+
+if (modeBtn){
+  modeBtn.addEventListener("click", () => {
+    state.mode = (state.mode === "zen") ? "standard" : "zen";
+    saveMode();
+    startLevel(state.level); // rebuild current level under new feel
+  });
+}
+if (resetProgressBtn){
+  resetProgressBtn.addEventListener("click", () => {
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    state.level = 1;
+    saveProgress();
+    startLevel(1);
+  });
+}
+closeModalBtn.addEventListener("click", () => hideOverlay());
+modalNextBtn.addEventListener("click", () => nextLevel());
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape"){ hideOverlay(); state.selectedTube = null; render(); }
+  if (e.key.toLowerCase() === "r"){ resetLevel(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z"){ undo(); }
+});
+
+loadMode();
+loadProgress();
+startLevel(state.level);
+</script>
+</body>
+</html>
