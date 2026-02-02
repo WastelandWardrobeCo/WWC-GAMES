@@ -837,16 +837,38 @@
 
   const ar=a.y, ac=a.x, br=b.y, bc=b.x;
 
-  const inGroup = (g,r,c)=> (g && g.cells && g.cells.has(rcKey(r,c)));
+  const groupKeys = (g)=>{
+    if(!g || !g.cells) return [];
+    // Newer code may store a Set of "x,y" strings
+    if(typeof g.cells.has === "function") return [...g.cells];
+    // Current findMatches() stores an array of {x,y}
+    if(Array.isArray(g.cells)) return g.cells.map(p=>`${p.x},${p.y}`);
+    return [];
+  };
+
+  const inGroup = (g,r,c)=>{
+    const key = rcKey(r,c);
+    if(!g || !g.cells) return false;
+    if(typeof g.cells.has === "function") return g.cells.has(key);
+    if(Array.isArray(g.cells)) return g.cells.some(p=>`${p.x},${p.y}`===key);
+    return false;
+  };
+
+  const groupSize = (g)=>{
+    if(!g || !g.cells) return 0;
+    if(typeof g.cells.size === "number") return g.cells.size;
+    if(Array.isArray(g.cells)) return g.cells.length;
+    return 0;
+  };
 
   // Prefer a match group that includes one of the swapped cells
   let involved = matchGroups.filter(g=>inGroup(g,ar,ac) || inGroup(g,br,bc));
   if(involved.length===0) involved = [matchGroups[0]];
 
   // Choose the largest involved group
-  involved.sort((g1,g2)=> (g2.cells.size - g1.cells.size));
+  involved.sort((g1,g2)=> (groupSize(g2) - groupSize(g1)));
   const g = involved[0];
-  const size = g.cells.size;
+  const size = groupSize(g);
 
   // Anchor special on the second swap cell if possible (feels most "natural")
   let anchorR = br, anchorC = bc;
@@ -854,19 +876,22 @@
 
   // Fallback: first cell in group
   if(!inGroup(g,anchorR,anchorC)){
-    const [x,y] = [...g.cells][0].split(',').map(Number);
-    anchorC = x; anchorR = y;
+    const keys = groupKeys(g);
+    if(keys.length){
+      const [x,y] = keys[0].split(',').map(Number);
+      anchorC = x; anchorR = y;
+    }
   }
 
   if(size>=5){
     if(board[anchorR] && board[anchorR][anchorC]) board[anchorR][anchorC].special = "core";
-    return {made:true, keepId: rcKey(anchorR,anchorC)};
+    return {made:"core", keepId: rcKey(anchorR,anchorC)};
   }
 
   if(size===4){
     const dir = g.dir || "h";
     if(board[anchorR] && board[anchorR][anchorC]) board[anchorR][anchorC].special = (dir==="h" ? "h" : "v");
-    return {made:true, keepId: rcKey(anchorR,anchorC)};
+    return {made:(dir==="h" ? "h" : "v"), keepId: rcKey(anchorR,anchorC)};
   }
 
   return {made:false, keepId:null};
@@ -936,13 +961,14 @@ function bumpObjectivesForTile(tile) {
     await sleep(T_FALL);
   }
 
-    async function resolveBoard(keepId=null) {
+    async function resolveBoard(keepId=null, initialToClear=null) {
     // Clears all matches, applies specials, collapses, refills, and repeats until stable.
     // keepId is used only for the *first* clear pass to preserve the special-creation tile.
     let keepOnce = keepId;
 
     while (true) {
-      const {toClear} = findMatches();
+      const toClear = (initialToClear ? initialToClear : findMatches().toClear);
+      initialToClear = null;
       if (toClear.size === 0) break;
 
       if (keepOnce) {
@@ -1114,11 +1140,11 @@ function bumpObjectivesForTile(tile) {
     }
 
     // Match: create special if needed, then resolve
-    const {made, keepId} = createSpecialFromSwap(a,b);
-    if (made === "core") toast("CORE created");
-    else if (made === "h" || made === "v") toast("STRIPE created");
+    const {made, keepId} = createSpecialFromSwap(a,b, probe.groups);
+    if (made === "core") showToast("CORE created");
+    else if (made === "h" || made === "v") showToast("STRIPE created");
 
-    await resolveBoard(keepId);
+    await resolveBoard(keepId, probe.toClear);
 
     movesLeft = Math.max(0, movesLeft - 1);
     updateUI();
