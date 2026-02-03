@@ -244,8 +244,26 @@
     transform: translateY(-1px) scale(1.02);
     box-shadow: 0 14px 28px rgba(0,0,0,.42);
   }
-  .tile.matched {
+  .tile.matched{
     animation: pop .22s ease-out forwards;
+  }
+  .tile.matched::before{
+    content:"";
+    position:absolute;
+    inset:4px;
+    border-radius:14px;
+    box-shadow:
+      0 0 0 2px rgba(255,210,100,.95),
+      0 0 18px rgba(255,210,100,.55),
+      inset 0 0 10px rgba(255,210,100,.30);
+    opacity:0;
+    animation: ringFlash .22s ease-out forwards;
+    pointer-events:none;
+  }
+  @keyframes ringFlash{
+    0%{opacity:0; transform:scale(.96);}
+    35%{opacity:1; transform:scale(1.02);}
+    100%{opacity:0; transform:scale(1.08);}
   }
   @keyframes pop {
     0% { transform: scale(1); filter: brightness(1); }
@@ -336,6 +354,61 @@
     :root { --tile: clamp(44px, 6.2vh, 64px); --gap: 10px; }
   }
 
+
+
+/* --- Sound button --- */
+#btnSound{
+  width: 44px;
+  padding: 0;
+  text-align:center;
+  font-size: 18px;
+  line-height: 42px;
+}
+
+/* --- Extra tile feedback --- */
+.tile.invalid { animation: invalidShake .35s ease; }
+@keyframes invalidShake{
+  0%{ transform: translateY(0) rotate(0); }
+  15%{ transform: translateX(-3px) rotate(-0.5deg); }
+  35%{ transform: translateX(3px) rotate(0.5deg); }
+  55%{ transform: translateX(-2px) rotate(-0.3deg); }
+  75%{ transform: translateX(2px) rotate(0.3deg); }
+  100%{ transform: translateX(0) rotate(0); }
+}
+.tile.specialSpawn { animation: specialSpawn .35s ease-out; }
+@keyframes specialSpawn{
+  0%{ transform: scale(.75); filter: brightness(1.8) saturate(1.3); }
+  100%{ transform: scale(1); filter: brightness(1) saturate(1); }
+}
+.tile.corePulse { animation: corePulse 1.2s ease-in-out infinite; }
+@keyframes corePulse{
+  0%,100%{ filter: drop-shadow(0 0 0 rgba(120,255,210,0)); }
+  50%{ filter: drop-shadow(0 0 14px rgba(120,255,210,.55)); }
+}
+
+/* --- Side tube motion (subtle) --- */
+.tube::after{ animation: tubeDrift 7.5s linear infinite; }
+@keyframes tubeDrift{
+  0%{ background-position: 0 0, 0 0, 0 0, 0 0; opacity:.85; }
+  50%{ background-position: 0 -120px, 0 -60px, 0 -180px, 0 -90px; opacity:1; }
+  100%{ background-position: 0 -240px, 0 -120px, 0 -360px, 0 -180px; opacity:.85; }
+}
+
+/* Mobile fit */
+@media (max-width: 760px){
+  .shell{ grid-template-columns: 1fr !important; gap:14px !important; padding:14px !important; }
+  .sidePanel{ display:none !important; }
+  .mainPanel{ width:100% !important; max-width: 560px !important; margin:0 auto !important; }
+  :root{
+    --tileSize: min(56px, calc((100vw - 64px) / 8));
+    --tileGap: 8px;
+  }
+  body{ overflow-y:auto; }
+}
+@media (max-height: 740px){
+  body{ overflow-y:auto; }
+}
+
 </style>
 </head>
 <body>
@@ -355,6 +428,7 @@
         <div class="btns">
           <button id="btnRestart">Restart Level</button>
           <button id="btnReset">Reset Campaign</button>
+          <button id="btnSound" class="miniBtn" title="Sound: On">🔊</button>
         </div>
       </div>
 
@@ -452,7 +526,6 @@
 
   // ===== Game constants =====
   const W = 8, H = 8;
-  let TILE_ID = 1;
 
   // animation timing (slower so 4-match doesn't just vanish)
   const T_MATCH_HIGHLIGHT = 180;
@@ -462,7 +535,79 @@
   // ===== State =====
   let board = []; // [y][x] => {t:int, special:null|'h'|'v'|'core'}
   let cells = []; // DOM nodes
-  let selected = null; // {x,y}
+  let selected = null;
+
+// --- Simple SFX (no external files) ---
+let audioOn = true;
+let audioCtx = null;
+function initAudio(){
+    if(audioCtx) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    audioCtx = new Ctx();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.22; // overall volume
+    masterGain.connect(audioCtx.destination);
+  }
+
+  function ensureAudio(){
+    initAudio();
+    if(!audioCtx) return;
+    if(audioCtx.state === 'suspended'){
+      // must be called from a user gesture (click/tap)
+      audioCtx.resume().catch(()=>{});
+    }
+  }
+
+  // unlock audio the first time the player interacts (helps on mobile)
+  window.addEventListener('pointerdown', ()=>{ ensureAudio(); }, { once:true, passive:true });
+
+  function playMatchSFX(groups){
+    try{
+      const maxLen = Math.max(...groups.map(g=>g.cells.length));
+      if (maxLen>=5) SFX.match5();
+      else if (maxLen===4) SFX.match4();
+      else if (maxLen===3) SFX.match3();
+      else SFX.match3();
+    }catch(e){}
+  }
+
+function playTone(freq=440, dur=0.08, type='sine', vol=0.18){
+    ensureAudio();
+    if(!audioCtx || !masterGain) return;
+
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+
+    // fast attack, quick decay
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vol), t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + Math.max(0.03, dur));
+
+    osc.connect(g);
+    g.connect(masterGain);
+
+    osc.start(t0);
+    osc.stop(t0 + Math.max(0.03, dur) + 0.02);
+  }
+const SFX = {
+  swap(){ playTone(520, 0.06, "triangle", 0.04); },
+  invalid(){ playTone(180, 0.12, "sawtooth", 0.035); },
+  clear(n=3){
+    const base = 420;
+    for(let i=0;i<Math.min(5,n);i++){
+      setTimeout(()=>playTone(base + i*110, 0.05, "sine", 0.035), i*22);
+    }
+  },
+  special(){ playTone(880, 0.10, "square", 0.045); setTimeout(()=>playTone(660,0.10,"square",0.04),70); },
+  core(){ playTone(980, 0.14, "triangle", 0.05); setTimeout(()=>playTone(420,0.18,"sawtooth",0.03),90); },
+  win(){ playTone(740,0.12,"sine",0.05); setTimeout(()=>playTone(980,0.14,"sine",0.05),120); setTimeout(()=>playTone(1240,0.18,"sine",0.05),260); }
+};
+ // {x,y}
   let lock = false;
 
   let level = 1;
@@ -602,7 +747,7 @@
   }
 
   function randomTile(typeCount, rng) {
-    return { id: TILE_ID++, t: Math.floor(rng() * typeCount), special: null };
+    return { t: Math.floor(rng() * typeCount), special: null };
   }
 
   function hasMatchAt(x,y) {
@@ -829,74 +974,30 @@
 
   function hideLevelSplash() { overlay.style.display = "none"; }
 
-  function createSpecialFromSwap(a, b, matchGroups){
-  if(!matchGroups || matchGroups.length===0) return {made:false, keepId:null};
+  function createSpecialFromSwap(a,b,groups) {
+    // Returns {keep:{x,y}, kind:"core"|"h"|"v"} when a swap creates a special.
+    const swapDir = (a.x!==b.x) ? "h" : "v";
+    const priority = groups.map(g => ({...g, len:g.cells.length})).sort((g1,g2)=>g2.len-g1.len);
+    for (const g of priority) {
+      const hasA = g.cells.some(c=>c.x===a.x && c.y===a.y);
+      const hasB = g.cells.some(c=>c.x===b.x && c.y===b.y);
+      if (!hasA && !hasB) continue;
 
-  // keys in matches are stored as "x,y" where x=col, y=row
-  const rcKey = (r,c)=>`${c},${r}`;
+      // Put the created special on the moved-into cell (the "destination" of the swap).
+      const dest = hasB ? b : a;
+      const tile = board[dest.y][dest.x];
+      if (!tile) continue;
 
-  const ar=a.y, ac=a.x, br=b.y, bc=b.x;
+      if (g.len>=5) tile.special = "core";
+      else if (g.len===4) tile.special = (swapDir==="h") ? "h" : "v";
+      else return null;
 
-  const groupKeys = (g)=>{
-    if(!g || !g.cells) return [];
-    // Newer code may store a Set of "x,y" strings
-    if(typeof g.cells.has === "function") return [...g.cells];
-    // Current findMatches() stores an array of {x,y}
-    if(Array.isArray(g.cells)) return g.cells.map(p=>`${p.x},${p.y}`);
-    return [];
-  };
-
-  const inGroup = (g,r,c)=>{
-    const key = rcKey(r,c);
-    if(!g || !g.cells) return false;
-    if(typeof g.cells.has === "function") return g.cells.has(key);
-    if(Array.isArray(g.cells)) return g.cells.some(p=>`${p.x},${p.y}`===key);
-    return false;
-  };
-
-  const groupSize = (g)=>{
-    if(!g || !g.cells) return 0;
-    if(typeof g.cells.size === "number") return g.cells.size;
-    if(Array.isArray(g.cells)) return g.cells.length;
-    return 0;
-  };
-
-  // Prefer a match group that includes one of the swapped cells
-  let involved = matchGroups.filter(g=>inGroup(g,ar,ac) || inGroup(g,br,bc));
-  if(involved.length===0) involved = [matchGroups[0]];
-
-  // Choose the largest involved group
-  involved.sort((g1,g2)=> (groupSize(g2) - groupSize(g1)));
-  const g = involved[0];
-  const size = groupSize(g);
-
-  // Anchor special on the second swap cell if possible (feels most "natural")
-  let anchorR = br, anchorC = bc;
-  if(!inGroup(g,anchorR,anchorC)){ anchorR = ar; anchorC = ac; }
-
-  // Fallback: first cell in group
-  if(!inGroup(g,anchorR,anchorC)){
-    const keys = groupKeys(g);
-    if(keys.length){
-      const [x,y] = keys[0].split(',').map(Number);
-      anchorC = x; anchorR = y;
+      return { keep: { x: dest.x, y: dest.y }, kind: tile.special };
     }
+    return null;
   }
 
-  if(size>=5){
-    if(board[anchorR] && board[anchorR][anchorC]) board[anchorR][anchorC].special = "core";
-    return {made:"core", keepId: rcKey(anchorR,anchorC)};
-  }
-
-  if(size===4){
-    const dir = g.dir || "h";
-    if(board[anchorR] && board[anchorR][anchorC]) board[anchorR][anchorC].special = (dir==="h" ? "h" : "v");
-    return {made:(dir==="h" ? "h" : "v"), keepId: rcKey(anchorR,anchorC)};
-  }
-
-  return {made:false, keepId:null};
-}
-function bumpObjectivesForTile(tile) {
+  function bumpObjectivesForTile(tile) {
     if (!tile) return;
     if (tile.special === "core") return;
     if (tile.t === goalA.type && goalA.got < goalA.need) goalA.got++;
@@ -912,8 +1013,6 @@ function bumpObjectivesForTile(tile) {
   }
 
   async function clearPositions(list) {
-      // Defensive: ignore out-of-bounds positions (can happen with special expansions)
-      list = (list||[]).filter(p => p && p.x>=0 && p.x<W && p.y>=0 && p.y<H);
     for (const p of list) {
       const tile = board[p.y][p.x];
       if (!tile) continue;
@@ -961,19 +1060,12 @@ function bumpObjectivesForTile(tile) {
     await sleep(T_FALL);
   }
 
-    async function resolveBoard(keepId=null, initialToClear=null) {
-    // Clears all matches, applies specials, collapses, refills, and repeats until stable.
-    // keepId is used only for the *first* clear pass to preserve the special-creation tile.
-    let keepOnce = keepId;
-
+    async function resolveBoard(keepPos=null) {
+    let keepKey = keepPos ? `${keepPos.x},${keepPos.y}` : null;
     while (true) {
-      const toClear = (initialToClear ? initialToClear : findMatches().toClear);
-      initialToClear = null;
-      if (toClear.size === 0) break;
-
-      if (keepOnce) {
-        toClear.delete(keepOnce);
-      }
+      const {toClear} = findMatches();
+      if (toClear.size===0) break;
+      if (keepKey && toClear.has(keepKey)) toClear.delete(keepKey);
 
       const base = Array.from(toClear).map(s => {
         const [x,y] = s.split(",").map(Number);
@@ -981,32 +1073,27 @@ function bumpObjectivesForTile(tile) {
       });
 
       const expanded = new Set(base.map(p=>`${p.x},${p.y}`));
-      if (keepOnce) {
-        expanded.delete(keepOnce);
-      }
-
-      // Expand stripe clears.
+      if (keepKey && expanded.has(keepKey)) expanded.delete(keepKey);
       for (const p of base) {
         const tile = board[p.y][p.x];
         if (!tile) continue;
-        if (tile.special === "h") {
-          for (let x=0;x<W;x++) expanded.add(`${x},${p.y}`);
-        } else if (tile.special === "v") {
-          for (let y=0;y<H;y++) expanded.add(`${p.x},${y}`);
-        }
+        if (tile.special === "h") for (let x=0;x<W;x++) expanded.add(`${x},${p.y}`);
+        if (tile.special === "v") for (let y=0;y<H;y++) expanded.add(`${p.x},${y}`);
       }
-
-      // Turn any cleared stripe into empty and remove special.
-      const list = Array.from(expanded).map(s => {
+      const finalClear = Array.from(expanded).map(s => {
         const [x,y] = s.split(",").map(Number);
         return {x,y};
       });
-    await highlightPositions(list, false);
-      await sleep(120);
-      await clearPositions(list);
-      await fallAndRefill();
 
-      keepOnce = null;
+      await highlightPositions(finalClear);
+      await clearPositions(finalClear);
+      await fallAndRefill();
+      keepKey = null;
+    }
+    if (!findAnyMove()) {
+      showToast("System recalibration…");
+      shuffleBoard();
+      renderBoard();
     }
   }
 
@@ -1024,51 +1111,29 @@ function bumpObjectivesForTile(tile) {
   }
 
   async function doCoreSwap(a,b) {
-    // Swap includes a CORE, then discharge by wiping the swapped-with type across the whole board.
-    const ta0 = board[a.y][a.x];
-    const tb0 = board[b.y][b.x];
-    const corePos0 = (ta0 && ta0.special==="core") ? a : b;
-    const otherPos0 = (corePos0.x===a.x && corePos0.y===a.y) ? b : a;
-
-    // Perform the swap first (CORE moves with the tile object).
+    const ta = board[a.y][a.x];
+    const tb = board[b.y][b.x];
+    const corePos = (ta && ta.special==="core") ? a : b;
+    const otherPos = (corePos.x===a.x && corePos.y===a.y) ? b : a;
+    const other = board[otherPos.y][otherPos.x];
     swap(a,b);
     renderBoard();
     await sleep(90);
 
-    const corePos = (board[a.y][a.x] && board[a.y][a.x].special==="core") ? a :
-                    (board[b.y][b.x] && board[b.y][b.x].special==="core") ? b : corePos0;
-    const otherPos = (corePos.x===a.x && corePos.y===a.y) ? b : a;
-
-    const other = board[otherPos.y][otherPos.x];
-    if (!other) { return; }
-
-    // CORE-on-CORE: clear entire board.
-    if (other.special === "core") {
+    if (other && other.special==="core") {
       const all = [];
-      for (let y=0;y<H;y++) for (let x=0;x<W;x++) if (board[y][x]) all.push({x,y});
-      if (all.length) {
-    await highlightPositions(all, true);
-        await sleep(160);
-    await clearPositions(all);
-        await fallAndRefill();
-        await resolveBoard(null);
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++) all.push({x,y});
+      await clearPositions(all);
+    } else if (other) {
+      const typeToClear = other.t;
+      const list = [];
+      for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+        const t = board[y][x];
+        if (t && t.special!=="core" && t.t===typeToClear) list.push({x,y});
       }
-      return;
+      list.push(corePos);
+      await clearPositions(list);
     }
-
-    const typeToWipe = other.t;
-    const list = [];
-    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
-      const t = board[y][x];
-      if (t && t.t === typeToWipe) list.push({x,y});
-    }
-    // Also remove the CORE tile itself so it doesn't sit there forever.
-    list.push({x: corePos.x, y: corePos.y});
-    await highlightPositions(list, true);
-    await sleep(180);
-    await clearPositions(list);
-    await fallAndRefill();
-    await resolveBoard(null);
   }
 
   async function checkEnd() {
@@ -1092,64 +1157,50 @@ function bumpObjectivesForTile(tile) {
     const x = Number(d.dataset.x);
     const y = Number(d.dataset.y);
     const pos = {x,y};
-
     if (!selected) { setSelected(pos); return; }
     if (selected.x===x && selected.y===y) { setSelected(null); return; }
-
     const dx = Math.abs(selected.x - x);
     const dy = Math.abs(selected.y - y);
     if (dx + dy !== 1) { setSelected(pos); return; }
 
-    // We have an adjacent pair.
+    lock = true;
     const a = selected;
     const b = pos;
     setSelected(null);
 
-    if (!board[a.y][a.x] || !board[b.y][b.x]) return;
+    const ta = board[a.y][a.x];
+    const tb = board[b.y][b.x];
 
-    lock = true;
-
-    // CORE discharge swap
-    if ((board[a.y][a.x] && board[a.y][a.x].special === "core") ||
-        (board[b.y][b.x] && board[b.y][b.x].special === "core")) {
-
+    if ((ta && ta.special==="core") || (tb && tb.special==="core")) {
       await doCoreSwap(a,b);
-      movesLeft = Math.max(0, movesLeft - 1);
+      movesLeft--;
       updateUI();
+      await resolveBoard(createdSpecial?.keep || null);
       await checkEnd();
       lock = false;
       return;
     }
 
-    // Normal swap attempt
     swap(a,b);
     renderBoard();
-    await sleep(80);
+    await sleep(70);
 
-    const probe = findMatches();
-    if (probe.toClear.size === 0) {
-      // No match: revert swap
+    const matches = findMatches();
+    if (matches.toClear.size===0) {
       swap(a,b);
       renderBoard();
-      await sleep(60);
-      movesLeft = Math.max(0, movesLeft - 1);
-      updateUI();
-      await checkEnd();
+      showToast("No match.");
       lock = false;
       return;
     }
 
-    // Match: create special if needed, then resolve
-    const {made, keepId} = createSpecialFromSwap(a,b, probe.groups);
-    if (made === "core") showToast("CORE created");
-    else if (made === "h" || made === "v") showToast("STRIPE created");
+    const createdSpecial = createSpecialFromSwap(a,b,matches.groups);
 
-    await resolveBoard(keepId, probe.toClear);
-
-    movesLeft = Math.max(0, movesLeft - 1);
+    movesLeft--;
     updateUI();
-    await checkEnd();
 
+    await resolveBoard(createdSpecial?.keep || null);
+    await checkEnd();
     lock = false;
   }
 
@@ -1157,7 +1208,7 @@ function bumpObjectivesForTile(tile) {
     level = Math.max(1, Math.min(1000, n));
     const spec = levelSpec(level);
     setObjectivesFromSpec(spec);
-    generateBoard(spec.typeCount, 4242 + level*17);
+    generateBoard(spec.typeCount, (level===1 ? ((Date.now()>>>0) ^ (Math.random()*1e9>>>0)) : (4242 + level*17)));
     renderBoard();
     updateUI();
     if (autoShowSplash) showLevelSplash();
@@ -1179,6 +1230,21 @@ function bumpObjectivesForTile(tile) {
     showToast("Campaign reset.");
     startLevel(1, true);
   });
+
+const btnSound = document.getElementById("btnSound");
+if(btnSound){
+  const refreshSoundBtn = ()=>{
+    btnSound.textContent = audioOn ? "🔊" : "🔇";
+    btnSound.title = audioOn ? "Sound: On" : "Sound: Off";
+  };
+  refreshSoundBtn();
+  btnSound.addEventListener("click", ()=>{
+    audioOn = !audioOn;
+    if(audioOn) initAudio();
+    refreshSoundBtn();
+  });
+}
+
 
   ovBegin.addEventListener("click", () => {
     hideLevelSplash();
