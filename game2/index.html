@@ -1,1 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zone 13 - Power Distribution (v1)</title>
+  <style>
+    :root{
+      --bg:#0d0f12;
+      --panel:#171a1f;
+      --panel2:#12151a;
+      --stroke:#2a303a;
+      --text:#cfd6df;
+      --muted:#8b97a6;
 
+      --good:#58d68d;
+      --warn:#f4d03f;
+      --bad:#ff5c5c;
+      --cold:#69b7ff;
+      --ink:#0b0d10;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+    .wrap{max-width:1100px;margin:0 auto;padding:14px 14px 18px;}
+    .topbar{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:12px 12px;
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.35);
+      position:sticky; top:0; z-index:5;
+    }
+    .stat{
+      display:flex; flex-direction:column; gap:2px;
+      padding:8px 10px;
+      border:1px solid var(--stroke);
+      border-radius:10px;
+      background:rgba(0,0,0,.2);
+      min-height:44px;
+    }
+    .label{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+    .value{font-size:18px;font-weight:650}
+    .value small{font-size:12px;color:var(--muted);font-weight:600}
+    .notice{
+      justify-self:end;
+      display:flex; gap:8px; align-items:center;
+    }
+    .pill{
+      padding:8px 10px;border-radius:999px;border:1px solid var(--stroke);
+      background:rgba(0,0,0,.22);
+      font-size:12px;color:var(--muted);
+      user-select:none;
+    }
+    .btn{
+      padding:9px 12px;border-radius:10px;border:1px solid var(--stroke);
+      background:#0f1216;color:var(--text);
+      cursor:pointer;
+      font-weight:650;
+    }
+    .btn:hover{filter:brightness(1.08)}
+    .main{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .card{
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      box-shadow: 0 10px 35px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .canvasWrap{
+      position:relative;
+      background:
+        radial-gradient(1000px 600px at 30% 10%, rgba(88,214,141,.08), transparent 55%),
+        radial-gradient(900px 600px at 80% 30%, rgba(105,183,255,.06), transparent 60%),
+        linear-gradient(180deg, #0e1116, #0b0d10);
+    }
+    canvas{display:block;width:100%;height:auto;}
+    .bottomPanel{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding:12px 12px;
+      border-top:1px solid var(--stroke);
+      background:rgba(0,0,0,.18);
+    }
+    .hint{color:var(--muted);font-size:13px;line-height:1.2}
+    .hint b{color:var(--text)}
+    .rightInfo{
+      display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .tag{
+      font-size:12px;color:var(--muted);
+      padding:7px 9px;border:1px solid var(--stroke);border-radius:999px;background:rgba(0,0,0,.22);
+    }
+    .danger{color:var(--bad)}
+    .good{color:var(--good)}
+    .warn{color:var(--warn)}
+    .cold{color:var(--cold)}
+    .footer{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;color:var(--text);
+      padding:2px 6px;border:1px solid var(--stroke);border-bottom-width:2px;border-radius:6px;background:rgba(0,0,0,.25)}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="stat">
+        <div class="label">Power Reserve</div>
+        <div class="value" id="powerReserve">+0.0 hr <small>(net)</small></div>
+      </div>
+      <div class="stat">
+        <div class="label">Load</div>
+        <div class="value" id="loadPct">0% <small>(demand / supply)</small></div>
+      </div>
+      <div class="stat">
+        <div class="label">System Stability</div>
+        <div class="value" id="stabilityPct">100%</div>
+      </div>
+      <div class="notice">
+        <div class="pill" id="noticePill">NO ACTIVE NOTICES</div>
+        <button class="btn" id="resetBtn" title="Resets save + connections">Reset</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card">
+        <div class="canvasWrap">
+          <canvas id="c"></canvas>
+        </div>
+        <div class="bottomPanel">
+          <div class="hint" id="hint">
+            <b>Power View</b> · Drag a cable end to a new port. Hover nodes to see details.
+            <span style="display:block;margin-top:6px">
+              Tip: Relays have capacity. Overload hurts stability. Sector Gate may draw power when stressed.
+            </span>
+          </div>
+          <div class="rightInfo">
+            <div class="tag" id="tagStatus">System: <span class="good">Stable</span></div>
+            <div class="tag" id="tagHover">Hover: <span class="muted">None</span></div>
+            <div class="tag" id="tagTime">Offline: <span class="muted">0s</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Zone 13 (v1 prototype) · Single-file build · Saves to your browser (localStorage)
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ---------- Utilities ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a,b,t)=>a+(b-a)*t;
+
+  // ---------- Canvas setup ----------
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  function resizeCanvas() {
+    // Crisp but not insane for laptops
+    const cssW = canvas.clientWidth;
+    const cssH = Math.round(cssW * 0.62);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.style.height = cssH + 'px';
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', () => { resizeCanvas(); });
+  resizeCanvas();
+
+  // ---------- Game model (v1) ----------
+  // Units: power in "units". Reserve displayed in "hours" as reserveUnits / totalDemand (approx).
+  // Supply is constant-ish; reserve changes over time via net.
+  const MODEL_VERSION = 1;
+  const SAVE_KEY = "zone13_power_v1_save";
+
+  const state = {
+    version: MODEL_VERSION,
+    tLast: Date.now(),
+    reserveUnits: 30, // starting buffer
+    stability: 0.84,  // 0..1
+    // dynamic:
+    hover: null,
+    dragging: null, // { linkId, end:'a'|'b', x,y }
+    notice: "NO ACTIVE NOTICES",
+    // anomaly toggles:
+    gateAnomaly: false,
+  };
+
+  // Nodes with ports. Ports are where cables can attach.
+  // We'll keep a simple top-down layout like the "playable today" screenshot.
+  // Each node has:
+  // - supply (units/hr) OR demand (units/hr)
+  // - relayCapacity (units/hr) for relay nodes
+  // - ports: array of positions relative to node center
+  const nodes = [
+    { id:"genA", name:"Primary Generator A", kind:"generator", x:160, y:220, supply:55, ports:[[-26,0],[26,0]], },
+    { id:"genB", name:"Primary Generator B", kind:"generator", x:160, y:360, supply:55, ports:[[-26,0],[26,0]], },
+
+    { id:"relayA", name:"Relay A", kind:"relay", x:420, y:280, relayCapacity:85, ports:[[-32,-14],[-32,14],[32,-14],[32,14]], },
+    { id:"relayB", name:"Relay B", kind:"relay", x:560, y:250, relayCapacity:70, ports:[[-32,0],[32,0],[0,32]], },
+
+    { id:"aux", name:"Auxiliary", kind:"consumer", x:420, y:140, demand:22, ports:[[0,30],[0,-30],[30,0],[-30,0]], },
+    { id:"life", name:"Life Support", kind:"consumer", x:720, y:320, demand:58, ports:[[-32,0],[32,0],[0,-32]], },
+    { id:"gate", name:"Sector Gate (LOCKED)", kind:"gate", x:840, y:200, demand:0, ports:[[-34,0],[0,34]], locked:true },
+  ];
+
+  // Port helpers
+  function getNode(id){ return nodes.find(n=>n.id===id); }
+  function portWorldPos(node, portIndex){
+    const [dx,dy]=node.ports[portIndex];
+    return { x: node.x+dx, y: node.y+dy };
+  }
+
+  // Links (cables) connect two node ports. Dragging allows reassigning an endpoint to a different port.
+  // We'll start with a reasonable default wiring.
+  const links = [
+    { id:"L1", a:{node:"genA",port:1}, b:{node:"relayA",port:0} },
+    { id:"L2", a:{node:"genB",port:1}, b:{node:"relayA",port:1} },
+    { id:"L3", a:{node:"relayA",port:2}, b:{node:"relayB",port:0} },
+    { id:"L4", a:{node:"relayA",port:3}, b:{node:"aux",port:3} },
+    { id:"L5", a:{node:"relayB",port:1}, b:{node:"life",port:0} },
+    { id:"L6", a:{node:"relayB",port:2}, b:{node:"gate",port:0} },
+  ];
+
+  // Simple power flow model for v1:
+  // - Total supply = sum(generator supply)
+  // - Total demand = sum(consumers + gate demand)
+  // - Consumers "served" if there exists a connection path from any generator to that consumer.
+  // - If served, demand counts toward load. If not served, it becomes "unpowered" and hurts stability.
+  // - Relays have capacity; we approximate relay load as sum of served demands routed through that relay (shortest path).
+  //
+  // This is intentionally simple for v1; we can replace with real flow later.
+
+  function buildGraph(){
+    // Undirected adjacency between node ids if any link exists.
+    const adj = new Map();
+    for (const n of nodes) adj.set(n.id, []);
+    for (const L of links){
+      adj.get(L.a.node).push({ to:L.b.node, link:L.id });
+      adj.get(L.b.node).push({ to:L.a.node, link:L.id });
+    }
+    return adj;
+  }
+
+  function bfsPath(adj, start, goal){
+    const q=[start];
+    const prev=new Map();
+    prev.set(start,null);
+    while(q.length){
+      const cur=q.shift();
+      if(cur===goal) break;
+      for(const e of adj.get(cur)||[]){
+        if(!prev.has(e.to)){
+          prev.set(e.to,{ from:cur, link:e.link });
+          q.push(e.to);
+        }
+      }
+    }
+    if(!prev.has(goal)) return null;
+    const pathNodes=[];
+    let cur=goal;
+    while(cur!==null){
+      pathNodes.push(cur);
+      cur = prev.get(cur)?.from ?? null;
+    }
+    pathNodes.reverse();
+    return pathNodes;
+  }
+
+  function compute(){
+    const adj = buildGraph();
+    const gens = nodes.filter(n=>n.kind==="generator");
+    const consumers = nodes.filter(n=>n.kind==="consumer");
+    const gate = getNode("gate");
+
+    // Gate anomaly behavior:
+    // If stability is low or relayB overloaded, gate starts demanding power.
+    // We'll compute relay loads first pass without gate, then decide gate demand, then recompute.
+    function pass(gateDemandUnits){
+      gate.demand = gateDemandUnits;
+      const allConsumers = [...consumers, gate];
+
+      const supply = gens.reduce((s,g)=>s+g.supply,0);
+      let servedDemand = 0;
+
+      const served = new Map(); // consumerId -> {served:boolean, path:[nodes]}
+      for(const c of allConsumers){
+        if(c.id==="gate" && c.locked && gateDemandUnits<=0){
+          served.set(c.id,{ served:false, path:null });
+          continue;
+        }
+        let foundPath=null;
+        for(const g of gens){
+          const p = bfsPath(adj, g.id, c.id);
+          if(p){ foundPath=p; break; }
+        }
+        const ok = !!foundPath;
+        served.set(c.id,{ served: ok, path: foundPath });
+        if(ok) servedDemand += (c.demand||0);
+      }
+
+      // Relay load approximation:
+      const relayLoads = new Map();
+      for(const r of nodes.filter(n=>n.kind==="relay")) relayLoads.set(r.id,0);
+
+      for(const c of allConsumers){
+        const info = served.get(c.id);
+        if(!info?.served) continue;
+        const path = info.path;
+        // attribute consumer demand across relay nodes in its path
+        for(const nodeId of path){
+          const n = getNode(nodeId);
+          if(n?.kind==="relay"){
+            relayLoads.set(nodeId, relayLoads.get(nodeId) + (c.demand||0));
+          }
+        }
+      }
+
+      const loadPct = supply>0 ? servedDemand/supply : 0;
+      return { supply, servedDemand, served, relayLoads, loadPct };
+    }
+
+    // Pass 1: no gate draw
+    let res = pass(0);
+
+    const relayB = getNode("relayB");
+    const relayBLoad = res.relayLoads.get("relayB") || 0;
+    const relayBOver = relayBLoad > relayB.relayCapacity;
+
+    // Decide gate anomaly: if stability < 0.78 OR relayB overloaded, gate starts drawing.
+    // It draws more if things are worse.
+    const stress = (relayBOver ? 0.25 : 0) + clamp((0.78 - state.stability)*1.2, 0, 0.35);
+    const gateDemand = stress>0 ? Math.round(18 + 40*stress) : 0;
+
+    // Pass 2 with gate
+    res = pass(gateDemand);
+    state.gateAnomaly = gateDemand>0;
+
+    // Notices
+    const loadPctNow = res.loadPct;
+    const servedLife = res.served.get("life")?.served ?? false;
+    const servedAux  = res.served.get("aux")?.served ?? false;
+
+    let notice = "NO ACTIVE NOTICES";
+    if(loadPctNow > 0.95) notice = "WARNING: POWER DEFICIT";
+    if(relayBOver) notice = "WARNING: RELAY B OVERLOAD";
+    if(!servedLife) notice = "CRITICAL: LIFE SUPPORT UNPOWERED";
+    if(state.gateAnomaly) notice = (notice==="NO ACTIVE NOTICES") ? "NOTICE: GATE DRAW DETECTED" : notice;
+
+    return { ...res, notice, relayBOver };
+  }
+
+  // ---------- Offline / time progression ----------
+  function tick(dtSeconds){
+    // Convert net supply-demand into reserve change.
+    const r = compute();
+    const netUnitsPerHr = r.supply - r.servedDemand;
+    const deltaUnits = (netUnitsPerHr/3600) * dtSeconds;
+
+    // Reserve changes, but clamp to avoid going crazy in prototype.
+    state.reserveUnits = clamp(state.reserveUnits + deltaUnits, -120, 240);
+
+    // Stability drift:
+    // - Improves slightly if reserve positive and no major warnings
+    // - Degrades if deficit, overload, or unpowered life support
+    let stab = state.stability;
+    const deficit = (r.supply - r.servedDemand) < 0;
+    const servedLife = r.served.get("life")?.served ?? false;
+
+    if(!servedLife) stab -= 0.020 * (dtSeconds/60);           // harsh penalty
+    if(r.relayBOver) stab -= 0.010 * (dtSeconds/60);
+    if(deficit) stab -= 0.006 * (dtSeconds/60);
+    if(!deficit && !r.relayBOver && servedLife && state.reserveUnits>10) stab += 0.004 * (dtSeconds/60);
+
+    // Gate draw adds quiet instability
+    if(state.gateAnomaly) stab -= 0.004 * (dtSeconds/60);
+
+    state.stability = clamp(stab, 0.05, 0.99);
+    state.notice = r.notice;
+  }
+
+  function applyOfflineProgress(){
+    const now = Date.now();
+    const last = state.tLast || now;
+    const dt = clamp((now - last)/1000, 0, 60*60*24); // up to 24h
+    if(dt > 2){
+      tick(dt);
+    }
+    state.tLast = now;
+    document.getElementById('tagTime').innerHTML = `Offline: <span class="muted">${Math.round(dt)}s</span>`;
+  }
+
+  // ---------- Save/Load ----------
+  function save(){
+    const payload = {
+      version: state.version,
+      tLast: state.tLast,
+      reserveUnits: state.reserveUnits,
+      stability: state.stability,
+      links: links.map(L => ({ id:L.id, a:L.a, b:L.b })),
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+  }
+
+  function load(){
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    try{
+      const p = JSON.parse(raw);
+      if(!p || p.version !== MODEL_VERSION) return false;
+
+      state.tLast = p.tLast || Date.now();
+      state.reserveUnits = typeof p.reserveUnits==="number" ? p.reserveUnits : state.reserveUnits;
+      state.stability = typeof p.stability==="number" ? p.stability : state.stability;
+
+      if(Array.isArray(p.links)){
+        for(const savedL of p.links){
+          const L = links.find(x=>x.id===savedL.id);
+          if(L && savedL.a && savedL.b){
+            L.a = savedL.a;
+            L.b = savedL.b;
+          }
+        }
+      }
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
+  function hardReset(){
+    localStorage.removeItem(SAVE_KEY);
+    // restore defaults
+    state.reserveUnits = 30;
+    state.stability = 0.84;
+    state.tLast = Date.now();
+    state.gateAnomaly = false;
+
+    // restore default wiring
+    const defaults = [
+      ["L1",{node:"genA",port:1},{node:"relayA",port:0}],
+      ["L2",{node:"genB",port:1},{node:"relayA",port:1}],
+      ["L3",{node:"relayA",port:2},{node:"relayB",port:0}],
+      ["L4",{node:"relayA",port:3},{node:"aux",port:3}],
+      ["L5",{node:"relayB",port:1},{node:"life",port:0}],
+      ["L6",{node:"relayB",port:2},{node:"gate",port:0}],
+    ];
+    for(const [id,a,b] of defaults){
+      const L = links.find(x=>x.id===id);
+      if(L){ L.a=a; L.b=b; }
+    }
+    save();
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if(confirm("Reset Zone 13 v1? This clears your save + restores default wiring.")){
+      hardReset();
+    }
+  });
+
+  // ---------- Input (dragging cable endpoints) ----------
+  const hit = {
+    nodeRadius: 28,
+    portRadius: 10,
+  };
+
+  function screenToWorld(evt){
+    const rect = canvas.getBoundingClientRect();
+    const x = (evt.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio ? Math.min(window.devicePixelRatio,2) : 1);
+    const y = (evt.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio ? Math.min(window.devicePixelRatio,2) : 1);
+    // because we set transform to dpr, world == css pixels
+    return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+  }
+
+  function dist(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return Math.hypot(dx,dy); }
+
+  function findPortAt(pos){
+    // find closest port within radius
+    let best=null;
+    for(const n of nodes){
+      for(let i=0;i<n.ports.length;i++){
+        const p = portWorldPos(n,i);
+        const d = dist(pos,p);
+        if(d <= hit.portRadius+3){
+          // disallow connecting to locked gate port if gate has no draw? Actually allow; it's just a node.
+          best = { nodeId:n.id, portIndex:i, d };
+          return best;
+        }
+      }
+    }
+    return null;
+  }
+
+  function findLinkEndAt(pos){
+    // if clicking near an endpoint port of an existing link
+    for(const L of links){
+      const aPos = portWorldPos(getNode(L.a.node), L.a.port);
+      const bPos = portWorldPos(getNode(L.b.node), L.b.port);
+      if(dist(pos,aPos) <= hit.portRadius+4) return { linkId:L.id, end:"a", x:aPos.x, y:aPos.y };
+      if(dist(pos,bPos) <= hit.portRadius+4) return { linkId:L.id, end:"b", x:bPos.x, y:bPos.y };
+    }
+    return null;
+  }
+
+  function portIsOccupied(nodeId, portIndex, exceptLinkId){
+    for(const L of links){
+      if(exceptLinkId && L.id===exceptLinkId) continue;
+      if(L.a.node===nodeId && L.a.port===portIndex) return true;
+      if(L.b.node===nodeId && L.b.port===portIndex) return true;
+    }
+    return false;
+  }
+
+  let mouse = { x:0, y:0 };
+
+  canvas.addEventListener('mousedown', (evt) => {
+    const p = screenToWorld(evt);
+    mouse = p;
+    const end = findLinkEndAt(p);
+    if(end){
+      state.dragging = { ...end };
+    }
+  });
+
+  window.addEventListener('mousemove', (evt) => {
+    const rect = canvas.getBoundingClientRect();
+    if(evt.clientX < rect.left || evt.clientX > rect.right || evt.clientY < rect.top || evt.clientY > rect.bottom){
+      // mouse out
+      state.hover = null;
+      return;
+    }
+    const p = screenToWorld(evt);
+    mouse = p;
+
+    // hover detection: ports > nodes > links
+    const port = findPortAt(p);
+    if(port){
+      const n = getNode(port.nodeId);
+      state.hover = { kind:"port", text:`${n.name} · Port ${port.portIndex+1}` };
+    } else {
+      // node hover
+      let bestNode=null; let bestD=1e9;
+      for(const n of nodes){
+        const d = Math.hypot(p.x-n.x, p.y-n.y);
+        if(d < hit.nodeRadius && d < bestD){ bestNode=n; bestD=d; }
+      }
+      if(bestNode){
+        state.hover = { kind:"node", nodeId: bestNode.id, text: bestNode.name };
+      } else {
+        state.hover = null;
+      }
+    }
+
+    if(state.dragging){
+      state.dragging.x = p.x;
+      state.dragging.y = p.y;
+    }
+  });
+
+  window.addEventListener('mouseup', (evt) => {
+    if(!state.dragging) return;
+    const p = mouse;
+    const snap = findPortAt(p);
+    const L = links.find(x=>x.id===state.dragging.linkId);
+    if(L && snap){
+      // cannot connect to an occupied port (except the same link's other end)
+      if(!portIsOccupied(snap.nodeId, snap.portIndex, L.id)){
+        // avoid connecting link to same node+port at both ends
+        const otherEnd = (state.dragging.end==="a") ? L.b : L.a;
+        if(!(otherEnd.node===snap.nodeId && otherEnd.port===snap.portIndex)){
+          // Commit
+          if(state.dragging.end==="a"){ L.a = { node:snap.nodeId, port:snap.portIndex }; }
+          else { L.b = { node:snap.nodeId, port:snap.portIndex }; }
+          save();
+        }
+      }
+    }
+    state.dragging = null;
+  });
+
+  // ---------- Rendering ----------
+  function colorForStability(s){
+    if(s >= 0.82) return getComputedStyle(document.documentElement).getPropertyValue('--good').trim();
+    if(s >= 0.62) return getComputedStyle(document.documentElement).getPropertyValue('--warn').trim();
+    return getComputedStyle(document.documentElement).getPropertyValue('--bad').trim();
+  }
+  function mixColor(a,b,t){
+    // a,b in rgb array
+    const r = Math.round(lerp(a[0],b[0],t));
+    const g = Math.round(lerp(a[1],b[1],t));
+    const b2= Math.round(lerp(a[2],b[2],t));
+    return `rgb(${r},${g},${b2})`;
+  }
+  function parseRgb(css){
+    const m = css.match(/(\d+)\D+(\d+)\D+(\d+)/);
+    return m ? [parseInt(m[1]),parseInt(m[2]),parseInt(m[3])] : [200,200,200];
+  }
+
+  function drawGrid(){
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    ctx.fillStyle = "#0b0d10";
+    ctx.fillRect(0,0,w,h);
+
+    // subtle grid
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
+    const step = 28;
+    for(let x=0;x<w;x+=step){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    }
+    for(let y=0;y<h;y+=step){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+
+    // vignette
+    const g = ctx.createRadialGradient(w*0.5,h*0.55,20,w*0.5,h*0.55,Math.max(w,h));
+    g.addColorStop(0,"rgba(0,0,0,0)");
+    g.addColorStop(1,"rgba(0,0,0,0.55)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function nodeStateColors(computed){
+    // Determine per-node state: green/yellow/red based on served & stress
+    const colors = new Map();
+    for(const n of nodes){
+      let c = "rgba(140,150,160,.45)";
+      if(n.kind==="generator"){
+        c = "rgba(105,183,255,.85)";
+      }
+      if(n.kind==="consumer"){
+        const served = computed.served.get(n.id)?.served;
+        c = served ? "rgba(88,214,141,.85)" : "rgba(255,92,92,.9)";
+        if(n.id==="aux" && served && computed.loadPct>0.90) c = "rgba(244,208,63,.9)";
+      }
+      if(n.kind==="relay"){
+        const load = computed.relayLoads.get(n.id) || 0;
+        const cap = n.relayCapacity || 1;
+        const pct = load / cap;
+        if(pct < 0.85) c = "rgba(88,214,141,.75)";
+        else if(pct < 1.0) c = "rgba(244,208,63,.92)";
+        else c = "rgba(255,92,92,.92)";
+      }
+      if(n.kind==="gate"){
+        if(state.gateAnomaly) c = "rgba(255,92,92,.95)";
+        else c = "rgba(140,150,160,.45)";
+      }
+      colors.set(n.id, c);
+    }
+    return colors;
+  }
+
+  function drawLinks(computed, t){
+    const goodCss = getComputedStyle(document.documentElement).getPropertyValue('--good').trim();
+    const warnCss = getComputedStyle(document.documentElement).getPropertyValue('--warn').trim();
+    const badCss  = getComputedStyle(document.documentElement).getPropertyValue('--bad').trim();
+    const good = parseRgb(goodCss), warn=parseRgb(warnCss), bad=parseRgb(badCss);
+
+    // For a v1 feel: link color based on whether it helps serve Life Support and/or overloaded relay
+    // We'll compute a global "stress" based on deficit/overload.
+    const deficit = (computed.supply - computed.servedDemand) < 0;
+    const relayBOver = computed.relayBOver;
+
+    for(const L of links){
+      const aN = getNode(L.a.node), bN = getNode(L.b.node);
+      const aP = portWorldPos(aN, L.a.port);
+      const bP = portWorldPos(bN, L.b.port);
+
+      // If dragging this end, draw it to cursor
+      let A = aP, B = bP;
+      if(state.dragging && state.dragging.linkId===L.id){
+        if(state.dragging.end==="a") A = { x: state.dragging.x, y: state.dragging.y };
+        else B = { x: state.dragging.x, y: state.dragging.y };
+      }
+
+      // Stroke width
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+
+      // Color selection
+      let col = mixColor(good, warn, clamp(computed.loadPct,0,1));
+      if(deficit) col = mixColor(warn, bad, clamp(Math.abs((computed.supply-computed.servedDemand))/80, 0, 1));
+      if(relayBOver) col = mixColor(warn, bad, 0.55);
+
+      ctx.strokeStyle = `rgba(0,0,0,0.55)`;
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+
+      ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+
+      // Animated flow dots
+      const segLen = Math.hypot(B.x-A.x, B.y-A.y);
+      const dots = Math.max(2, Math.floor(segLen/90));
+      for(let i=0;i<dots;i++){
+        const tt = ( (t*0.00035) + i/dots ) % 1;
+        const x = lerp(A.x, B.x, tt);
+        const y = lerp(A.y, B.y, tt);
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
+      }
+    }
+  }
+
+  function drawNode(n, computed, colors, t){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+
+    const c = colors.get(n.id) || "rgba(140,150,160,.45)";
+    const pulse = 0.6 + 0.4*Math.sin(t*0.004 + (n.x+n.y)*0.01);
+    const glowAlpha = (n.kind==="gate" && state.gateAnomaly) ? 0.8 : 0.45;
+
+    // base shadow
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.beginPath();
+    ctx.ellipse(n.x+2, n.y+10, 34, 14, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // body
+    ctx.fillStyle = "rgba(26,30,36,1)";
+    roundRect(ctx, n.x-34, n.y-24, 68, 48, 12);
+    ctx.fill();
+
+    // inner plate
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    roundRect(ctx, n.x-28, n.y-18, 56, 36, 10);
+    ctx.fill();
+
+    // status light
+    ctx.fillStyle = c;
+    ctx.globalAlpha = glowAlpha * pulse;
+    ctx.beginPath(); ctx.arc(n.x, n.y-2, 10, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // outline
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, n.x-34, n.y-24, 68, 48, 12);
+    ctx.stroke();
+
+    // ports
+    for(let i=0;i<n.ports.length;i++){
+      const p = portWorldPos(n,i);
+      const occupied = portIsOccupied(n.id,i,null);
+      const isSnapTarget = state.dragging && !occupied && (dist(mouse,p) <= hit.portRadius+3);
+      const isOccupied = occupied && !(state.dragging && state.dragging.linkId); // simplistic
+
+      ctx.fillStyle = isSnapTarget ? "rgba(244,208,63,0.95)" : "rgba(255,255,255,0.12)";
+      if(isOccupied) ctx.fillStyle = "rgba(255,255,255,0.20)";
+      ctx.beginPath(); ctx.arc(p.x,p.y, hit.portRadius-1, 0, Math.PI*2); ctx.fill();
+
+      ctx.strokeStyle = "rgba(0,0,0,0.55)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x,p.y, hit.portRadius-1, 0, Math.PI*2); ctx.stroke();
+    }
+
+    // label
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+    const label = shortName(n);
+    const tw = ctx.measureText(label).width;
+    roundRect(ctx, n.x - tw/2 - 8, n.y + 26, tw + 16, 20, 8);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(210,220,230,0.92)";
+    ctx.fillText(label, n.x - tw/2, n.y + 40);
+
+    // special warning marker
+    if(n.kind==="relay"){
+      const load = computed.relayLoads.get(n.id)||0;
+      const pct = load/(n.relayCapacity||1);
+      if(pct>=1){
+        ctx.fillStyle = "rgba(255,92,92,0.9)";
+        ctx.beginPath(); ctx.moveTo(n.x+18,n.y-24); ctx.lineTo(n.x+32,n.y-8); ctx.lineTo(n.x+4,n.y-8); ctx.closePath(); ctx.fill();
+      }
+    }
+    if(n.kind==="gate" && state.gateAnomaly){
+      ctx.fillStyle = "rgba(255,92,92,0.75)";
+      ctx.globalAlpha = 0.35 + 0.25*pulse;
+      ctx.beginPath(); ctx.arc(n.x, n.y-2, 22, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function shortName(n){
+    if(n.id==="genA") return "Generator A";
+    if(n.id==="genB") return "Generator B";
+    if(n.id==="relayA") return "Relay A";
+    if(n.id==="relayB") return "Relay B";
+    if(n.id==="aux") return "Auxiliary";
+    if(n.id==="life") return "Life Support";
+    if(n.id==="gate") return "Sector Gate";
+    return n.name;
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y, x+w,y+h, rr);
+    ctx.arcTo(x+w,y+h, x,y+h, rr);
+    ctx.arcTo(x,y+h, x,y, rr);
+    ctx.arcTo(x,y, x+w,y, rr);
+    ctx.closePath();
+  }
+
+  function updateUI(computed){
+    // Reserve as "hours": reserveUnits / (servedDemand per hour) * 1 hour
+    const demand = Math.max(1, computed.servedDemand);
+    const reserveHours = state.reserveUnits / demand;
+    const netHr = (computed.supply - computed.servedDemand) / demand; // per hour-ish
+
+    const powerEl = document.getElementById('powerReserve');
+    const loadEl  = document.getElementById('loadPct');
+    const stabEl  = document.getElementById('stabilityPct');
+    const noticeEl= document.getElementById('noticePill');
+
+    const netStr = (netHr>=0?"+":"") + (netHr).toFixed(1) + " hr";
+    powerEl.innerHTML = `${(reserveHours>=0?"+":"")}${reserveHours.toFixed(1)} hr <small>(${netStr} net/hr)</small>`;
+
+    const lp = clamp(Math.round(computed.loadPct*100),0,999);
+    loadEl.textContent = `${lp}%`;
+
+    const sp = Math.round(state.stability*100);
+    stabEl.textContent = `${sp}%`;
+    stabEl.style.color = colorForStability(state.stability);
+
+    noticeEl.textContent = state.notice;
+    noticeEl.style.color = (state.notice.includes("CRITICAL") || state.notice.includes("WARNING")) ? getComputedStyle(document.documentElement).getPropertyValue('--bad') : getComputedStyle(document.documentElement).getPropertyValue('--muted');
+
+    // bottom tags
+    const tagStatus = document.getElementById('tagStatus');
+    const tagHover  = document.getElementById('tagHover');
+
+    let statusHTML = `<span class="good">Stable</span>`;
+    if(state.notice.includes("CRITICAL")) statusHTML = `<span class="danger">Critical</span>`;
+    else if(state.notice.includes("WARNING")) statusHTML = `<span class="warn">Warning</span>`;
+    else if(state.notice.includes("NOTICE")) statusHTML = `<span class="cold">Notice</span>`;
+
+    tagStatus.innerHTML = `System: ${statusHTML}`;
+
+    if(state.hover?.kind==="node"){
+      const n = getNode(state.hover.nodeId);
+      let extra = "";
+      if(n.kind==="generator") extra = ` · supply ${n.supply}/hr`;
+      if(n.kind==="consumer"){
+        const served = computed.served.get(n.id)?.served;
+        extra = served ? ` · demand ${n.demand}/hr` : ` · <span class="danger">UNPOWERED</span>`;
+      }
+      if(n.kind==="relay"){
+        const load = computed.relayLoads.get(n.id)||0;
+        const pct = Math.round(100*load/(n.relayCapacity||1));
+        extra = ` · load ${pct}% (cap ${n.relayCapacity})`;
+      }
+      if(n.kind==="gate"){
+        extra = state.gateAnomaly ? ` · <span class="danger">draw ${n.demand}/hr</span>` : ` · locked`;
+      }
+      tagHover.innerHTML = `Hover: <span class="muted">${n.name}</span>${extra}`;
+    } else if(state.hover?.kind==="port"){
+      tagHover.innerHTML = `Hover: <span class="muted">${state.hover.text}</span>`;
+    } else {
+      tagHover.innerHTML = `Hover: <span class="muted">None</span>`;
+    }
+  }
+
+  // ---------- Main loop ----------
+  let lastFrame = performance.now();
+  function frame(t){
+    const now = performance.now();
+    const dt = clamp((now-lastFrame)/1000, 0, 0.05);
+    lastFrame = now;
+
+    // small real-time tick so it feels alive even when online
+    tick(dt);
+
+    const computed = compute();
+
+    drawGrid();
+    drawLinks(computed, t);
+
+    const colors = nodeStateColors(computed);
+    // draw nodes on top
+    for(const n of nodes){
+      drawNode(n, computed, colors, t);
+    }
+
+    // draw dragging preview circle
+    if(state.dragging){
+      ctx.fillStyle = "rgba(244,208,63,0.55)";
+      ctx.beginPath(); ctx.arc(state.dragging.x, state.dragging.y, 9, 0, Math.PI*2); ctx.fill();
+    }
+
+    updateUI(computed);
+
+    // autosave occasionally
+    if(Math.floor(t/2000) !== Math.floor((t-dt*1000)/2000)){
+      state.tLast = Date.now();
+      save();
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Init ----------
+  const loaded = load();
+  applyOfflineProgress();
+  save();
+  requestAnimationFrame(frame);
+
+  // Save when tab is hidden/closed
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === "hidden"){
+      state.tLast = Date.now();
+      save();
+    } else {
+      // on return, apply offline
+      const ok = load();
+      applyOfflineProgress();
+      save();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
