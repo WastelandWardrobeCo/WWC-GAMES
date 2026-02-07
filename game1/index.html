@@ -157,10 +157,26 @@
         <div><span class="muted">Effective:</span> <span id="effPct">0%</span></div>
         <div><span class="muted">Harvesting:</span> <span id="harvRate">+0.000 / min</span></div>
         <div><span class="muted">Rations Stored:</span> <span id="rations">0.0000</span></div>
+        <div><span class="muted">Grid Efficiency:</span> <span id="efficiency">100%</span></div>
+        <div><span class="muted">Shift Quota:</span> <span id="quotaLine">0.000 / 5.000</span></div>
       </div>
     </div>
 
+    
     <div class="card">
+      <div class="label">Maintenance</div>
+      <div class="divider"></div>
+      <div class="mono" style="font-size:12px; line-height:1.35;">
+        <div><span class="muted">Action:</span> Recalibrate grid to restore efficiency.</div>
+        <div class="muted">Cost: <span class="mono">0.500 rations</span> • Cooldown: <span class="mono">30s</span></div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+        <div class="btn" id="recalBtn">RECALIBRATE</div>
+        <div class="mono muted" id="recalStatus" style="font-size:12px;">READY</div>
+      </div>
+    </div>
+
+<div class="card">
       <div class="label">Operator Log</div>
       <div class="divider"></div>
       <div class="log mono" id="log"></div>
@@ -190,12 +206,40 @@
   const clamp = (v, a, b)=>Math.max(a, Math.min(b, v));
   const nowStamp = () => new Date().toTimeString().slice(0,8);
   const logEl = $("log");
-  const pushLog = (msg) => {
+  
+  // --- Persistence (v0.6) ---
+  const SAVE_KEY = "zone13_persist_v0_12";
+  const saveState = () => {
+    try{
+      const state = {
+        cables,
+        throttle: Number($("throttle").value),
+        rationsStored
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    }catch(e){}
+  };
+  const loadState = () => {
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return false;
+      const state = JSON.parse(raw);
+      if(state.cables) cables = state.cables;
+      if(typeof state.throttle === "number") $("throttle").value = state.throttle;
+      if(typeof state.rationsStored === "number") rationsStored = state.rationsStored;
+      return true;
+    }catch(e){ return false; }
+  };
+const pushLog = (msg) => {
     const line = document.createElement("div");
     line.textContent = `[${nowStamp()}] ${msg}`;
     logEl.appendChild(line);
     logEl.scrollTop = logEl.scrollHeight;
   };
+  // Autosave: rations change frequently; persist on a gentle interval to avoid heavy writes.
+  let _autosaveAcc = 0;
+  let _lastSavedRations = null;
+
 
   // Isometric layout settings. tileW/tileH are auto-sized per screen in resize().
   const ISO = { tileW:110, tileH:58, ox:0, oy:0,
@@ -220,6 +264,18 @@
   let cables = [];
   let activePort = null;
   let rationsStored = 0.0;
+  // Engagement layer (Option 2): efficiency + shift quotas
+  let gridEfficiency = 1.0;          // 0.50–1.00
+  let shiftQuota = 5.0;              // target rations for the current shift
+  let shiftProgress = 0.0;           // accumulated rations toward quota
+  let recalCooldownUntil = 0;        // performance.now() ms
+
+  // Event-based efficiency faults (Satisfactory-style autonomy):
+  // Systems run indefinitely at 100% unless a fault event occurs.
+  let effFaultActive = false;
+  let effFaultTarget = 1.0;          // efficiency during fault (0.70–0.85)
+  let nextEffFaultAt = performance.now() + (120000 + Math.random()*180000); // 2–5 minutes from start
+
 
   const portKey = (nid, pi) => `${nid}:p${pi}`;
   const parsePortKey = (k) => { const [nid,p]=k.split(":p"); return {nid, pi:Number(p)}; };
@@ -270,7 +326,16 @@
   };
   const isConnectedToGens = (id)=>reachableFromGens().has(id);
 
-  const computeStats = ()=>{
+  
+  // --- Periodic Power Fluctuation (v0.9) ---
+  let fluct = {
+    active: false,
+    genId: null,
+    factor: 1,
+    until: 0,
+    nextAt: performance.now() + (45000 + Math.random()*45000)
+  };
+const computeStats = ()=>{
     const throttle=Number($("throttle").value)/100;
     const lifeOnline=isConnectedToGens('life');
     const systemOnline=lifeOnline;
@@ -282,7 +347,13 @@
     let supply=0;
     for(const g of NODES.filter(n=>n.type==='gen')){
       const active=cables.some(c=>parsePortKey(c.a).nid===g.id || parsePortKey(c.b).nid===g.id);
-      if(active) supply+=g.supply;
+      if(active){
+        let supplyFactor = 1;
+        if(fluct.active && fluct.genId===g.id){
+          supplyFactor = fluct.factor;
+        }
+        supply += g.supply * supplyFactor;
+      }
     }
 
     let notice="System routing stable.";
@@ -305,11 +376,19 @@
       }
     }
 
+    
+    // During output variance, the grid naturally browns out high-draw equipment first.
+    // This keeps fluctuation from feeling like an instant fail-state while still applying pressure.
+    if(fluct.active && harvPowered && effectiveThrottle>0){
+      effectiveThrottle = Math.max(0, effectiveThrottle * 0.85);
+      notice = "NOTICE: Output variance. Harvester draw automatically reduced.";
+    }
+
     const harvDemand=harvPowered ? nodeById.harv.baseDemand*effectiveThrottle : 0;
     const demand=lifeDemand+auxDemand+harvDemand;
 
     const deficit=Math.max(0, demand - supply);
-    const stability=clamp(100 - deficit*1.1, 0, 100);
+    const stability=clamp(100 - deficit*0.75, 0, 100);
 
     const powerNetPerHr=(supply-demand)/100;
     const powerReserveHr=clamp(0.2+powerNetPerHr, -9.9, 9.9);
@@ -488,7 +567,7 @@
 
   const cableColor=(stats)=>{
     if(!stats.systemOnline) return "rgba(148,163,184,.35)";
-    if(stats.stability>=80) return "rgba(52,211,153,.95)";
+    if(stats.stability>=80) return fluct.active ? "rgba(251,191,36,.85)" : "rgba(52,211,153,.95)";
     if(stats.stability>=55) return "rgba(251,191,36,.95)";
     return "rgba(239,68,68,.95)";
   };
@@ -610,7 +689,7 @@
   };
 
   const connect=(a,b)=>{
-    cables.push({a,b});
+    cables.push({a,b}); saveState();
     pushLog(`Cable connected: ${a} -> ${b}`);
   };
 
@@ -637,7 +716,7 @@
       // This keeps iteration fast and prevents "permanent" mistakes.
       if(!activePort){
         const before = cables.length;
-        cables = cables.filter(c => !(c.a===hit.k || c.b===hit.k));
+        cables = cables.filter(c => !(c.a===hit.k || c.b===hit.k)); saveState();
         const removed = before - cables.length;
         if(removed>0) pushLog(`Cable removed from: ${hit.k}`);
         return;
@@ -656,13 +735,32 @@
     activePort=hit.k; pushLog(`Selected port: ${hit.k}`);
   });
 
-  $("resetBtn").addEventListener("click", reset);
+  $("resetBtn").addEventListener("click", ()=>{ reset(); saveState(); });
 
   // Help re-opens splash anytime
   const helpBtn = $("helpBtn");
   if(helpBtn){ helpBtn.addEventListener("click", ()=>{ splash.style.display="flex"; }); }
 
-  $("helpBtn").addEventListener("click", ()=>openSplash());
+  // Recalibrate: trade rations for restored efficiency (extends sessions without adding complexity).
+  const recalBtn=$("recalBtn");
+  if(recalBtn){
+    recalBtn.addEventListener("click", ()=>{
+      const now=performance.now();
+      if(now < recalCooldownUntil) return;
+      if(rationsStored < 0.5){ pushLog("RECALIBRATE FAILED: insufficient rations."); return; }
+      const wasFault = effFaultActive;
+
+      rationsStored=Math.max(0, rationsStored-0.5);
+      gridEfficiency=1.0;
+      effFaultActive=false;
+      effFaultTarget=1.0;
+      recalCooldownUntil=now+30000; // 30s
+
+      pushLog(wasFault ? "MAINTENANCE: Recalibration complete. Fault cleared." : "MAINTENANCE: Grid recalibrated. Efficiency restored.");
+      saveState();
+    });
+  }
+$("helpBtn").addEventListener("click", ()=>openSplash());
 
   const setBadge=(kind,text)=>{
     const b=$("systemBadge");
@@ -694,7 +792,38 @@
 
     // Extra precision makes the "stopwatch" feel, especially at low throttle.
     $("rations").textContent=rationsStored.toFixed(4);
-    $("harvRate").textContent=`+${s.harvRate.toFixed(3)} / min`;
+    const effEl=$("efficiency"); if(effEl) effEl.textContent=`${Math.round(gridEfficiency*100)}%`;
+    const qEl=$("quotaLine"); if(qEl) qEl.textContent=`${shiftProgress.toFixed(3)} / ${shiftQuota.toFixed(3)}`;
+
+    const ab=document.getElementById("alertBanner");
+    const at=document.getElementById("alertText");
+    if(ab){
+      if(effFaultActive){
+        ab.style.display="flex";
+        if(at) at.textContent = `Efficiency fault detected (${Math.round(gridEfficiency*100)}%). Recalibration recommended.`;
+      }else{
+        ab.style.display="none";
+      }
+    }
+
+    // Recalibrate button status
+    const now=performance.now();
+    const rs=$("recalStatus");
+    const rb=$("recalBtn");
+    if(rs && rb){
+      if(rationsStored < 0.5){
+        rs.textContent="NEED 0.500 RATIONS";
+        rb.style.opacity="0.45";
+      }else if(now < recalCooldownUntil){
+        const left=Math.ceil((recalCooldownUntil-now)/1000);
+        rs.textContent=`COOLDOWN ${left}s`;
+        rb.style.opacity="0.6";
+      }else{
+        rs.textContent = effFaultActive ? "RECOMMENDED" : "READY";
+        rb.style.opacity="1";
+      }
+    }
+$("harvRate").textContent=`+${s.harvRate.toFixed(3)} / min`;
 
     if(s.systemOnline){
       $("systemTitle").textContent="System Healthy";
@@ -717,32 +846,109 @@
 
   let lastT=performance.now();
   const tick=(t)=>{
+    // --- Fluctuation timing ---
+    if(!fluct.active && t >= fluct.nextAt){
+      const gens = NODES.filter(n=>n.type==='gen');
+      const pick = gens[Math.floor(Math.random()*gens.length)];
+      fluct.active = true;
+      fluct.genId = pick.id;
+      fluct.factor = 0.90 + Math.random()*0.08; // 90–98% output (gentle variance)
+      fluct.until = t + 15000 + Math.random()*10000;
+      fluct.nextAt = t + 90000 + Math.random()*60000;
+      pushLog(`NOTICE: Output variance detected on ${pick.name}.`);
+    }
+    if(fluct.active && t >= fluct.until){
+      pushLog(`INFO: ${nodeById[fluct.genId].name} output stabilized.`);
+      fluct.active = false;
+      fluct.genId = null;
+      fluct.factor = 1;
+    }
+
     const dt=(t-lastT)/1000; lastT=t;
     const s=computeStats();
-    if(s.systemOnline && s.harvPowered && s.harvRate>0){
+
+    // Event-based efficiency faults: rare, readable, non-fatal. Harvest continues slower until recalibrated.
+    if(!effFaultActive && t >= nextEffFaultAt){
+      effFaultActive = true;
+      effFaultTarget = 0.70 + Math.random()*0.15; // 70–85%
+      gridEfficiency = effFaultTarget;
+      nextEffFaultAt = t + (180000 + Math.random()*240000); // schedule next one 3–7 minutes out
+      pushLog(`GRID NOTICE: Efficiency fault detected (${Math.round(gridEfficiency*100)}%).`);
+      saveState();
+    }
+
+if(s.systemOnline && s.harvPowered && s.harvRate>0){
       rationsStored += (s.harvRate/60)*dt;
+      shiftProgress += (s.harvRate/60)*dt;
+    // Autosave every ~2 seconds if rations changed
+    _autosaveAcc += dt;
+    if(_autosaveAcc >= 2){
+      _autosaveAcc = 0;
+      if(_lastSavedRations === null || Math.abs(rationsStored - _lastSavedRations) > 0.0005){
+        _lastSavedRations = rationsStored;
+        saveState();
+      }
+    }
+    }
+        // Shift quota progression: complete quotas to create a longer play session.
+    if(shiftProgress >= shiftQuota){
+      pushLog(`SHIFT COMPLETE: Quota met (${shiftQuota.toFixed(3)} rations).`);
+      shiftProgress = 0;
+      shiftQuota = Math.min(50, shiftQuota + (shiftQuota < 10 ? 2.5 : 5));
+      gridEfficiency = Math.min(1.0, gridEfficiency + 0.10);
+      saveState();
     }
     renderHUD(s);
     draw();
+    window.addEventListener("beforeunload", ()=>{ saveState(); });
     requestAnimationFrame(tick);
   };
 
   const splash=$("splash");
-  const KEY="zone13_iso_splash_seen_v0_5";
+  const KEY="zone13_iso_splash_seen_v0_12";
   const showSplash=()=>{ splash.style.display="flex"; };
   const hideSplash=()=>{ splash.style.display="none"; try{localStorage.setItem(KEY,"1");}catch(e){} };
   $("hideSplash").addEventListener("click", hideSplash);
   window.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape" && splash.style.display==="flex") hideSplash(); });
 
   const init=()=>{
+    const resumed = loadState();
+
     resize();
     pushLog("Boot sequence loaded. Awaiting routing input…");
+    if(resumed){
+      const t=document.getElementById("toast");
+      if(t){ t.style.opacity="1"; setTimeout(()=>t.style.opacity="0",1800);} 
+      pushLog("SYSTEM RESUMED FROM LAST SESSION.");
+    }
     pushLog("Tip: Click a port, then click a glowing target port.");
     try{ if(localStorage.getItem(KEY)!=="1") showSplash(); }catch(e){ showSplash(); }
+    window.addEventListener("beforeunload", ()=>{ saveState(); });
     requestAnimationFrame(tick);
   };
   init();
 })();
 </script>
+
+<div id="toast" style="position:fixed; top:18px; right:18px;
+background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.18);
+color:#34d399; padding:10px 14px; border-radius:10px;
+font-weight:700; opacity:0; transition:opacity .4s ease;
+pointer-events:none; z-index:9999;">
+SYSTEM RESUMED
+</div>
+
+
+  <div id="alertBanner" style="
+    position:absolute; left:16px; top:16px;
+    padding:10px 12px; border-radius:12px;
+    background:rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.18);
+    display:none; gap:10px; align-items:center;
+    z-index:50;">
+    <div style="font-weight:800; letter-spacing:.06em; font-size:12px; color:#fbbf24;">GRID NOTICE</div>
+    <div class="mono" id="alertText" style="font-size:12px; color:#e5e7eb;">Efficiency fault detected.</div>
+  </div>
+
 </body>
 </html>
