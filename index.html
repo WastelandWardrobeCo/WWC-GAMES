@@ -1,61 +1,57 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WWC GAMES</title>
   <style>
-    body{
-      margin:0;
-      padding:32px;
-      font-family:system-ui,Arial,sans-serif;
-      background:#0b0b0f;
-      color:#eaeaf2;
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; background:#0b0f14; color:#e8eef7; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: 1px; }
+    p { margin: 0 0 18px; color:#b9c4d6; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+    a.card {
+      display: block; padding: 14px 16px; border-radius: 12px;
+      background: #131a24; color: #e8eef7; text-decoration: none;
+      border: 1px solid #223044;
     }
-    h1{margin:0 0 12px 0}
-    p{margin:0 0 20px 0;opacity:.7}
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-      gap:14px;
-      max-width:900px;
-    }
-    a{
-      display:block;
-      padding:18px;
-      border-radius:14px;
-      background:#171722;
-      color:#eaeaf2;
-      text-decoration:none;
-      border:1px solid rgba(255,255,255,.08);
-    }
-    a:hover{background:#23233a}
-    .title{font-size:18px;font-weight:700;margin-bottom:6px}
-    .desc{font-size:14px;opacity:.7}
-    footer{margin-top:24px;font-size:13px;opacity:.5}
+    a.card:hover { background:#172233; }
+    .title { font-weight: 700; }
+    .sub { font-size: 13px; color:#b9c4d6; margin-top: 4px; }
+    .note { margin-top: 18px; font-size: 12px; color:#91a3bf; }
+    code { background:#111824; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h1>WWC GAMES</h1>
-  <p>Select a game.</p>
+  <div class="wrap">
+    <h1>WWC GAMES</h1>
+    <p>Select a game.</p>
 
-  <div class="grid">
-    <a href="./slot/">
-      <div class="title">🎰 Slot Machine</div>
-      <div class="desc">Pull the lever.</div>
-    </a>
+    <div class="grid">
+      <a class="card" href="./game1/">
+        <div class="title">GAME 1</div>
+        <div class="sub">Power / Zone 13 systems</div>
+      </a>
 
-    <a href="./game1/">
-      <div class="title">🧠 Match Game</div>
-      <div class="desc">Memory match.</div>
-    </a>
+      <a class="card" href="./game2/">
+        <div class="title">GAME 2</div>
+        <div class="sub">Your second game</div>
+      </a>
 
-    <a href="./game2/">
-      <div class="title">🕹️ Game 2</div>
-      <div class="desc">Another experiment.</div>
-    </a>
+      <a class="card" href="./game3/">
+        <div class="title">GAME 3</div>
+        <div class="sub">New game</div>
+      </a>
+
+      <a class="card" href="./slot/">
+        <div class="title">SLOT MACHINE</div>
+        <div class="sub">Spin + bonus round</div>
+      </a>
+    </div>
+
+    <div class="note">
+      Tip: each game must live in its own folder and be named <code>index.html</code>.
+    </div>
   </div>
-
-  <footer>Systema Obscura Arcade</footer>
 </body>
 </html>
