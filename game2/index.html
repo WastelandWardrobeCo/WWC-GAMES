@@ -446,6 +446,21 @@
     font-weight: 900;
     letter-spacing:.2px;
   }
+.btn.secondary{
+  background: rgba(20,26,32,.55);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(230,235,245,.9);
+}
+.btn.secondary:hover{
+  background: rgba(26,34,42,.65);
+}
+#autoBtn.isOn{
+  border-color: rgba(120,255,180,.55);
+  box-shadow: 0 0 0 1px rgba(120,255,180,.25), 0 10px 25px rgba(40,160,90,.15);
+  color: rgba(170,255,210,.95);
+}
+#autoBtn.isOn::after{ content:" •"; color: rgba(120,255,180,.9); }
+
   .btn.primary::after{
     content:"";
     position:absolute; inset:-1px;
@@ -601,7 +616,18 @@
   /* Bonus rumble: a heavier cabinet vibration */
   .rumble { animation: rumble 120ms infinite linear; }
   @keyframes rumble{
-    0%{ transform: translate(0,0) rotate(0deg); filter: saturate(1.02) contrast(1.02); }
+  0%{transform:translate(0,0) rotate(0deg);}
+  10%{transform:translate(-2px,1px) rotate(-0.4deg);}
+  20%{transform:translate(-1px,-2px) rotate(0.3deg);}
+  30%{transform:translate(2px,1px) rotate(0.2deg);}
+  40%{transform:translate(1px,-1px) rotate(-0.2deg);}
+  50%{transform:translate(-1px,2px) rotate(0.3deg);}
+  60%{transform:translate(-2px,0px) rotate(-0.3deg);}
+  70%{transform:translate(2px,-1px) rotate(0.2deg);}
+  80%{transform:translate(-1px,-1px) rotate(-0.2deg);}
+  90%{transform:translate(1px,2px) rotate(0.2deg);}
+  100%{transform:translate(0,0) rotate(0deg);}
+}
     20%{ transform: translate(1px,-1px) rotate(-0.3deg); }
     40%{ transform: translate(-1px,1px) rotate(0.3deg); }
     60%{ transform: translate(1px,1px) rotate(-0.2deg); }
@@ -886,6 +912,53 @@
     100%{ filter:none; }
   }
 
+
+/* Bonus trigger strip */
+.bonusLegend{
+  display:flex; align-items:center; gap:10px;
+  margin-top:6px;
+  font-size:12px;
+  color: rgba(220,230,245,.72);
+}
+.bonusLegend .chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.18);
+}
+.bonusLegend .dot{
+  width:7px; height:7px; border-radius:50%;
+  background: rgba(120,255,180,.9);
+  box-shadow:0 0 10px rgba(120,255,180,.55);
+}
+.bonusLegend .dot.dim{
+  background: rgba(140,160,255,.8);
+  box-shadow:0 0 10px rgba(140,160,255,.35);
+}
+
+/* === BONUS OVERLAY POSITION FIX === */
+.bonusOverlay,
+#bonusOverlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+}
+
+/* Make hidden override the forced flex */
+#bonusOverlay.hidden,
+.bonusOverlay.hidden{
+  display:none !important;
+}
+
+.bonusOverlay .panel,
+#bonusOverlay .panel {
+  position: relative;
+}
+
 </style>
 </head>
 <body>
@@ -940,6 +1013,7 @@
           </div>
           <button class="btn" id="sfxBtn" title="Toggle sound effects"><span id="sfxLabel">SFX: OFF</span></button>
           <button class="btn primary" id="spinBtn">SPIN</button>
+          <button class="btn secondary" id="autoBtn" title="Auto Spin">AUTO</button>
           <button class="btn danger" id="resetBtn">RESET</button>
         </div>
       </div>
@@ -956,6 +1030,7 @@
           <div class="bonusPanel" id="bonusPanel" aria-live="polite">
             <div class="bonusLabel">BONUS</div>
             <div class="bonusDesc" id="bonusDesc">Any win can initiate a scan. When it hits, you&apos;ll see what triggered it.</div>
+            <div class="bonusLegend" aria-label="Bonus triggers"><span class="chip"><span class="dot"></span>3-of-a-kind</span><span class="chip"><span class="dot dim"></span>Pair</span></div>
             <div class="bonusLast" id="bonusLast">Last trigger: none</div>
           </div>
         </div>
@@ -1080,17 +1155,21 @@
   }
 
   // Shift+S toggles skins
-  window.addEventListener("keydown",(e)=>{
-    if(e.shiftKey && e.key.toLowerCase()==="s"){
-      applySkin(skin==="salvaged" ? "standard" : "salvaged");
-      toast(`Skin: ${skin==="salvaged" ? "Salvaged" : "Standard"}`);
-    }
-  });
-
-
-
-
-  // Weighted symbol list (kept internal)
+  
+window.addEventListener("keydown",(e)=>{
+  if(e.code==="Space"){
+    e.preventDefault();
+    if(e.repeat) return;
+    holdSpin = true;
+    spin();
+  }
+});
+window.addEventListener("keyup",(e)=>{
+  if(e.code==="Space"){
+    holdSpin = false;
+  }
+});
+// Weighted symbol list (kept internal)
   const symbols = [
     { key: "biohazard",  w: 14 },
     { key: "radiation",  w: 13 },
@@ -1294,7 +1373,8 @@
 
   const spinBtn = document.getElementById("spinBtn");
   const resetBtn = document.getElementById("resetBtn");
-  const betUp = document.getElementById("betUp");
+  const autoBtn = document.getElementById("autoBtn");
+const betUp = document.getElementById("betUp");
   const betDown = document.getElementById("betDown");
   const marqueeRow = document.getElementById("marqueeRow");
   const bonusLastEl = document.getElementById("bonusLast");
@@ -1366,7 +1446,12 @@
   let drySpins=0; // invisible streak counter
   let spinning=false;
 
-  // ===== SAVE SYSTEM (LOCAL STORAGE) =====
+    let autoSpin=false;
+  let autoSpinTimer=null;
+  
+let autoResumeAfterBonus = false;
+let holdSpin=false;
+// ===== SAVE SYSTEM (LOCAL STORAGE) =====
   const SAVE_KEY = "systema_obscura_slot_save_v1";
   function saveGame(){
     try{
@@ -1765,8 +1850,14 @@ async function spin(){
         setMsg("BONUS DETECTED...");
         tone(980,0.10,"sine",0.05);
         await wait(2500);
+        // If AUTO was running, pause it for the bonus (prevents re-entrancy / lockups)
+
+        if (autoSpin) { autoResumeAfterBonus = true; setAutoSpin(false); }
+
         await bonusFlow(Math.max(1, bet));
-      }
+
+        if (autoResumeAfterBonus) { autoResumeAfterBonus = false; setAutoSpin(true); }
+}
 
       const isBig = res.mult >= 12;
       const state = isBig ? "JACKPOT" : (res.mult >= 6 ? "BIG WIN" : "WIN");
@@ -1799,7 +1890,9 @@ async function spin(){
 
     spinning=false;
     updateUI();
-  }
+  
+    if(autoSpin && !bonusActive){ queueAutoSpin(420); }
+}
 
   function reset(){
     const restored = (typeof loadGame==='function') ? loadGame() : false;
@@ -1811,8 +1904,38 @@ async function spin(){
   }
 
   // Buttons
-  spinBtn.addEventListener("click", spin);
-  resetBtn.addEventListener("click", () => {
+  
+function setAutoSpin(on){
+  autoSpin = !!on;
+  if(!autoBtn) return;
+  autoBtn.classList.toggle("isOn", autoSpin);
+  autoBtn.textContent = autoSpin ? "AUTO ON" : "AUTO";
+  if(!autoSpin && autoSpinTimer){
+    clearTimeout(autoSpinTimer);
+    autoSpinTimer = null;
+  }
+  if(autoSpin) queueAutoSpin(350);
+}
+
+function queueAutoSpin(delayMs){
+  if(!autoSpin) return;
+  if(autoSpinTimer) return;
+  autoSpinTimer = setTimeout(async ()=>{
+    autoSpinTimer = null;
+    if(autoSpin && !spinning && !bonusActive){
+      if(balance >= bet){
+        await spin();
+      } else {
+        setAutoSpin(false);
+        setStatus("Insufficient balance. Auto stopped.");
+      }
+    }
+  }, delayMs);
+}
+spinBtn.addEventListener("click", spin);
+  
+autoBtn && autoBtn.addEventListener("click", ()=> setAutoSpin(!autoSpin));
+resetBtn.addEventListener("click", () => {
     if (typeof clearSave === 'function') clearSave();
     balance=100; bet=5; lastWin=0;
     setReel(0,"gasmask"); setReel(1,"radar"); setReel(2,"biohazard");
@@ -1904,6 +2027,15 @@ async function spin(){
   document.addEventListener("DOMContentLoaded", () => {
     initSkin();
     reset();
+    // Safety: never start inside a bonus modal on page load
+    try {
+      bonusActive = false;
+      closeBonus(true);
+    } catch (e) {
+      const bw = document.getElementById("bonusWrap");
+      if (bw) bw.classList.add("hidden");
+      document.body.classList.remove("modalOpen");
+    }
   });
 })();
 </script>
