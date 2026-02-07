@@ -1,1157 +1,747 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Zone 13 - Power & Rations (v2.0)</title>
-  <style>
-    :root{
-      --bg:#0d0f12;
-      --panel:#171a1f;
-      --panel2:#12151a;
-      --stroke:#2a303a;
-      --text:#cfd6df;
-      --muted:#8b97a6;
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Zone 13 — Power & Rations (Isometric Prototype v0)</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --panel:#121821;
+    --text:#d7dee8;
+    --muted:#8ea0b6;
+    --green:#34d399;
+    --yellow:#fbbf24;
+    --red:#ef4444;
+    --cyan:#60a5fa;
+    --glow: 0 0 12px rgba(52,211,153,.25);
+  }
+  html,body{height:100%; margin:0; background:var(--bg); color:var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
+  .wrap{display:grid; grid-template-columns: 1fr 320px; gap:14px; padding:14px; height:100%; box-sizing:border-box;}
+  .left{display:flex; flex-direction:column; gap:12px; min-width:0;}
+  .topbar{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);}
+  .label{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
+  .value{font-size:18px; font-weight:700; margin-top:3px;}
+  .sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .boardCard{flex:1; min-height:420px; position:relative; overflow:hidden;}
+  canvas{width:100%; height:100%; display:block; border-radius:12px;}
+  .hudBottom{
+    position:absolute; left:14px; right:14px; bottom:14px;
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    pointer-events:none;
+  }
+  .pill{pointer-events:auto; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10);
+    border-radius:999px; padding:10px 12px; display:flex; gap:10px; align-items:center;
+    box-shadow:0 12px 28px rgba(0,0,0,.35); backdrop-filter: blur(6px);}
+  .pill small{color:var(--muted); font-size:11px;}
+  input[type="range"]{width:180px;}
+  .btn{pointer-events:auto; cursor:pointer; user-select:none; background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12); padding:10px 12px; border-radius:10px; font-weight:700;}
+  .btn:hover{background:rgba(255,255,255,.09);}
+  .side{display:flex; flex-direction:column; gap:12px;}
+  .statusBig{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .badge{padding:8px 10px; border-radius:999px; font-weight:800; font-size:12px; letter-spacing:.04em;
+    border:1px solid rgba(255,255,255,.14);}
+  .badge.ok{color:var(--green); box-shadow: var(--glow);}
+  .badge.bad{color:var(--red);}
+  .badge.warn{color:var(--yellow);}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+  .log{height:220px; overflow:auto; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10);
+    border-radius:10px; padding:10px; font-size:12px; color:#cbd5e1;}
+  .log div{margin:2px 0;}
+  .muted{color:var(--muted);}
+  .divider{height:1px; background:rgba(255,255,255,.08); margin:8px 0;}
+  .splash{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background: radial-gradient(1200px 700px at 30% 30%, rgba(52,211,153,.10), transparent 60%),
+                radial-gradient(900px 600px at 75% 40%, rgba(96,165,250,.10), transparent 60%),
+                rgba(0,0,0,.72);
+    padding:18px;
+  }
+  .splash .box{
+    width:min(860px, 96vw);
+    background:linear-gradient(180deg, rgba(18,24,33,.98), rgba(10,14,20,.98));
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:16px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    padding:18px 18px 14px;
+  }
+  .splash h1{margin:0 0 8px; font-size:18px; letter-spacing:.02em;}
+  .splash p{margin:8px 0; color:#cbd5e1; line-height:1.45;}
+  .splash ul{margin:10px 0 0 18px; color:#cbd5e1;}
+  .splash li{margin:6px 0;}
+  .splash .row{display:flex; gap:10px; justify-content:flex-end; margin-top:12px;}
 
-      --good:#58d68d;
-      --warn:#f4d03f;
-      --bad:#ff5c5c;
-      --cold:#69b7ff;
-      --food:#b58bff;
-    }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      -webkit-text-size-adjust:100%;
-    }
-    body{overscroll-behavior:none;touch-action:manipulation;}
-    .wrap{max-width:1150px;margin:0 auto;padding:14px 14px 18px;}
-    .topbar{
-      display:grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr auto;
-      gap:10px; align-items:center;
-      padding:12px 12px;
-      background:linear-gradient(180deg,var(--panel),var(--panel2));
-      border:1px solid var(--stroke);
-      border-radius:12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,.35);
-      position:sticky; top:0; z-index:5;
-    }
-    .stat{
-      display:flex; flex-direction:column; gap:2px;
-      padding:8px 10px;
-      border:1px solid var(--stroke);
-      border-radius:10px;
-      background:rgba(0,0,0,.2);
-      min-height:44px;
-    }
-    .label{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-    .value{font-size:18px;font-weight:650}
-    .value small{font-size:12px;color:var(--muted);font-weight:600}
-    .notice{justify-self:end;display:flex;gap:8px;align-items:center;}
-    .pill{
-      padding:8px 10px;border-radius:999px;border:1px solid var(--stroke);
-      background:rgba(0,0,0,.22);
-      font-size:12px;color:var(--muted);
-      user-select:none;
-      max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    }
-    .btn{padding:9px 12px;border-radius:10px;border:1px solid var(--stroke);
-      background:#0f1216;color:var(--text);cursor:pointer;font-weight:650;}
-    .btn:hover{filter:brightness(1.08)}
-    .main{margin-top:12px;display:grid;grid-template-columns:1fr;gap:12px;}
-    .card{
-      background:linear-gradient(180deg,var(--panel),var(--panel2));
-      border:1px solid var(--stroke);
-      border-radius:14px;
-      box-shadow: 0 10px 35px rgba(0,0,0,.35);
-      overflow:hidden;
-    }
-    .canvasWrap{
-      position:relative;
-      background:
-        radial-gradient(1000px 600px at 30% 10%, rgba(88,214,141,.08), transparent 55%),
-        radial-gradient(900px 600px at 80% 30%, rgba(105,183,255,.06), transparent 60%),
-        radial-gradient(900px 600px at 50% 90%, rgba(181,139,255,.06), transparent 60%),
-        linear-gradient(180deg, #0e1116, #0b0d10);
-    }
-    canvas{
-      display:block;
-      width:100%;
-      height:auto;
-      touch-action:none; /* critical for iPhone Safari */
-      -webkit-user-select:none;
-      user-select:none;
-    }
-    .bottomPanel{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:10px; align-items:start;
-      padding:12px 12px;
-      border-top:1px solid var(--stroke);
-      background:rgba(0,0,0,.18);
-    }
-    .hint{color:var(--muted);font-size:13px;line-height:1.25}
-    .hint b{color:var(--text)}
-    .rightInfo{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;}
-    .tag{
-      font-size:12px;color:var(--muted);
-      padding:7px 9px;border:1px solid var(--stroke);border-radius:999px;background:rgba(0,0,0,.22);
-      user-select:none; white-space:nowrap;
-    }
-    .danger{color:var(--bad)}
-    .good{color:var(--good)}
-    .warn{color:var(--warn)}
-    .cold{color:var(--cold)}
-    .food{color:var(--food)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
-    .footer{margin-top:8px;color:var(--muted);font-size:12px;text-align:center;}
-  </style>
+    #helpBtn{width:44px; text-align:center; font-weight:800;}
+
+</style>
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar">
-    <div class="stat">
-      <div class="label">Power Reserve</div>
-      <div class="value" id="powerReserve">+0.0 hr <small>(net)</small></div>
+  <div class="left">
+    <div class="topbar">
+      <div class="card">
+        <div class="label">Power Reserve</div>
+        <div class="value" id="powerReserve">+0.0 hr</div>
+        <div class="sub" id="powerNet">(+0.0 net/hr)</div>
+      </div>
+      <div class="card">
+        <div class="label">Food Reserve</div>
+        <div class="value" id="foodReserve">+0.0 hr</div>
+        <div class="sub" id="foodNet">(+0.0 net/hr)</div>
+      </div>
+      <div class="card">
+        <div class="label">Habitability</div>
+        <div class="value" id="habit">--%</div>
+        <div class="sub">Life support integrity</div>
+      </div>
+      <div class="card">
+        <div class="label">System Stability</div>
+        <div class="value" id="stability">--%</div>
+        <div class="sub" id="notice">Awaiting routing input…</div>
+      </div>
     </div>
-    <div class="stat">
-      <div class="label">Food Reserve</div>
-      <div class="value" id="foodReserve">+0.0 hr <small>(net)</small></div>
-    </div>
-    <div class="stat">
-      <div class="label">Habitability</div>
-      <div class="value" id="habitPct">100%</div>
-    </div>
-    <div class="stat">
-      <div class="label">System Stability</div>
-      <div class="value" id="stabilityPct">100%</div>
-    </div>
-    <div class="notice">
-      <div class="pill" id="noticePill">NO ACTIVE NOTICES</div>
-      <button class="btn" id="resetBtn" title="Resets save + connections">Reset</button>
+
+    <div class="card boardCard">
+      <canvas id="board"></canvas>
+
+      <div class="hudBottom">
+        <div class="pill">
+          <div class="mono" style="font-size:12px;">
+            <div><span class="muted">Isometric v0:</span> click a port, then click a glowing target.</div>
+            <div class="muted">Click the active port again to cancel. Reset clears all routing.</div>
+          </div>
+        </div>
+
+        <div class="pill">
+          <small class="muted">Harvester Throttle</small>
+          <input id="throttle" type="range" min="0" max="100" value="60" />
+          <div class="mono" id="throttlePct" style="width:44px; text-align:right;">60%</div>
+        </div>
+
+        <div class="btn" id="helpBtn">?</div>
+        <div class="btn" id="resetBtn">Reset</div>
+        <div class="btn" id="helpBtn" title="Help">?</div>
+      </div>
     </div>
   </div>
 
-  <div class="main">
-    <div class="card">
-      <div class="canvasWrap">
-        <canvas id="c"></canvas>
+  <div class="side">
+    <div class="card statusBig">
+      <div>
+        <div class="label">System</div>
+        <div class="value" id="systemTitle" style="font-size:16px;">Boot Sequence</div>
       </div>
-      <div class="bottomPanel">
-        <div class="hint">
-          <b>Power & Rations</b> · Drag cable ends, or tap mode:
-          <span class="mono">tap an endpoint</span> → <span class="mono">tap a port</span>.
-          <span style="display:block;margin-top:8px" id="projLine" class="mono">Projection: --</span>
-          <span style="display:block;margin-top:6px">
-            Food Harvester converts power into rations. Low rations reduce Habitability. Low Habitability slows stability recovery.
-          </span>
-        </div>
-        <div class="rightInfo">
-          <div class="tag" id="tagObjective">Objective: <span class="muted">Survive heat events</span></div>
-          <div class="tag" id="tagHeat">Heat: <span class="muted">--</span></div>
-          <div class="tag" id="tagHover">Hover: <span class="muted">None</span></div>
-          <div class="tag" id="tagMode">Mode: <span class="muted">Idle</span></div>
-          <div class="tag" id="tagTime">Offline: <span class="muted">0s</span></div>
-        </div>
+      <div class="badge warn" id="systemBadge">INIT</div>
+    </div>
+
+    <div class="card">
+      <div class="label">System Status</div>
+      <div class="divider"></div>
+      <div class="mono" style="font-size:12px; line-height:1.35;">
+        <div><span class="muted">State:</span> <span id="stateLine">SYSTEM OFFLINE</span></div>
+        <div><span class="muted">Life Support:</span> <span id="lifeLine">OFFLINE</span></div>
+        <div><span class="muted">Harvester:</span> <span id="harvLine">OFFLINE</span></div>
       </div>
     </div>
 
-    <div class="footer">
-      Zone 13 (v2.0) · Food Harvester machine · Touch-safe routing · Offline progress · Local save
+    <div class="card">
+      <div class="label">Harvester</div>
+      <div class="divider"></div>
+      <div class="mono" style="font-size:12px; line-height:1.35;">
+        <div><span class="muted">Requested:</span> <span id="reqPct">60%</span></div>
+        <div><span class="muted">Effective:</span> <span id="effPct">0%</span></div>
+        <div><span class="muted">Harvesting:</span> <span id="harvRate">+0.000 / min</span></div>
+        <div><span class="muted">Rations Stored:</span> <span id="rations">0.0000</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Operator Log</div>
+      <div class="divider"></div>
+      <div class="log mono" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<div class="splash" id="splash">
+  <div class="box">
+    <h1>ZONE 13: POWER &amp; RATIONS</h1>
+    <p class="muted mono">Objective: restore Life Support, then power the Harvester. Throttle harvest to stay stable.</p>
+    <ul>
+      <li><b>Route Power:</b> Click a port, then click a <b>glowing</b> valid port to connect.</li>
+      <li><b>Bring Life Support Online:</b> Without Life Support, the Harvester is disabled.</li>
+      <li><b>Optimize Harvest:</b> Higher throttle yields rations faster but stresses relays and stability.</li>
+    </ul>
+    <p class="muted">Tip: Green cables indicate stable flow. If the system drops offline, re-route and recover.</p>
+    <div class="row">
+      <div class="btn" id="hideSplash">OK, START</div>
     </div>
   </div>
 </div>
 
 <script>
 (() => {
-  // ---------- helpers ----------
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const lerp=(a,b,t)=>a+(b-a)*t;
+  const $ = (id)=>document.getElementById(id);
+  const clamp = (v, a, b)=>Math.max(a, Math.min(b, v));
+  const nowStamp = () => new Date().toTimeString().slice(0,8);
+  const logEl = $("log");
+  const pushLog = (msg) => {
+    const line = document.createElement("div");
+    line.textContent = `[${nowStamp()}] ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  };
 
-  // ---------- canvas ----------
-  const canvas=document.getElementById('c');
-  const ctx=canvas.getContext('2d',{alpha:false});
-  function resizeCanvas(){
-    const cssW=canvas.clientWidth;
-    const cssH=Math.round(cssW*0.62);
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    canvas.style.height=cssH+'px';
-    canvas.width=Math.floor(cssW*dpr);
-    canvas.height=Math.floor(cssH*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-  window.addEventListener('resize',resizeCanvas);
-  resizeCanvas();
-
-  // ---------- model ----------
-  const MODEL_VERSION=3;
-  const SAVE_KEY="zone13_v2_save";
-
-  const state={
-    version:MODEL_VERSION,
-    tLast:Date.now(),
-
-    // reserves are in "units", later converted to "hours" via current demand/consumption rates
-    powerReserveUnits:30,          // reserve in power-units
-    foodReserveUnits:40,           // reserve in food-units
-
-    stability:0.84,                // 0..1
-    habitability:0.88,             // 0..1
-
-    hover:null,
-    dragging:null,
-    tapPick:null,
-    notice:"NO ACTIVE NOTICES",
-
-    gateAnomaly:false,
-
-    // Heat anomaly system
-    heat:{
-      active:false,
-      target:"relayB",
-      reduction:0.35,
-      untilMs:0,
-      nextMs:Date.now()+90_000,
-
-      // Objective tracking: survive 3 heat events without losing life support DURING heat
-      progress:0,           // 0..3
-      inEventHadLife:true,  // tracked during active heat
-      completed:false
+  // Isometric layout settings. tileW/tileH are auto-sized per screen in resize().
+  const ISO = { tileW:110, tileH:58, ox:0, oy:0,
+    toScreen(gx, gy, gz=0){
+      return { x:(gx-gy)*(this.tileW/2)+this.ox, y:(gx+gy)*(this.tileH/2)+this.oy-gz };
     }
   };
 
-  // Nodes
-  // IMPORTANT: Food Harvester is a MACHINE node (consumer+producer)
-  const nodes=[
-    { id:"genA", name:"Primary Generator A", kind:"generator", x:160, y:220, supply:55, ports:[[-26,0],[26,0]] },
-    { id:"genB", name:"Primary Generator B", kind:"generator", x:160, y:360, supply:55, ports:[[-26,0],[26,0]] },
-
-    { id:"relayA", name:"Relay A", kind:"relay", x:420, y:300, relayCapacity:85, ports:[[-32,-14],[-32,14],[32,-14],[32,14]] },
-    { id:"relayB", name:"Relay B", kind:"relay", x:560, y:260, relayCapacity:70, ports:[[-32,0],[32,0],[0,32]] },
-
-    { id:"harv", name:"Food Harvester", kind:"harvester", x:720, y:130,
-      powerDemand:30, foodOutput:28, ports:[[-32,0],[32,0],[0,32]] },
-
-    { id:"aux",  name:"Auxiliary", kind:"consumer", x:420, y:150, demand:22, ports:[[0,30],[0,-30],[30,0],[-30,0]] },
-    { id:"life", name:"Life Support", kind:"consumer", x:820, y:330, demand:58, ports:[[-32,0],[32,0],[0,-32]] },
-    { id:"gate", name:"Sector Gate (LOCKED)", kind:"gate", x:930, y:220, demand:0, ports:[[-34,0],[0,34]], locked:true },
+  const NODES = [
+    // Layout tweak: spread the board so ports are easier to see/click.
+    {id:'genA',  name:'Primary Generator A', type:'gen',   gx:2,  gy:7,  ports:2, supply:60},
+    {id:'genB',  name:'Primary Generator B', type:'gen',   gx:2,  gy:11, ports:2, supply:60},
+    {id:'aux',   name:'Auxiliary',           type:'aux',   gx:7,  gy:5,  ports:4, demand:15},
+    {id:'relayA',name:'Relay A',             type:'relay', gx:7,  gy:9,  ports:4, cap:90},
+    {id:'relayB',name:'Relay B',             type:'relay', gx:9,  gy:9,  ports:4, cap:72},
+    {id:'harv',  name:'Food Harvester',      type:'harv',  gx:13, gy:6,  ports:2, baseDemand:30},
+    {id:'life',  name:'Life Support',        type:'life',  gx:14, gy:12, ports:2, demand:55},
+    {id:'gate',  name:'Sector Gate',         type:'gate',  gx:13, gy:9,  ports:0},
   ];
+  const nodeById = Object.fromEntries(NODES.map(n=>[n.id,n]));
 
-  // Links (wiring)
-  const links=[
-    { id:"L1", a:{node:"genA",port:1},  b:{node:"relayA",port:0} },
-    { id:"L2", a:{node:"genB",port:1},  b:{node:"relayA",port:1} },
-    { id:"L3", a:{node:"relayA",port:2}, b:{node:"relayB",port:0} },
-    { id:"L4", a:{node:"relayA",port:3}, b:{node:"aux",port:3} },
-    { id:"L5", a:{node:"relayB",port:1}, b:{node:"life",port:0} },
-    { id:"L6", a:{node:"relayB",port:2}, b:{node:"gate",port:0} },
-    // v2 adds harvester wiring line by default (from Relay B side)
-    { id:"L7", a:{node:"relayB",port:0}, b:{node:"harv",port:0} },
-  ];
+  let cables = [];
+  let activePort = null;
+  let rationsStored = 0.0;
 
-  const hit={ nodeRadius:28, portRadius:12 };
-  const getNode=(id)=>nodes.find(n=>n.id===id);
-  function portWorldPos(node,portIndex){
-    const [dx,dy]=node.ports[portIndex];
-    return {x:node.x+dx,y:node.y+dy};
-  }
+  const portKey = (nid, pi) => `${nid}:p${pi}`;
+  const parsePortKey = (k) => { const [nid,p]=k.split(":p"); return {nid, pi:Number(p)}; };
+  const isPortUsed = (k)=>cables.some(c=>c.a===k||c.b===k);
 
-  // ---------- graph ----------
-  function buildGraph(localLinks){
-    const adj=new Map();
-    for(const n of nodes) adj.set(n.id,[]);
-    for(const L of localLinks){
-      adj.get(L.a.node).push(L.b.node);
-      adj.get(L.b.node).push(L.a.node);
-    }
+  const allow = {
+    gen: new Set(["relay","aux"]),
+    aux: new Set(["relay"]),
+    relay: new Set(["gen","relay","aux","life","harv"]),
+    life: new Set(["relay"]),
+    harv: new Set(["relay"]),
+    gate: new Set([])
+  };
+  const typeAllows = (aType,bType)=> (allow[aType]?.has(bType) || allow[bType]?.has(aType));
+  const canConnect = (aKey,bKey)=>{
+    if(aKey===bKey) return false;
+    if(isPortUsed(aKey)||isPortUsed(bKey)) return false;
+    const a=parsePortKey(aKey), b=parsePortKey(bKey);
+    const an=nodeById[a.nid], bn=nodeById[b.nid];
+    if(!an||!bn) return false;
+    if(an.ports<=a.pi||bn.ports<=b.pi) return false;
+    if(an.type==='gate'||bn.type==='gate') return false;
+    if(!typeAllows(an.type,bn.type)) return false;
+    return true;
+  };
+
+  const adjacency = ()=>{
+    const adj={}; NODES.forEach(n=>adj[n.id]=new Set());
+    cables.forEach(c=>{
+      const a=parsePortKey(c.a), b=parsePortKey(c.b);
+      adj[a.nid].add(b.nid); adj[b.nid].add(a.nid);
+    });
     return adj;
-  }
-  function bfsPath(adj,start,goal){
-    const q=[start];
-    const prev=new Map();
-    prev.set(start,null);
+  };
+
+  const reachableFromGens = ()=>{
+    const adj=adjacency();
+    const gens=NODES.filter(n=>n.type==='gen').map(n=>n.id);
+    const vis=new Set(gens);
+    const q=[...gens];
     while(q.length){
       const cur=q.shift();
-      if(cur===goal) break;
-      for(const nxt of adj.get(cur)||[]){
-        if(!prev.has(nxt)){
-          prev.set(nxt,cur);
-          q.push(nxt);
-        }
+      for(const nx of adj[cur]){
+        if(!vis.has(nx)){ vis.add(nx); q.push(nx); }
       }
     }
-    if(!prev.has(goal)) return null;
-    const path=[];
-    let cur=goal;
-    while(cur!==null){ path.push(cur); cur=prev.get(cur); }
-    path.reverse();
-    return path;
-  }
+    return vis;
+  };
+  const isConnectedToGens = (id)=>reachableFromGens().has(id);
 
-  // ---------- heat (anomaly + objective) ----------
-  function baseHeatIntervalMs(){
-    // Habitability makes heat more frequent when low, less when high.
-    // 0.90+ habit => slower, 0.60 habit => faster
-    const h = state.habitability;
-    const scale = clamp(1.25 - (h-0.6)*0.9, 0.75, 1.35);
-    return Math.round(150_000 * scale); // around 2.5 minutes baseline
-  }
+  const computeStats = ()=>{
+    const throttle=Number($("throttle").value)/100;
+    const lifeOnline=isConnectedToGens('life');
+    const systemOnline=lifeOnline;
+    const harvPowered=systemOnline && isConnectedToGens('harv');
 
-  function updateHeat(nowMs){
-    const H = state.heat;
+    const lifeDemand = lifeOnline ? nodeById.life.demand : 0;
+    const auxDemand  = isConnectedToGens('aux') ? nodeById.aux.demand : 0;
 
-    // End event
-    if(H.active && nowMs >= H.untilMs){
-      // event ends: if life stayed powered throughout event => progress++
-      if(H.inEventHadLife){
-        H.progress = clamp(H.progress + 1, 0, 3);
-        if(H.progress >= 3){
-          H.completed = true;
-          state.notice = "OBJECTIVE COMPLETE: EVENT SURVIVAL CONFIRMED";
-        }
+    let supply=0;
+    for(const g of NODES.filter(n=>n.type==='gen')){
+      const active=cables.some(c=>parsePortKey(c.a).nid===g.id || parsePortKey(c.b).nid===g.id);
+      if(active) supply+=g.supply;
+    }
+
+    let notice="System routing stable.";
+    let effectiveThrottle=0;
+
+    if(harvPowered && throttle>0){
+      const harvLinkedToRelayB = cables.some(c=>{
+        const a=parsePortKey(c.a), b=parsePortKey(c.b);
+        return (a.nid==='harv'&&b.nid==='relayB')||(b.nid==='harv'&&a.nid==='relayB');
+      });
+      if(harvLinkedToRelayB){
+        const baseDemand=lifeDemand+auxDemand;
+        const remaining=Math.max(0, nodeById.relayB.cap - baseDemand);
+        const requested=nodeById.harv.baseDemand*throttle;
+        const effDemand=Math.min(requested, remaining);
+        effectiveThrottle = effDemand / nodeById.harv.baseDemand;
+        if(requested>remaining+0.001) notice="NOTICE: Throttle limited (relay capacity).";
       } else {
-        // failure resets progress (harsh but clean, as designed)
-        H.progress = 0;
+        effectiveThrottle=throttle;
       }
-      H.active=false;
-
-      // schedule next heat
-      const jitter = Math.floor(Math.random()*60_000);
-      H.nextMs = nowMs + baseHeatIntervalMs() + jitter;
-      H.inEventHadLife = true;
     }
 
-    // Start event
-    if(!H.active && nowMs >= H.nextMs){
-      H.active=true;
-      H.target = (Math.random() < 0.75) ? "relayB" : "relayA";
-      H.reduction = (H.target==="relayB") ? 0.35 : 0.28;
-      const dur = 70_000 + Math.floor(Math.random()*55_000);
-      H.untilMs = nowMs + dur;
-      H.inEventHadLife = true;
+    const harvDemand=harvPowered ? nodeById.harv.baseDemand*effectiveThrottle : 0;
+    const demand=lifeDemand+auxDemand+harvDemand;
+
+    const deficit=Math.max(0, demand - supply);
+    const stability=clamp(100 - deficit*1.1, 0, 100);
+
+    const powerNetPerHr=(supply-demand)/100;
+    const powerReserveHr=clamp(0.2+powerNetPerHr, -9.9, 9.9);
+
+    const foodNetPerHr = harvPowered ? (effectiveThrottle*1.5) : -0.7;
+    const foodReserveHr=clamp(1.0+foodNetPerHr, -9.9, 9.9);
+
+    const habit = lifeOnline ? clamp(70 + stability*0.3, 0, 100) : clamp(20 + stability*0.2, 0, 100);
+
+    // Rations per minute at 100% effective. Higher value = more visible progress.
+    // 1.0 feels "alive" even when effective throttle is low.
+    const harvRate = harvPowered ? (effectiveThrottle * 1.000) : 0;
+
+    return {systemOnline, lifeOnline, harvPowered, throttle, effectiveThrottle,
+      stability, habit, powerReserveHr, powerNetPerHr, foodReserveHr, foodNetPerHr, harvRate, notice};
+  };
+
+  const canvas=$("board");
+  const ctx=canvas.getContext("2d",{alpha:false});
+  const pointer={x:0,y:0};
+
+  const resize=()=>{
+    const r=canvas.getBoundingClientRect();
+    const dpr=Math.max(1, Math.min(2, window.devicePixelRatio||1));
+    canvas.width=Math.floor(r.width*dpr);
+    canvas.height=Math.floor(r.height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    // Roominess pass: on large screens, increase spacing so ports aren't cramped.
+    // On smaller screens, keep it tight enough that auto-fit can still keep everything visible.
+    const base = Math.min(r.width * 0.82, r.height * 0.78);
+    ISO.tileW = Math.max(92, Math.min(155, base / 5.6));
+    ISO.tileH = ISO.tileW * 0.52;
+
+    // Auto-fit: center all nodes in the available board area (prevents off-screen layouts).
+    const rawToScreen=(gx,gy)=>({
+      x:(gx-gy)*(ISO.tileW/2),
+      y:(gx+gy)*(ISO.tileH/2)
+    });
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    for(const n of NODES){
+      const p=rawToScreen(n.gx,n.gy);
+      minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
+      minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
     }
-  }
+    const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
 
-  function effectiveRelayCapacity(relayId, nowMs){
-    const n=getNode(relayId);
-    if(!n||n.kind!=="relay") return 0;
-    const base=n.relayCapacity||0;
-    const H=state.heat;
-    if(H.active && relayId===H.target && nowMs < H.untilMs){
-      return Math.max(10, Math.round(base*(1-H.reduction)));
+    // Leave room for the bottom HUD and right panel; bias slightly left/up.
+    const usableW=r.width * 0.82;   // right panel takes ~18%
+    const usableH=r.height * 0.78;  // bottom HUD takes ~22%
+    const targetX=(usableW/2);
+    const targetY=(usableH/2);
+
+    ISO.ox = targetX - cx + 20;
+    ISO.oy = targetY - cy + 40;
+  };
+  window.addEventListener("resize", resize);
+
+  const drawGrid=(w,h)=>{
+    ctx.save();
+    ctx.globalAlpha=0.12;
+    ctx.strokeStyle="rgba(255,255,255,.10)";
+    ctx.lineWidth=1;
+    for(let gx=-2; gx<18; gx++){
+      const a=ISO.toScreen(gx,-2), b=ISO.toScreen(gx,16);
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
     }
-    return base;
-  }
-
-  // ---------- compute ----------
-  function computeFor(sim, localLinks, nowMs){
-    const adj=buildGraph(localLinks);
-    const gens=nodes.filter(n=>n.kind==="generator");
-    const consumers=nodes.filter(n=>n.kind==="consumer");
-    const gate=getNode("gate");
-    const harv=getNode("harv");
-
-    function pass(gateDemandUnits){
-      gate.demand = gateDemandUnits;
-
-      // Treat harvester like a consumer for power-serving purposes
-      const allConsumers=[...consumers, harv, gate];
-
-      const supply = gens.reduce((s,g)=>s+g.supply,0);
-      let servedDemand=0;
-
-      const served=new Map(); // id -> {served, path}
-      for(const c of allConsumers){
-        if(c.id==="gate" && c.locked && gateDemandUnits<=0){
-          served.set(c.id,{served:false,path:null});
-          continue;
-        }
-        // demand varies by kind
-        const demand = (c.kind==="harvester") ? (c.powerDemand||0) : (c.demand||0);
-
-        let found=null;
-        for(const g of gens){
-          const p=bfsPath(adj,g.id,c.id);
-          if(p){ found=p; break; }
-        }
-        const ok=!!found;
-        served.set(c.id,{served:ok,path:found});
-        if(ok) servedDemand += demand;
-      }
-
-      const relayLoads=new Map();
-      for(const r of nodes.filter(n=>n.kind==="relay")) relayLoads.set(r.id,0);
-
-      for(const c of allConsumers){
-        const info=served.get(c.id);
-        if(!info?.served) continue;
-
-        const demand = (c.kind==="harvester") ? (c.powerDemand||0) : (c.demand||0);
-        for(const nodeId of info.path){
-          const n=getNode(nodeId);
-          if(n?.kind==="relay"){
-            relayLoads.set(nodeId, relayLoads.get(nodeId) + demand);
-          }
-        }
-      }
-
-      const loadPct = supply>0 ? servedDemand/supply : 0;
-      return { supply, servedDemand, served, relayLoads, loadPct };
+    for(let gy=-2; gy<18; gy++){
+      const a=ISO.toScreen(-2,gy), b=ISO.toScreen(16,gy);
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
     }
+    ctx.restore();
+  };
 
-    // Pass 1 (no gate draw)
-    let res = pass(0);
+  const nodeSortKey=(n)=>n.gx+n.gy;
 
-    const capA = effectiveRelayCapacity("relayA", nowMs);
-    const capB = effectiveRelayCapacity("relayB", nowMs);
-    const loadA = res.relayLoads.get("relayA")||0;
-    const loadB = res.relayLoads.get("relayB")||0;
-    const relayAOver = loadA > capA;
-    const relayBOver = loadB > capB;
+  const nodeTint=(t)=>{
+    if(t==='gen') return {top:"#1f2a3a", side:"#151e2a", edge:"rgba(96,165,250,.35)"};
+    if(t==='relay') return {top:"#262d38", side:"#171d26", edge:"rgba(251,191,36,.35)"};
+    if(t==='life') return {top:"#22302b", side:"#151f1c", edge:"rgba(52,211,153,.35)"};
+    if(t==='harv') return {top:"#262834", side:"#151620", edge:"rgba(52,211,153,.25)"};
+    if(t==='aux') return {top:"#2a2733", side:"#171522", edge:"rgba(167,139,250,.30)"};
+    return {top:"#222", side:"#111", edge:"rgba(255,255,255,.18)"};
+  };
 
-    // gate stress uses stability + overload
-    const stress = (relayBOver ? 0.25 : 0) + clamp((0.78 - sim.stability)*1.2, 0, 0.35);
-    const gateDemand = stress>0 ? Math.round(18 + 40*stress) : 0;
-
-    // Pass 2 (with gate draw)
-    res = pass(gateDemand);
-
-    const loadA2 = res.relayLoads.get("relayA")||0;
-    const loadB2 = res.relayLoads.get("relayB")||0;
-    const relayAOver2 = loadA2 > capA;
-    const relayBOver2 = loadB2 > capB;
-
-    const servedLife = res.served.get("life")?.served ?? false;
-
-    // Harvester power status
-    const harvPowered = res.served.get("harv")?.served ?? false;
-
-    // Harvester efficiency: depends on stability and overloads
-    const overloadPenalty = (relayAOver2||relayBOver2) ? 0.65 : 1.0;
-    const stabilityFactor = clamp((sim.stability - 0.45) / 0.55, 0, 1); // 0 at 0.45, 1 at 1.0
-    const habitFactor = clamp((sim.habitability - 0.55) / 0.45, 0.65, 1.0); // low habit reduces output a bit
-    const harvEff = harvPowered ? (0.25 + 0.75*stabilityFactor) * overloadPenalty * habitFactor : 0;
-
-    const harvFoodOutPerHr = (harv.foodOutput||0) * harvEff;
-
-    // Notices (priority order)
-    let notice = "NO ACTIVE NOTICES";
-    if(res.loadPct > 0.95) notice = "WARNING: POWER DEFICIT";
-    if(relayBOver2) notice = "WARNING: RELAY B OVERLOAD";
-    if(relayAOver2) notice = "WARNING: RELAY A OVERLOAD";
-    if(!servedLife) notice = "CRITICAL: LIFE SUPPORT UNPOWERED";
-    if(!harvPowered && notice === "NO ACTIVE NOTICES") notice = "NOTICE: HARVESTER UNPOWERED";
-    if(harvPowered && harvEff < 0.55 && notice === "NO ACTIVE NOTICES") notice = "NOTICE: HARVESTER THROTTLED (EFFICIENCY)";
-    if(gateDemand>0 && notice === "NO ACTIVE NOTICES") notice = "NOTICE: GATE DRAW DETECTED";
-
-    return {
-      ...res,
-      notice,
-      relayAOver: relayAOver2,
-      relayBOver: relayBOver2,
-      capA, capB,
-      gateDemand,
-      harvPowered,
-      harvEff,
-      harvFoodOutPerHr
-    };
-  }
-
-  // ---------- progression tick ----------
-  function tick(dtSeconds){
-    const nowMs=Date.now();
-    updateHeat(nowMs);
-
-    const sim = {
-      powerReserveUnits: state.powerReserveUnits,
-      foodReserveUnits: state.foodReserveUnits,
-      stability: state.stability,
-      habitability: state.habitability
-    };
-
-    const r = computeFor(sim, links, nowMs);
-
-    state.gateAnomaly = r.gateDemand > 0;
-    state.notice = state.heat.completed ? "OBJECTIVE COMPLETE: EVENT SURVIVAL CONFIRMED" : r.notice;
-
-    // ---- power reserve ----
-    const netPowerUnitsPerHr = r.supply - r.servedDemand;
-    state.powerReserveUnits = clamp(state.powerReserveUnits + (netPowerUnitsPerHr/3600)*dtSeconds, -160, 320);
-
-    // ---- food reserve ----
-    // Food consumption is tied to Life Support being powered (population baseline).
-    const lifePowered = r.served.get("life")?.served ?? false;
-    const foodConsumePerHr = lifePowered ? 26 : 18; // if life support down, consumption drops (grim but systemic)
-    const netFoodUnitsPerHr = r.harvFoodOutPerHr - foodConsumePerHr;
-    state.foodReserveUnits = clamp(state.foodReserveUnits + (netFoodUnitsPerHr/3600)*dtSeconds, -200, 420);
-
-    // ---- habitability ----
-    // Habitability rises slowly when food reserve is healthy; drops faster when starving.
-    const foodPressure = state.foodReserveUnits; // units; later translated to hours for UI
-    let hab = state.habitability;
-
-    if(foodPressure < -20) hab -= 0.010*(dtSeconds/60);
-    else if(foodPressure < 10) hab -= 0.004*(dtSeconds/60);
-    else if(foodPressure > 40) hab += 0.003*(dtSeconds/60);
-    else hab += 0.001*(dtSeconds/60);
-
-    // Power crises hurt habitability a bit (lights, heat, air handling quality)
-    if(r.relayAOver || r.relayBOver) hab -= 0.0025*(dtSeconds/60);
-    if((r.supply - r.servedDemand) < 0) hab -= 0.003*(dtSeconds/60);
-    if(!lifePowered) hab -= 0.020*(dtSeconds/60);
-
-    state.habitability = clamp(hab, 0.05, 0.99);
-
-    // ---- stability ----
-    // Stability drift is now influenced by habitability (low hab slows recovery)
-    let stab = state.stability;
-    const deficit = (r.supply - r.servedDemand) < 0;
-
-    const habRecoveryFactor = clamp(0.55 + 0.55*state.habitability, 0.45, 1.05); // low hab => slower recovery
-    const habDegradeFactor  = clamp(1.05 - 0.65*state.habitability, 0.55, 1.05); // low hab => more fragile
-
-    if(!lifePowered) stab -= 0.020*(dtSeconds/60);
-    if(r.relayAOver || r.relayBOver) stab -= 0.010*(dtSeconds/60) * habDegradeFactor;
-    if(deficit) stab -= 0.006*(dtSeconds/60) * habDegradeFactor;
-    if(!deficit && !r.relayAOver && !r.relayBOver && lifePowered && state.powerReserveUnits>10){
-      stab += 0.004*(dtSeconds/60) * habRecoveryFactor;
-    }
-    if(state.gateAnomaly) stab -= 0.004*(dtSeconds/60) * habDegradeFactor;
-
-    state.stability = clamp(stab, 0.05, 0.99);
-
-    // Objective failure tracking during active heat:
-    if(state.heat.active){
-      if(!lifePowered) state.heat.inEventHadLife = false;
-    }
-
-    return r;
-  }
-
-  // ---------- offline progress ----------
-  function applyOfflineProgress(){
-    const now=Date.now();
-    const last=state.tLast||now;
-    const dt=clamp((now-last)/1000,0,60*60*24);
-    if(dt>2) tick(dt);
-    state.tLast=now;
-    document.getElementById('tagTime').innerHTML = `Offline: <span class="muted">${Math.round(dt)}s</span>`;
-  }
-
-  // ---------- save/load ----------
-  function save(){
-    const payload={
-      version:state.version,
-      tLast:state.tLast,
-      powerReserveUnits:state.powerReserveUnits,
-      foodReserveUnits:state.foodReserveUnits,
-      stability:state.stability,
-      habitability:state.habitability,
-      links:links.map(L=>({id:L.id,a:L.a,b:L.b})),
-      heat:{...state.heat}
-    };
-    localStorage.setItem(SAVE_KEY,JSON.stringify(payload));
-  }
-  function load(){
-    const raw=localStorage.getItem(SAVE_KEY);
-    if(!raw) return false;
-    try{
-      const p=JSON.parse(raw);
-      if(!p || p.version!==MODEL_VERSION) return false;
-
-      state.tLast=p.tLast||Date.now();
-      state.powerReserveUnits=typeof p.powerReserveUnits==="number"?p.powerReserveUnits:state.powerReserveUnits;
-      state.foodReserveUnits=typeof p.foodReserveUnits==="number"?p.foodReserveUnits:state.foodReserveUnits;
-      state.stability=typeof p.stability==="number"?p.stability:state.stability;
-      state.habitability=typeof p.habitability==="number"?p.habitability:state.habitability;
-
-      if(Array.isArray(p.links)){
-        for(const savedL of p.links){
-          const L=links.find(x=>x.id===savedL.id);
-          if(L && savedL.a && savedL.b){ L.a=savedL.a; L.b=savedL.b; }
-        }
-      }
-      if(p.heat){
-        state.heat = {
-          active: !!p.heat.active,
-          target: p.heat.target || "relayB",
-          reduction: typeof p.heat.reduction==="number" ? p.heat.reduction : 0.35,
-          untilMs: typeof p.heat.untilMs==="number" ? p.heat.untilMs : 0,
-          nextMs: typeof p.heat.nextMs==="number" ? p.heat.nextMs : (Date.now()+90_000),
-          progress: typeof p.heat.progress==="number" ? p.heat.progress : 0,
-          inEventHadLife: (p.heat.inEventHadLife!==undefined) ? !!p.heat.inEventHadLife : true,
-          completed: !!p.heat.completed
-        };
-      }
-      return true;
-    }catch{ return false; }
-  }
-
-  function hardReset(){
-    localStorage.removeItem(SAVE_KEY);
-    state.tLast=Date.now();
-    state.powerReserveUnits=30;
-    state.foodReserveUnits=40;
-    state.stability=0.84;
-    state.habitability=0.88;
-    state.hover=null;
-    state.dragging=null;
-    state.tapPick=null;
-    state.notice="NO ACTIVE NOTICES";
-    state.gateAnomaly=false;
-    state.heat={
-      active:false,
-      target:"relayB",
-      reduction:0.35,
-      untilMs:0,
-      nextMs:Date.now()+90_000,
-      progress:0,
-      inEventHadLife:true,
-      completed:false
-    };
-
-    // restore default wiring including harvester
-    const defaults=[
-      ["L1",{node:"genA",port:1},{node:"relayA",port:0}],
-      ["L2",{node:"genB",port:1},{node:"relayA",port:1}],
-      ["L3",{node:"relayA",port:2},{node:"relayB",port:0}],
-      ["L4",{node:"relayA",port:3},{node:"aux",port:3}],
-      ["L5",{node:"relayB",port:1},{node:"life",port:0}],
-      ["L6",{node:"relayB",port:2},{node:"gate",port:0}],
-      ["L7",{node:"relayB",port:0},{node:"harv",port:0}],
+  const drawIsoBlock=(cx,cy,w,h,height,tint)=>{
+    const hw=w/2, hh=h/2;
+    const top=[
+      {x:cx,y:cy-height},{x:cx+hw,y:cy-height+hh},{x:cx,y:cy-height+h},{x:cx-hw,y:cy-height+hh}
     ];
-    for(const [id,a,b] of defaults){
-      const L=links.find(x=>x.id===id);
-      if(L){ L.a=a; L.b=b; }
-    }
-    save();
-  }
-
-  document.getElementById('resetBtn').addEventListener('click',()=>{
-    if(confirm("Reset Zone 13 v2.0? Clears save + wiring.")) hardReset();
-  });
-
-  // ---------- interaction (drag + tap routing) ----------
-  let mouse={x:0,y:0};
-  function screenToWorld(evt){
-    const rect=canvas.getBoundingClientRect();
-    return {x:evt.clientX-rect.left, y:evt.clientY-rect.top};
-  }
-  const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-
-  function portIsOccupied(nodeId,portIndex,exceptLinkId){
-    for(const L of links){
-      if(exceptLinkId && L.id===exceptLinkId) continue;
-      if(L.a.node===nodeId && L.a.port===portIndex) return true;
-      if(L.b.node===nodeId && L.b.port===portIndex) return true;
-    }
-    return false;
-  }
-
-  function findPortAt(pos){
-    for(const n of nodes){
-      for(let i=0;i<n.ports.length;i++){
-        const p=portWorldPos(n,i);
-        if(dist(pos,p) <= hit.portRadius+3) return {nodeId:n.id, portIndex:i};
-      }
-    }
-    return null;
-  }
-
-  function findLinkEndAt(pos){
-    for(const L of links){
-      const aPos=portWorldPos(getNode(L.a.node), L.a.port);
-      const bPos=portWorldPos(getNode(L.b.node), L.b.port);
-      if(dist(pos,aPos) <= hit.portRadius+5) return {linkId:L.id, end:"a", x:aPos.x, y:aPos.y};
-      if(dist(pos,bPos) <= hit.portRadius+5) return {linkId:L.id, end:"b", x:bPos.x, y:bPos.y};
-    }
-    return null;
-  }
-
-  function setHoverAt(pos){
-    const port=findPortAt(pos);
-    if(port){
-      const n=getNode(port.nodeId);
-      state.hover={kind:"port", text:`${n.name} · Port ${port.portIndex+1}`};
-      return;
-    }
-    let best=null, bestD=1e9;
-    for(const n of nodes){
-      const d=Math.hypot(pos.x-n.x,pos.y-n.y);
-      if(d < hit.nodeRadius && d < bestD){ best=n; bestD=d; }
-    }
-    state.hover = best ? {kind:"node", nodeId:best.id, text:best.name} : null;
-  }
-
-  function commitTo(pos){
-    const snap=findPortAt(pos);
-    if(!snap) return false;
-
-    let linkId=null, end=null;
-    if(state.dragging){ linkId=state.dragging.linkId; end=state.dragging.end; }
-    else if(state.tapPick){ linkId=state.tapPick.linkId; end=state.tapPick.end; }
-    else return false;
-
-    const L=links.find(x=>x.id===linkId);
-    if(!L) return false;
-    if(portIsOccupied(snap.nodeId, snap.portIndex, L.id)) return false;
-
-    const other=(end==="a")?L.b:L.a;
-    if(other.node===snap.nodeId && other.port===snap.portIndex) return false;
-
-    if(end==="a") L.a={node:snap.nodeId, port:snap.portIndex};
-    else L.b={node:snap.nodeId, port:snap.portIndex};
-
-    saveNow();
-    state.dragging=null;
-    state.tapPick=null;
-    return true;
-  }
-
-  canvas.addEventListener('pointerdown',(evt)=>{
-    evt.preventDefault();
-    canvas.setPointerCapture(evt.pointerId);
-    const p=screenToWorld(evt);
-    mouse=p;
-
-    if(state.tapPick){
-      commitTo(p);
-      return;
-    }
-
-    const end=findLinkEndAt(p);
-    if(end){
-      state.dragging={...end};
-      state.tapPick={linkId:end.linkId, end:end.end}; // tap selects too
-      return;
-    }
-    setHoverAt(p);
-  },{passive:false});
-
-  canvas.addEventListener('pointermove',(evt)=>{
-    evt.preventDefault();
-    const p=screenToWorld(evt);
-    mouse=p;
-    if(state.dragging){
-      state.dragging.x=p.x; state.dragging.y=p.y;
-    } else {
-      setHoverAt(p);
-    }
-  },{passive:false});
-
-  canvas.addEventListener('pointerup',(evt)=>{
-    evt.preventDefault();
-    const p=screenToWorld(evt);
-    mouse=p;
-
-    if(state.dragging){
-      commitTo(p);
-      state.dragging=null;
-      return;
-    }
-    const port=findPortAt(p);
-    if(port && state.tapPick){
-      commitTo(p);
-    } else {
-      state.tapPick=null; // tap empty cancels
-    }
-  },{passive:false});
-
-  canvas.addEventListener('pointercancel',(evt)=>{
-    evt.preventDefault();
-    state.dragging=null;
-    state.tapPick=null;
-  },{passive:false});
-
-  // ---------- rendering ----------
-  function roundRect(ctx,x,y,w,h,r){
-    const rr=Math.min(r,w/2,h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+rr,y);
-    ctx.arcTo(x+w,y,x+w,y+h,rr);
-    ctx.arcTo(x+w,y+h,x,y+h,rr);
-    ctx.arcTo(x,y+h,x,y,rr);
-    ctx.arcTo(x,y,x+w,y,rr);
-    ctx.closePath();
-  }
-
-  function drawGrid(){
-    const w=canvas.clientWidth, h=canvas.clientHeight;
-    ctx.fillStyle="#0b0d10";
-    ctx.fillRect(0,0,w,h);
-
-    ctx.strokeStyle="rgba(255,255,255,0.05)";
-    ctx.lineWidth=1;
-    const step=28;
-    for(let x=0;x<w;x+=step){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-    for(let y=0;y<h;y+=step){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-
-    const g=ctx.createRadialGradient(w*0.5,h*0.55,20,w*0.5,h*0.55,Math.max(w,h));
-    g.addColorStop(0,"rgba(0,0,0,0)");
-    g.addColorStop(1,"rgba(0,0,0,0.55)");
-    ctx.fillStyle=g;
-    ctx.fillRect(0,0,w,h);
-  }
-
-  function nodeColors(computed, nowMs){
-    const colors=new Map();
-    for(const n of nodes){
-      let c="rgba(140,150,160,.45)";
-      if(n.kind==="generator") c="rgba(105,183,255,.85)";
-      if(n.kind==="consumer"){
-        const served=computed.served.get(n.id)?.served;
-        c=served ? "rgba(88,214,141,.85)" : "rgba(255,92,92,.9)";
-      }
-      if(n.kind==="relay"){
-        const load=computed.relayLoads.get(n.id)||0;
-        const cap=(n.id==="relayA")?computed.capA:computed.capB;
-        const pct=cap>0?load/cap:2;
-        if(pct<0.85) c="rgba(88,214,141,.75)";
-        else if(pct<1.0) c="rgba(244,208,63,.92)";
-        else c="rgba(255,92,92,.92)";
-        if(state.heat.active && nowMs < state.heat.untilMs && state.heat.target===n.id){
-          c="rgba(244,208,63,.95)";
-        }
-      }
-      if(n.kind==="gate"){
-        c=(computed.gateDemand>0) ? "rgba(255,92,92,.95)" : "rgba(140,150,160,.45)";
-      }
-      if(n.kind==="harvester"){
-        c = computed.harvPowered
-          ? (computed.harvEff >= 0.75 ? "rgba(181,139,255,.95)" : "rgba(181,139,255,.60)")
-          : "rgba(255,92,92,.90)";
-      }
-      colors.set(n.id,c);
-    }
-    return colors;
-  }
-
-  function drawLinks(computed,t){
-    const deficit=(computed.supply-computed.servedDemand)<0;
-    const stressed=deficit || computed.relayAOver || computed.relayBOver;
-
-    for(const L of links){
-      const aN=getNode(L.a.node), bN=getNode(L.b.node);
-      const aP=portWorldPos(aN,L.a.port);
-      const bP=portWorldPos(bN,L.b.port);
-
-      let A=aP,B=bP;
-      if(state.dragging && state.dragging.linkId===L.id){
-        if(state.dragging.end==="a") A={x:state.dragging.x,y:state.dragging.y};
-        else B={x:state.dragging.x,y:state.dragging.y};
-      }
-
-      ctx.lineWidth=6;
-      ctx.lineCap="round";
-      ctx.strokeStyle="rgba(0,0,0,0.55)";
-      ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
-
-      let col="rgba(88,214,141,0.85)";
-      if(computed.loadPct>=0.85) col="rgba(244,208,63,0.92)";
-      if(stressed) col="rgba(255,92,92,0.90)";
-      if(state.tapPick && state.tapPick.linkId===L.id) col="rgba(105,183,255,0.95)";
-
-      ctx.strokeStyle=col;
-      ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y); ctx.stroke();
-
-      const segLen=Math.hypot(B.x-A.x,B.y-A.y);
-      const dots=Math.max(2,Math.floor(segLen/90));
-      for(let i=0;i<dots;i++){
-        const tt=((t*0.00035)+i/dots)%1;
-        const x=lerp(A.x,B.x,tt);
-        const y=lerp(A.y,B.y,tt);
-        ctx.fillStyle="rgba(255,255,255,0.35)";
-        ctx.beginPath(); ctx.arc(x,y,2.2,0,Math.PI*2); ctx.fill();
-      }
-    }
-  }
-
-  function drawNode(n, computed, colors, t, nowMs){
-    const c=colors.get(n.id)||"rgba(140,150,160,.45)";
-    const pulse=0.6+0.4*Math.sin(t*0.004+(n.x+n.y)*0.01);
-
-    // shadow
-    ctx.fillStyle="rgba(0,0,0,0.55)";
-    ctx.beginPath();
-    ctx.ellipse(n.x+2,n.y+10,34,14,0,0,Math.PI*2);
-    ctx.fill();
-
-    // body
-    ctx.fillStyle="rgba(26,30,36,1)";
-    roundRect(ctx,n.x-34,n.y-24,68,48,12);
-    ctx.fill();
-
-    // inner
-    ctx.fillStyle="rgba(0,0,0,0.18)";
-    roundRect(ctx,n.x-28,n.y-18,56,36,10);
-    ctx.fill();
-
-    // status light
-    ctx.fillStyle=c;
-    ctx.globalAlpha=(0.40+0.35*pulse);
-    ctx.beginPath(); ctx.arc(n.x,n.y-2,10,0,Math.PI*2); ctx.fill();
+    const left=[
+      {x:cx-hw,y:cy-height+hh},{x:cx,y:cy-height+h},{x:cx,y:cy+h},{x:cx-hw,y:cy+hh}
+    ];
+    const right=[
+      {x:cx+hw,y:cy-height+hh},{x:cx,y:cy-height+h},{x:cx,y:cy+h},{x:cx+hw,y:cy+hh}
+    ];
+    ctx.save();
+    ctx.fillStyle=tint.side;
+    ctx.beginPath(); ctx.moveTo(left[0].x,left[0].y); left.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=0.92;
+    ctx.beginPath(); ctx.moveTo(right[0].x,right[0].y); right.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill();
     ctx.globalAlpha=1;
+    ctx.fillStyle=tint.top;
+    ctx.beginPath(); ctx.moveTo(top[0].x,top[0].y); top.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill();
 
-    // outline
-    ctx.strokeStyle="rgba(255,255,255,0.08)";
-    ctx.lineWidth=1;
-    roundRect(ctx,n.x-34,n.y-24,68,48,12);
-    ctx.stroke();
+    ctx.strokeStyle=tint.edge; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(top[0].x,top[0].y); top.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.stroke();
+    ctx.strokeStyle="rgba(255,255,255,.08)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(top[0].x,top[0].y); top.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.stroke();
+    ctx.restore();
+  };
 
-    // ports
-    for(let i=0;i<n.ports.length;i++){
-      const p=portWorldPos(n,i);
-      const occupied=portIsOccupied(n.id,i,null);
-      const near=Math.hypot(mouse.x-p.x,mouse.y-p.y) <= hit.portRadius+4;
+  const getNodeRect=(n)=>{
+    const base=ISO.toScreen(n.gx,n.gy,0);
+    const w=(n.type==='relay')?120:(n.type==='harv'?150:130);
+    const h=72, height=22;
+    return {cx:base.x, cy:base.y-10, w, h, height};
+  };
 
-      let fill="rgba(255,255,255,0.12)";
-      if(occupied) fill="rgba(255,255,255,0.20)";
-      if(state.tapPick && !occupied) fill="rgba(105,183,255,0.22)";
-      if(state.tapPick && !occupied && near) fill="rgba(105,183,255,0.55)";
-      if(state.dragging && !occupied && near) fill="rgba(244,208,63,0.95)";
+  const portScreenPos=(n,pi)=>{
+    const r=getNodeRect(n);
 
-      ctx.fillStyle=fill;
-      ctx.beginPath(); ctx.arc(p.x,p.y, hit.portRadius-1, 0, Math.PI*2); ctx.fill();
-
-      ctx.strokeStyle="rgba(0,0,0,0.55)";
-      ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(p.x,p.y, hit.portRadius-1, 0, Math.PI*2); ctx.stroke();
+    // Relays: 4 ports, one per corner for clarity (purely visual/hitbox positioning).
+    if(n.type==='relay' && n.ports===4){
+      const padX=16;
+      const padY=18;
+      const topY=-r.height+padY;
+      const botY=-r.height+padY+34;
+      const corners=[
+        {x:-r.w/2+padX, y:topY},   // NW
+        {x: r.w/2-padX, y:topY},   // NE
+        {x: r.w/2-padX, y:botY},   // SE
+        {x:-r.w/2+padX, y:botY},   // SW
+      ];
+      const o=corners[pi]||corners[0];
+      return {x:r.cx+o.x, y:r.cy+o.y};
     }
 
-    // label text
-    ctx.fillStyle="rgba(0,0,0,0.55)";
-    ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+    // Default: split ports along left/right edges.
+    const offs=[];
+    for(let i=0;i<Math.ceil(n.ports/2);i++) offs.push({x:-r.w/2+14, y:-r.height+22+i*18});
+    for(let i=0;i<Math.floor(n.ports/2);i++) offs.push({x:r.w/2-14, y:-r.height+22+i*18});
+    const o=offs[pi]||offs[0]||{x:0,y:0};
+    return {x:r.cx+o.x, y:r.cy+o.y};
+  };
 
-    let label=n.name;
-    if(n.id==="relayA") label=`Relay A (${computed.capA})`;
-    if(n.id==="relayB") label=`Relay B (${computed.capB})`;
-    if(n.id==="gate") label = computed.gateDemand>0 ? `Gate (${computed.gateDemand})` : "Gate (LOCKED)";
-    if(n.id==="genA") label="Gen A";
-    if(n.id==="genB") label="Gen B";
-    if(n.id==="aux") label="Aux";
-    if(n.id==="life") label="Life Support";
-    if(n.id==="harv"){
-      const pct=Math.round(computed.harvEff*100);
-      label = computed.harvPowered ? `Food Harvester (${pct}%)` : "Food Harvester (OFF)";
+  const drawPort=(n,pi,stats)=>{
+    const k=portKey(n.id,pi);
+    const used=isPortUsed(k);
+    const pos=portScreenPos(n,pi);
+    const isActive=activePort===k;
+    let isValid=false;
+    if(activePort && activePort!==k) isValid=canConnect(activePort,k);
+    const rad=9;
+    ctx.save();
+    ctx.lineWidth=2.2;
+    let ring="rgba(255,255,255,.20)";
+    if(used) ring="rgba(255,255,255,.10)";
+    if(isValid) ring="rgba(52,211,153,.90)";
+    if(isActive) ring="rgba(96,165,250,.95)";
+    ctx.strokeStyle=ring;
+    ctx.fillStyle=used?"rgba(0,0,0,.40)":"rgba(0,0,0,.25)";
+    ctx.beginPath(); ctx.arc(pos.x,pos.y,rad,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    if(isValid){
+      ctx.shadowColor="rgba(52,211,153,.55)"; ctx.shadowBlur=18;
+      ctx.strokeStyle="rgba(52,211,153,1)";
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,rad+1.5,0,Math.PI*2); ctx.stroke();
     }
+    if(isActive){
+      ctx.shadowColor="rgba(96,165,250,.55)"; ctx.shadowBlur=18;
+      ctx.strokeStyle="rgba(96,165,250,1)";
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,rad+1.5,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+  };
 
-    const tw=ctx.measureText(label).width;
-    roundRect(ctx, n.x - tw/2 - 8, n.y + 26, tw + 16, 20, 8);
+  const cableColor=(stats)=>{
+    if(!stats.systemOnline) return "rgba(148,163,184,.35)";
+    if(stats.stability>=80) return "rgba(52,211,153,.95)";
+    if(stats.stability>=55) return "rgba(251,191,36,.95)";
+    return "rgba(239,68,68,.95)";
+  };
+
+  const drawCable=(aKey,bKey,stats)=>{
+    const a=parsePortKey(aKey), b=parsePortKey(bKey);
+    const an=nodeById[a.nid], bn=nodeById[b.nid];
+    if(!an||!bn) return;
+    const p1=portScreenPos(an,a.pi), p2=portScreenPos(bn,b.pi);
+    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2 - 18;
+    ctx.save();
+    const col=cableColor(stats);
+    ctx.lineWidth=6; ctx.lineCap="round"; ctx.strokeStyle=col;
+    ctx.shadowColor=col; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(mx,my,p2.x,p2.y); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.lineWidth=2.5; ctx.strokeStyle="rgba(255,255,255,.14)";
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(mx,my,p2.x,p2.y); ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawNode=(n,stats)=>{
+    const r=getNodeRect(n);
+    ctx.save();
+    ctx.fillStyle="rgba(0,0,0,.35)";
+    ctx.beginPath();
+    ctx.ellipse(r.cx, r.cy + r.h/2 + 18, r.w*0.32, 14, 0, 0, Math.PI*2);
     ctx.fill();
+    ctx.restore();
 
-    ctx.fillStyle="rgba(210,220,230,0.92)";
-    ctx.fillText(label, n.x - tw/2, n.y + 40);
+    drawIsoBlock(r.cx,r.cy,r.w,r.h,r.height,nodeTint(n.type));
 
-    // heat icon for relay targets
-    if(n.kind==="relay" && state.heat.active && nowMs < state.heat.untilMs && state.heat.target===n.id){
-      ctx.fillStyle="rgba(244,208,63,0.9)";
-      ctx.beginPath(); ctx.arc(n.x+24,n.y-14,6,0,Math.PI*2); ctx.fill();
-    }
-  }
+    ctx.save();
+    ctx.font="700 13px ui-sans-serif, system-ui";
+    ctx.fillStyle="rgba(215,222,232,.92)";
+    ctx.textAlign="center";
+    ctx.fillText(n.name, r.cx, r.cy - r.height + r.h + 18);
+    ctx.font="12px ui-monospace, Menlo, Consolas, monospace";
+    ctx.fillStyle="rgba(142,160,182,.95)";
+    if(n.type==='gen') ctx.fillText(`Supply: ${n.supply}`, r.cx, r.cy - r.height + r.h + 35);
+    else if(n.type==='relay') ctx.fillText(`Capacity: ${n.cap}`, r.cx, r.cy - r.height + r.h + 35);
+    else if(n.type==='life') ctx.fillText(`Demand: ${n.demand}`, r.cx, r.cy - r.height + r.h + 35);
+    else if(n.type==='harv'){
+      const req=Math.round(stats.throttle*100);
+      const load=(stats.systemOnline && stats.harvPowered)?Math.round(n.baseDemand*stats.effectiveThrottle):0;
+      ctx.fillText(`Load: ${load} / ${n.baseDemand}  (Req ${req}%)`, r.cx, r.cy - r.height + r.h + 35);
+    } else if(n.type==='aux') ctx.fillText("Aux-link", r.cx, r.cy - r.height + r.h + 35);
+    else if(n.type==='gate') ctx.fillText("INACTIVE", r.cx, r.cy - r.height + r.h + 35);
+    ctx.restore();
 
-  // ---------- UI & projection ----------
-  function colorForPct(p){
-    const good=getComputedStyle(document.documentElement).getPropertyValue('--good').trim();
-    const warn=getComputedStyle(document.documentElement).getPropertyValue('--warn').trim();
-    const bad =getComputedStyle(document.documentElement).getPropertyValue('--bad').trim();
-    if(p>=82) return good;
-    if(p>=62) return warn;
-    return bad;
-  }
+    for(let i=0;i<n.ports;i++) drawPort(n,i,stats);
+  };
 
-  function updateUI(computed){
-    // translate reserve units into "hours" using CURRENT rates
-    const powerDemand = Math.max(1, computed.servedDemand);
-    const powerReserveHours = state.powerReserveUnits / powerDemand;
-    const netPowerHoursPerHr = (computed.supply - computed.servedDemand) / powerDemand;
+  const draw=()=>{
+    const r=canvas.getBoundingClientRect();
+    ctx.save();
+    ctx.fillStyle="#0b0f14";
+    ctx.fillRect(0,0,r.width,r.height);
 
-    // food: hours relative to consumption rate
-    const lifePowered = computed.served.get("life")?.served ?? false;
-    const foodConsumePerHr = lifePowered ? 26 : 18;
-    const foodReserveHours = state.foodReserveUnits / Math.max(1, foodConsumePerHr);
-    const netFoodHoursPerHr = (computed.harvFoodOutPerHr - foodConsumePerHr) / Math.max(1, foodConsumePerHr);
+    const vg=ctx.createRadialGradient(r.width*0.45,r.height*0.45,80,r.width*0.55,r.height*0.55,Math.max(r.width,r.height));
+    vg.addColorStop(0,"rgba(255,255,255,.03)");
+    vg.addColorStop(1,"rgba(0,0,0,.35)");
+    ctx.fillStyle=vg; ctx.fillRect(0,0,r.width,r.height);
 
-    document.getElementById('powerReserve').innerHTML =
-      `${(powerReserveHours>=0?"+":"")}${powerReserveHours.toFixed(1)} hr <small>(${(netPowerHoursPerHr>=0?"+":"")}${netPowerHoursPerHr.toFixed(1)} net/hr)</small>`;
+    drawGrid(r.width,r.height);
 
-    document.getElementById('foodReserve').innerHTML =
-      `${(foodReserveHours>=0?"+":"")}${foodReserveHours.toFixed(1)} hr <small>(${(netFoodHoursPerHr>=0?"+":"")}${netFoodHoursPerHr.toFixed(1)} net/hr)</small>`;
+    const stats=computeStats();
 
-    const habPct=Math.round(state.habitability*100);
-    const stabPct=Math.round(state.stability*100);
+    for(const c of cables) drawCable(c.a,c.b,stats);
 
-    const habEl=document.getElementById('habitPct');
-    habEl.textContent=`${habPct}%`;
-    habEl.style.color=colorForPct(habPct);
-
-    const stabEl=document.getElementById('stabilityPct');
-    stabEl.textContent=`${stabPct}%`;
-    stabEl.style.color=colorForPct(stabPct);
-
-    const noticeEl=document.getElementById('noticePill');
-    noticeEl.textContent=state.notice;
-    noticeEl.style.color =
-      (state.notice.includes("CRITICAL")||state.notice.includes("WARNING"))
-      ? getComputedStyle(document.documentElement).getPropertyValue('--bad').trim()
-      : getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
-
-    // objective tags
-    const H=state.heat;
-    const prog = `${H.progress}/3`;
-    const heatTag=document.getElementById('tagHeat');
-    if(H.active){
-      const secs=Math.max(0, Math.round((H.untilMs-Date.now())/1000));
-      heatTag.innerHTML = `Heat: <span class="warn">ACTIVE</span> <span class="muted">(${secs}s)</span> <span class="muted">${prog}</span>`;
-    } else {
-      const secs=Math.max(0, Math.round((H.nextMs-Date.now())/1000));
-      heatTag.innerHTML = `Heat: <span class="muted">${secs}s</span> <span class="muted">${prog}</span>`;
-    }
-
-    const obj=document.getElementById('tagObjective');
-    obj.innerHTML = H.completed
-      ? `Objective: <span class="good">Complete</span>`
-      : `Objective: <span class="muted">Survive 3 heat events</span>`;
-
-    // hover
-    const tagHover=document.getElementById('tagHover');
-    if(state.hover?.kind==="node"){
-      const n=getNode(state.hover.nodeId);
-      tagHover.innerHTML=`Hover: <span class="muted">${n.name}</span>`;
-    } else if(state.hover?.kind==="port"){
-      tagHover.innerHTML=`Hover: <span class="muted">${state.hover.text}</span>`;
-    } else {
-      tagHover.innerHTML=`Hover: <span class="muted">None</span>`;
-    }
-
-    // mode
-    const tagMode=document.getElementById('tagMode');
-    if(state.dragging) tagMode.innerHTML=`Mode: <span class="cold">Dragging</span>`;
-    else if(state.tapPick) tagMode.innerHTML=`Mode: <span class="cold">Tap Routing</span>`;
-    else tagMode.innerHTML=`Mode: <span class="muted">Idle</span>`;
-  }
-
-  function projectMinutes(mins){
-    const nowMs=Date.now();
-    const sim={
-      powerReserveUnits:state.powerReserveUnits,
-      foodReserveUnits:state.foodReserveUnits,
-      stability:state.stability,
-      habitability:state.habitability
-    };
-    const steps=Math.max(1,Math.floor((mins*60)/6));
-    const dt=(mins*60)/steps;
-
-    // simulate forward without triggering NEW heat starts; but active heat still affects capacities (uses real state.heat data)
-    for(let i=0;i<steps;i++){
-      const tMs = nowMs + (i*dt*1000);
-      const r=computeFor(sim, links, tMs);
-
-      const netPowerUnitsPerHr = r.supply - r.servedDemand;
-      sim.powerReserveUnits = clamp(sim.powerReserveUnits + (netPowerUnitsPerHr/3600)*dt, -160, 320);
-
-      const lifePowered = r.served.get("life")?.served ?? false;
-      const foodConsumePerHr = lifePowered ? 26 : 18;
-      const netFoodUnitsPerHr = r.harvFoodOutPerHr - foodConsumePerHr;
-      sim.foodReserveUnits = clamp(sim.foodReserveUnits + (netFoodUnitsPerHr/3600)*dt, -200, 420);
-
-      let hab = sim.habitability;
-      if(sim.foodReserveUnits < -20) hab -= 0.010*(dt/60);
-      else if(sim.foodReserveUnits < 10) hab -= 0.004*(dt/60);
-      else if(sim.foodReserveUnits > 40) hab += 0.003*(dt/60);
-      else hab += 0.001*(dt/60);
-      if(r.relayAOver || r.relayBOver) hab -= 0.0025*(dt/60);
-      if((r.supply - r.servedDemand) < 0) hab -= 0.003*(dt/60);
-      if(!lifePowered) hab -= 0.020*(dt/60);
-      sim.habitability = clamp(hab, 0.05, 0.99);
-
-      let stab = sim.stability;
-      const deficit = (r.supply - r.servedDemand) < 0;
-
-      const habRecoveryFactor = clamp(0.55 + 0.55*sim.habitability, 0.45, 1.05);
-      const habDegradeFactor  = clamp(1.05 - 0.65*sim.habitability, 0.55, 1.05);
-
-      if(!lifePowered) stab -= 0.020*(dt/60);
-      if(r.relayAOver || r.relayBOver) stab -= 0.010*(dt/60)*habDegradeFactor;
-      if(deficit) stab -= 0.006*(dt/60)*habDegradeFactor;
-      if(!deficit && !r.relayAOver && !r.relayBOver && lifePowered && sim.powerReserveUnits>10){
-        stab += 0.004*(dt/60)*habRecoveryFactor;
+    if(activePort){
+      const ap=parsePortKey(activePort);
+      const an=nodeById[ap.nid];
+      if(an){
+        const p1=portScreenPos(an,ap.pi);
+        ctx.save();
+        ctx.lineWidth=3.5; ctx.setLineDash([6,6]);
+        ctx.strokeStyle="rgba(96,165,250,.65)";
+        ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(pointer.x,pointer.y); ctx.stroke();
+        ctx.restore();
       }
-      if(r.gateDemand>0) stab -= 0.004*(dt/60)*habDegradeFactor;
-
-      sim.stability = clamp(stab, 0.05, 0.99);
     }
 
-    // Convert to hours for display
-    const baseNow=computeFor({stability:state.stability, habitability:state.habitability}, links, nowMs);
-    const powerDemand=Math.max(1, baseNow.servedDemand);
-    const lifePowered = baseNow.served.get("life")?.served ?? false;
-    const foodConsumePerHr = lifePowered ? 26 : 18;
+    [...NODES].sort((a,b)=>nodeSortKey(a)-nodeSortKey(b)).forEach(n=>drawNode(n,stats));
 
-    return {
-      pHours: (sim.powerReserveUnits / powerDemand),
-      fHours: (sim.foodReserveUnits / Math.max(1, foodConsumePerHr)),
-      hab: Math.round(sim.habitability*100),
-      stab: Math.round(sim.stability*100)
-    };
-  }
+    ctx.save();
+    ctx.font="900 16px ui-sans-serif, system-ui";
+    ctx.textAlign="right";
+    ctx.fillStyle=stats.systemOnline?"rgba(52,211,153,.95)":"rgba(239,68,68,.92)";
+    ctx.fillText(stats.systemOnline?"SYSTEM ONLINE":"SYSTEM OFFLINE", r.width-18, 34);
+    ctx.restore();
 
-  function updateProjectionLine(){
-    const p15=projectMinutes(15), p30=projectMinutes(30), p60=projectMinutes(60);
-    const fmt=(p)=>`${(p.pHours>=0?"+":"")}${p.pHours.toFixed(1)}p ${ (p.fHours>=0?"+":"")}${p.fHours.toFixed(1)}f ${p.hab}%h ${p.stab}%s`;
-    document.getElementById('projLine').textContent =
-      `Projection: 15m ${fmt(p15)} · 30m ${fmt(p30)} · 60m ${fmt(p60)}`;
-  }
+    ctx.restore();
+  };
 
-  // ---------- init/loop ----------
-  function saveNow(){ state.tLast=Date.now(); save(); }
+  const canvasToLocal=(ev)=>{
+    const r=canvas.getBoundingClientRect();
+    return {x:ev.clientX-r.left, y:ev.clientY-r.top};
+  };
 
-  load();
-  applyOfflineProgress();
-  save();
-
-  let lastFrame=performance.now();
-  let lastProj=0;
-
-  function frame(t){
-    const now=performance.now();
-    const dt=clamp((now-lastFrame)/1000,0,0.05);
-    lastFrame=now;
-
-    const computed=tick(dt);
-
-    drawGrid();
-    drawLinks(computed,t);
-
-    const nowMs=Date.now();
-    const colors=nodeColors(computed,nowMs);
-    for(const n of nodes) drawNode(n, computed, colors, t, nowMs);
-
-    if(state.dragging){
-      ctx.fillStyle="rgba(244,208,63,0.55)";
-      ctx.beginPath(); ctx.arc(state.dragging.x,state.dragging.y,9,0,Math.PI*2); ctx.fill();
+  const allPorts=()=>{
+    const out=[];
+    for(const n of NODES){
+      for(let i=0;i<n.ports;i++){
+        const pos=portScreenPos(n,i);
+        out.push({k:portKey(n.id,i), x:pos.x, y:pos.y});
+      }
     }
-
-    updateUI(computed);
-
-    if(t-lastProj>2500){ updateProjectionLine(); lastProj=t; }
-    if(Math.floor(t/2000)!==Math.floor((t-dt*1000)/2000)) saveNow();
-
-    requestAnimationFrame(frame);
-  }
-
-  updateProjectionLine();
-  requestAnimationFrame(frame);
-
-  document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==="hidden"){
-      saveNow();
-    } else {
-      load();
-      applyOfflineProgress();
-      updateProjectionLine();
-      save();
+    return out;
+  };
+  const hitPort=(x,y)=>{
+    let best=null, bestD=1e9;
+    for(const p of allPorts()){
+      const dx=p.x-x, dy=p.y-y;
+      const d=Math.hypot(dx,dy);
+      if(d<16 && d<bestD){ best=p; bestD=d; }
     }
+    return best;
+  };
+
+  const connect=(a,b)=>{
+    cables.push({a,b});
+    pushLog(`Cable connected: ${a} -> ${b}`);
+  };
+
+  const reset=()=>{
+    cables=[]; activePort=null; rationsStored=0.0;
+    pushLog("System reset: all routing cleared.");
+  };
+
+  canvas.addEventListener("mousemove",(ev)=>{
+    const p=canvasToLocal(ev);
+    pointer.x=p.x; pointer.y=p.y;
   });
+
+  canvas.addEventListener("click",(ev)=>{
+    const p=canvasToLocal(ev);
+    pointer.x=p.x; pointer.y=p.y;
+    const hit=hitPort(p.x,p.y);
+    if(!hit){
+      if(activePort){ activePort=null; pushLog("Routing selection cleared."); }
+      return;
+    }
+    if(isPortUsed(hit.k)){
+      // Disconnect QoL: click an occupied port (when not actively routing) to remove its cable.
+      // This keeps iteration fast and prevents "permanent" mistakes.
+      if(!activePort){
+        const before = cables.length;
+        cables = cables.filter(c => !(c.a===hit.k || c.b===hit.k));
+        const removed = before - cables.length;
+        if(removed>0) pushLog(`Cable removed from: ${hit.k}`);
+        return;
+      }
+      // If currently routing, keep selection; occupied ports cannot accept new connections.
+      pushLog("Port is occupied.");
+      return;
+    }
+
+    if(!activePort){
+      activePort=hit.k; pushLog(`Selected port: ${hit.k}`); return;
+    }
+    if(activePort===hit.k){ activePort=null; pushLog("Selection cancelled."); return; }
+    if(canConnect(activePort, hit.k)){ connect(activePort, hit.k); activePort=null; return; }
+
+    activePort=hit.k; pushLog(`Selected port: ${hit.k}`);
+  });
+
+  $("resetBtn").addEventListener("click", reset);
+
+  // Help re-opens splash anytime
+  const helpBtn = $("helpBtn");
+  if(helpBtn){ helpBtn.addEventListener("click", ()=>{ splash.style.display="flex"; }); }
+
+  $("helpBtn").addEventListener("click", ()=>openSplash());
+
+  const setBadge=(kind,text)=>{
+    const b=$("systemBadge");
+    b.classList.remove("ok","bad","warn");
+    if(kind==="ok") b.classList.add("ok");
+    if(kind==="bad") b.classList.add("bad");
+    if(kind==="warn") b.classList.add("warn");
+    b.textContent=text;
+  };
+
+  const fmt=(n,d=1)=>{
+    const s=(Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d);
+    return (n>=0?"+":"")+s;
+  };
+
+  const renderHUD=(s)=>{
+    $("throttlePct").textContent=`${Math.round(s.throttle*100)}%`;
+    $("reqPct").textContent=`${Math.round(s.throttle*100)}%`;
+    $("effPct").textContent=`${Math.round(s.effectiveThrottle*100)}%`;
+
+    $("powerReserve").textContent=`${fmt(s.powerReserveHr,1)} hr`;
+    $("powerNet").textContent=`(${fmt(s.powerNetPerHr,2)} net/hr)`;
+    $("foodReserve").textContent=`${fmt(s.foodReserveHr,1)} hr`;
+    $("foodNet").textContent=`(${fmt(s.foodNetPerHr,2)} net/hr)`;
+
+    $("habit").textContent=`${Math.round(s.habit)}%`;
+    $("stability").textContent=`${Math.round(s.stability)}%`;
+    $("notice").textContent=s.notice;
+
+    // Extra precision makes the "stopwatch" feel, especially at low throttle.
+    $("rations").textContent=rationsStored.toFixed(4);
+    $("harvRate").textContent=`+${s.harvRate.toFixed(3)} / min`;
+
+    if(s.systemOnline){
+      $("systemTitle").textContent="System Healthy";
+      setBadge("ok","ONLINE");
+      $("stateLine").textContent="SYSTEM ONLINE";
+      $("lifeLine").textContent="ONLINE";
+    } else {
+      $("systemTitle").textContent="System Critical";
+      setBadge("bad","OFFLINE");
+      $("stateLine").textContent="SYSTEM OFFLINE";
+      $("lifeLine").textContent="OFFLINE";
+    }
+
+    if(s.systemOnline && s.harvPowered && s.effectiveThrottle>0){
+      $("harvLine").textContent = (s.effectiveThrottle < s.throttle) ? `THROTTLED (${Math.round(s.effectiveThrottle*100)}%)` : "ONLINE";
+    } else {
+      $("harvLine").textContent="OFFLINE";
+    }
+  };
+
+  let lastT=performance.now();
+  const tick=(t)=>{
+    const dt=(t-lastT)/1000; lastT=t;
+    const s=computeStats();
+    if(s.systemOnline && s.harvPowered && s.harvRate>0){
+      rationsStored += (s.harvRate/60)*dt;
+    }
+    renderHUD(s);
+    draw();
+    requestAnimationFrame(tick);
+  };
+
+  const splash=$("splash");
+  const KEY="zone13_iso_splash_seen_v0_5";
+  const showSplash=()=>{ splash.style.display="flex"; };
+  const hideSplash=()=>{ splash.style.display="none"; try{localStorage.setItem(KEY,"1");}catch(e){} };
+  $("hideSplash").addEventListener("click", hideSplash);
+  window.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape" && splash.style.display==="flex") hideSplash(); });
+
+  const init=()=>{
+    resize();
+    pushLog("Boot sequence loaded. Awaiting routing input…");
+    pushLog("Tip: Click a port, then click a glowing target port.");
+    try{ if(localStorage.getItem(KEY)!=="1") showSplash(); }catch(e){ showSplash(); }
+    requestAnimationFrame(tick);
+  };
+  init();
 })();
 </script>
 </body>
