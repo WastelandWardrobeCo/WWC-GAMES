@@ -597,6 +597,18 @@
   .shake{ animation: shake .22s linear 2; }
   @keyframes shake{
     0%{ transform: translate(0,0); }
+
+  /* Bonus rumble: a heavier cabinet vibration */
+  .rumble { animation: rumble 120ms infinite linear; }
+  @keyframes rumble{
+    0%{ transform: translate(0,0) rotate(0deg); filter: saturate(1.02) contrast(1.02); }
+    20%{ transform: translate(1px,-1px) rotate(-0.3deg); }
+    40%{ transform: translate(-1px,1px) rotate(0.3deg); }
+    60%{ transform: translate(1px,1px) rotate(-0.2deg); }
+    80%{ transform: translate(-1px,-1px) rotate(0.2deg); }
+    100%{ transform: translate(0,0) rotate(0deg); }
+  }
+
     25%{ transform: translate(2px,-1px); }
     50%{ transform: translate(-2px,1px); }
     75%{ transform: translate(2px,1px); }
@@ -794,6 +806,86 @@
   .glitchBurst{ animation: soGlitch .55s ease-out; }
   @keyframes soFlicker { 0%,100%{opacity:1} 50%{opacity:.78} }
   .marqueeFlicker{ animation: soFlicker .35s ease-in-out 2; }
+
+  /* === SALVAGED CABINET SKIN === */
+  :root{
+    --rust1:#5b3a28;
+    --rust2:#8a4b2e;
+    --grime: rgba(20,14,10,.35);
+    --flicker: rgba(255,210,120,.12);
+  }
+  body.salvaged{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(120,80,40,.25), transparent 60%),
+      linear-gradient(180deg, #0b0a09, #0a0908 40%, #070605);
+  }
+
+  body.salvaged{
+    --cab: #15110e;
+    --cab2:#0f0c0a;
+    --glass: rgba(18,14,10,.55);
+  }
+  body.salvaged .cabinet, 
+  body.salvaged .machineGrid{
+    filter: saturate(0.82) contrast(1.08);
+  }
+  body.salvaged .cabinet,
+  body.salvaged .machineGrid{
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.06) inset,
+      0 40px 120px rgba(0,0,0,.75),
+      0 0 40px rgba(140,80,40,.25);
+  }
+  body.salvaged .cabinet::before,
+  body.salvaged .machineGrid::before{
+    content:"";
+    position:absolute; inset:-10px;
+    border-radius: 24px;
+    background:
+      radial-gradient(120px 80px at 12% 18%, rgba(255,120,60,.18), transparent 60%),
+      radial-gradient(160px 120px at 78% 22%, rgba(140,90,40,.22), transparent 60%),
+      radial-gradient(180px 140px at 30% 70%, rgba(90,60,30,.28), transparent 60%),
+      repeating-linear-gradient(115deg, rgba(0,0,0,.08) 0 2px, rgba(255,255,255,.02) 2px 4px);
+    filter: blur(.2px);
+    pointer-events:none;
+  }
+  body.salvaged .screen{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.25)),
+      radial-gradient(140% 90% at 50% -10%, rgba(255,200,120,.08), transparent 60%);
+  }
+  body.salvaged .screen::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(0deg, rgba(0,0,0,.18), rgba(0,0,0,.18)),
+      radial-gradient(80% 40% at 50% 0%, rgba(255,255,255,.08), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px);
+    mix-blend-mode: overlay;
+    pointer-events:none;
+  }
+  body.salvaged .reel{
+    filter: contrast(1.05) saturate(.9);
+  }
+  body.salvaged .marquee{
+    text-shadow: 0 0 8px rgba(255,180,90,.45);
+  }
+  body.salvaged .statusPill{
+    background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.35));
+  }
+  /* subtle flicker on idle */
+  body.salvaged.idle .screen{
+    animation: salvagedFlicker 2.8s infinite steps(1,end);
+  }
+  @keyframes salvagedFlicker{
+    0%{ filter:none; }
+    92%{ filter:none; }
+    94%{ filter: brightness(.95); }
+    96%{ filter: brightness(1.05); }
+    100%{ filter:none; }
+  }
+
 </style>
 </head>
 <body>
@@ -952,6 +1044,50 @@
     return (seed >>> 0) / 4294967296;
   }
   const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+  // === CABINET SKINS ===
+  // Default to the post‑apocalyptic cabinet unless explicitly overridden.
+  let skin = "salvaged";
+
+  function applySkin(name, persist=true){
+    skin = name;
+    document.body.classList.toggle("salvaged", name === "salvaged");
+    if(persist){
+      try{ localStorage.setItem("so_skin", name); }catch(e){}
+    }
+  }
+
+  function initSkin(){
+    const q = new URLSearchParams(location.search);
+    // URL can override:
+    //   ?skin=standard  (or ?skin=salvaged)
+    //   ?standard (legacy convenience)
+    const urlSkin = (q.get("skin") || "").toLowerCase();
+    const legacyStandard = q.has("standard");
+    let desired = "salvaged";
+
+    if(urlSkin === "standard" || urlSkin === "salvaged"){
+      desired = urlSkin;
+    } else if(legacyStandard){
+      desired = "standard";
+    } else {
+      try{
+        const saved = (localStorage.getItem("so_skin") || "").toLowerCase();
+        if(saved === "standard" || saved === "salvaged") desired = saved;
+      }catch(e){}
+    }
+    applySkin(desired, false);
+  }
+
+  // Shift+S toggles skins
+  window.addEventListener("keydown",(e)=>{
+    if(e.shiftKey && e.key.toLowerCase()==="s"){
+      applySkin(skin==="salvaged" ? "standard" : "salvaged");
+      toast(`Skin: ${skin==="salvaged" ? "Salvaged" : "Standard"}`);
+    }
+  });
+
+
 
 
   // Weighted symbol list (kept internal)
@@ -1141,6 +1277,7 @@
 
   // ===== UI refs =====
   const cabinet = document.getElementById("cabinet");
+  const marquee = document.getElementById("marquee") || document.querySelector(".marquee") || document.querySelector("[data-marquee]") || { classList:{add(){},remove(){}}, offsetWidth:0 };
   const screen = document.getElementById("screen");
   const winline = document.getElementById("winline");
   const balPill = document.getElementById("balPill");
@@ -1510,6 +1647,7 @@
   function bonusFlow(base){
     return new Promise(resolve=>{
       bonusResolve = resolve;
+      rumbleCabinet(1200);
       openBonus(base);
     });
   }
@@ -1553,6 +1691,14 @@ function prettyKey(k){
   function glitchCabinet(){
     cabinet.classList.remove("glitchBurst"); void cabinet.offsetWidth; cabinet.classList.add("glitchBurst");
     marquee.classList.remove("marqueeFlicker"); void marquee.offsetWidth; marquee.classList.add("marqueeFlicker");
+  }
+
+  function rumbleCabinet(ms=900){
+    try{
+      const card = document.querySelector(".machineCard") || document.querySelector(".machineWrap") || document.querySelector(".machineGrid") || document.body;
+      card.classList.add("rumble");
+      setTimeout(()=>card.classList.remove("rumble"), ms);
+    }catch(e){}
   }
   function personalityPing(msg){
     // Rare little cabinet mood swings on big wins
@@ -1742,7 +1888,23 @@ async function spin(){
   lever.addEventListener("pointerup", onUp);
   lever.addEventListener("pointercancel", onUp);
 
-  reset();
+  
+  // === IDLE STATE FOR SKIN EFFECTS ===
+  let _idleT=null;
+  function markActivity(){
+    document.body.classList.remove("idle");
+    clearTimeout(_idleT);
+    _idleT = setTimeout(()=>document.body.classList.add("idle"), 12000);
+  }
+  ["mousemove","mousedown","keydown","touchstart"].forEach(ev=>{
+    window.addEventListener(ev, markActivity, {passive:true});
+  });
+  markActivity();
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initSkin();
+    reset();
+  });
 })();
 </script>
 
