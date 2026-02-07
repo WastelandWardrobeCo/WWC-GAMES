@@ -766,6 +766,34 @@
     100%{ box-shadow: 0 0 0 rgba(54,247,255,0); }
   }
 
+
+  /* Bonus variant: Overload meter */
+  .overloadMeter{ width:100%; padding:14px 14px 10px; border-radius:14px;
+    background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08);
+    box-shadow: inset 0 1px 10px rgba(0,0,0,.45);
+  }
+  .overloadTrack{ position:relative; height:18px; border-radius:999px;
+    background: rgba(255,255,255,.06); overflow:hidden; border:1px solid rgba(255,255,255,.10);
+  }
+  .overloadSafe{ position:absolute; left:40%; width:20%; top:0; bottom:0;
+    background: linear-gradient(90deg, rgba(140,255,220,.10), rgba(140,255,220,.40), rgba(140,255,220,.10));
+    filter: drop-shadow(0 0 10px rgba(140,255,220,.35));
+  }
+  .overloadNeedle{ position:absolute; top:-6px; width:10px; height:30px; left:50%;
+    transform: translateX(-50%); border-radius:999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.35));
+    box-shadow: 0 0 14px rgba(200,240,255,.35);
+  }
+  .overloadHint{ margin-top:10px; font-size:12px; opacity:.78; text-align:center; }
+  .overloadReadout{ font-size:12px; opacity:.85; text-align:center; margin-top:2px; }
+  @keyframes overloadPulse{ 0%{transform:scale(1)} 35%{transform:scale(1.01)} 100%{transform:scale(1)} }
+  .overloadPulse{ animation: overloadPulse .25s ease-out; }
+
+  /* Cabinet personality */
+  @keyframes soGlitch { 0%{filter:none} 20%{filter: hue-rotate(25deg) saturate(1.25)} 40%{filter: contrast(1.15) saturate(1.4)} 60%{filter: hue-rotate(-20deg) saturate(1.2)} 100%{filter:none} }
+  .glitchBurst{ animation: soGlitch .55s ease-out; }
+  @keyframes soFlicker { 0%,100%{opacity:1} 50%{opacity:.78} }
+  .marqueeFlicker{ animation: soFlicker .35s ease-in-out 2; }
 </style>
 </head>
 <body>
@@ -1198,13 +1226,14 @@
   let balance=100;
   let bet=5;
   let lastWin=0;
+  let drySpins=0; // invisible streak counter
   let spinning=false;
 
   // ===== SAVE SYSTEM (LOCAL STORAGE) =====
   const SAVE_KEY = "systema_obscura_slot_save_v1";
   function saveGame(){
     try{
-      const payload = { balance, bet, lastWin, t: Date.now() };
+      const payload = { balance, bet, lastWin, drySpins, t: Date.now() };
       localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
     }catch(e){}
   }
@@ -1216,6 +1245,7 @@
       if(typeof s.balance === "number") balance = s.balance;
       if(typeof s.bet === "number") bet = s.bet;
       if(typeof s.lastWin === "number") lastWin = s.lastWin;
+      if(typeof s.drySpins === "number") drySpins = Math.max(0, Math.floor(s.drySpins));
       bet = Math.max(1, bet);
       return true;
     }catch(e){ return false; }
@@ -1279,7 +1309,22 @@
     if(res.kind === "TRIPLE") p = (res.mult >= 12) ? 0.35 : 0.22;
     else if(res.kind === "PAIR") p = 0.12;
     else p = 0;
-    return Math.random() < p;
+
+    // Invisible streak logic: slightly increases bonus chance after long dry spells.
+    // No UI indicator. Resets on meaningful wins.
+    const boost = Math.min(0.10, drySpins * 0.006); // caps at +10%
+    return Math.random() < (p + boost);
+  }
+
+  
+  // ===== BONUS VARIANTS =====
+  let bonusType = "scan";
+
+  function pickBonusType(){
+    // Same trigger, different games. Slightly favors Scan, occasionally surprises.
+    const types = ["scan","overload","surge"];
+    const w = [60,25,15];
+    return weightedPick(types, w);
   }
 
   function openBonus(base){
@@ -1290,14 +1335,22 @@
     bonusPicks = 0;
     bonusTotal = 0;
 
+    bonusType = pickBonusType();
     bonusOverlay.classList.remove("hidden");
     bonusOverlay.setAttribute("aria-hidden","false");
     bonusCollect.disabled = true;
+
+    if (bonusType === "overload") return openBonusOverload(base);
+    if (bonusType === "surge") return openBonusSurge(base);
+    return openBonusScan(base);
+  }
+
+  function openBonusScan(base){
     bonusText.textContent = "Calibration window open. Select 3 signals.";
     bonusRadarImg.innerHTML = iconHTML("radar");
 
     bonusGrid.innerHTML = "";
-    // Rewards: always pays something (no EMPTY picks)
+    // Rewards: always pays something
     const values = [base, base*2, base*3, base*5, base*8, base*12];
     const weights = [35, 25, 18, 12, 7, 3];
 
@@ -1314,8 +1367,7 @@
         bonusTotal += reward;
         tone(880, 0.06, "triangle", 0.06);
         tone(1320, 0.05, "sine", 0.05);
-if(bonusPicks>=3){
-          // lock remaining cells visually
+        if(bonusPicks>=3){
           Array.from(bonusGrid.children).forEach(c=>{
             if(!c.classList.contains("revealed")) c.style.opacity = ".55";
           });
@@ -1327,6 +1379,126 @@ if(bonusPicks>=3){
       });
       bonusGrid.appendChild(btn);
     }
+  }
+
+  function openBonusSurge(base){
+    bonusText.textContent = "JACKPOT SURGE detected. Select 3 charge cells.";
+    bonusRadarImg.innerHTML = iconHTML("purple");
+
+    bonusGrid.innerHTML = "";
+    const mults = [2,3,5,8,12];
+    const weights = [30, 26, 22, 14, 8];
+
+    for(let i=0;i<6;i++){
+      const m = weightedPick(mults, weights);
+      const reward = base * m;
+      const btn = document.createElement("button");
+      btn.className = "bonusCell bonusPop";
+      btn.innerHTML = `<span class="tinyIcon">⬣</span><span class="amt">SURGE</span>`;
+      btn.addEventListener("click", () => {
+        if(btn.classList.contains("revealed") || bonusPicks>=3) return;
+        btn.classList.add("revealed");
+        btn.innerHTML = `<span class="tinyIcon">✦</span><span class="amt">x${m} • ${money(reward)}</span>`;
+        bonusPicks++;
+        bonusTotal += reward;
+        tone(660, 0.07, "sine", 0.06);
+        tone(990, 0.05, "triangle", 0.05);
+        if(bonusPicks>=3){
+          Array.from(bonusGrid.children).forEach(c=>{
+            if(!c.classList.contains("revealed")) c.style.opacity = ".55";
+          });
+          bonusCollect.disabled = false;
+          bonusText.textContent = `Surge stabilized. Bonus accrued: ${money(bonusTotal)}`;
+        }else{
+          bonusText.textContent = `Select ${3-bonusPicks} more cell${(3-bonusPicks)===1?"":"s"}.`;
+        }
+      });
+      bonusGrid.appendChild(btn);
+    }
+  }
+
+  function openBonusOverload(base){
+    bonusText.textContent = "OVERLOAD event. Stabilize the core 3 times.";
+    bonusRadarImg.innerHTML = iconHTML("core");
+
+    bonusGrid.innerHTML = "";
+    const wrap = document.createElement("div");
+    wrap.style.width = "100%";
+    wrap.style.display = "grid";
+    wrap.style.gridTemplateColumns = "1fr";
+    wrap.style.gap = "10px";
+
+    const meter = document.createElement("div");
+    meter.className = "overloadMeter";
+    meter.innerHTML = `<div class="overloadTrack"><div class="overloadSafe"></div><div class="overloadNeedle"></div></div>
+      <div class="overloadHint">Click STABILIZE when the needle is in the bright band.</div>`;
+
+    const btn = document.createElement("button");
+    btn.className = "collectBtn";
+    btn.style.justifySelf = "center";
+    btn.style.width = "220px";
+    btn.textContent = "STABILIZE";
+
+    const readout = document.createElement("div");
+    readout.className = "overloadReadout";
+    readout.textContent = "Stabilizations: 0 / 3";
+
+    wrap.appendChild(meter);
+    wrap.appendChild(btn);
+    wrap.appendChild(readout);
+    bonusGrid.appendChild(wrap);
+
+    const needle = meter.querySelector(".overloadNeedle");
+    let phase = Math.random();
+    let dir = Math.random() < 0.5 ? -1 : 1;
+    let rounds = 0;
+    let raf = null;
+    let last = performance.now();
+
+    function loop(now){
+      const dt = Math.min(32, now - last);
+      last = now;
+      // speed gently varies to feel alive
+      const speed = 0.0009 + (Math.sin(now/700) * 0.00025);
+      phase += dir * speed * dt;
+      if(phase <= 0){ phase = 0; dir = 1; tick(); }
+      if(phase >= 1){ phase = 1; dir = -1; tick(); }
+      const pct = (phase * 100);
+      needle.style.left = pct + "%";
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+
+    function scoreFromPhase(p){
+      // center is best
+      const dist = Math.abs(p - 0.5);
+      const s = Math.max(0, 1 - dist * 2);
+      return s;
+    }
+
+    btn.addEventListener("click", ()=>{
+      if(rounds >= 3) return;
+      const s = scoreFromPhase(phase);
+      const reward = Math.max(1, Math.floor(base * (2 + s*10)));
+      rounds++;
+      bonusPicks = rounds;
+      bonusTotal += reward;
+
+      // Feedback
+      tone(520 + Math.floor(s*380), 0.08, "triangle", 0.07);
+      tone(220, 0.06, "sine", 0.05);
+      meter.classList.remove("overloadPulse"); void meter.offsetWidth; meter.classList.add("overloadPulse");
+
+      readout.textContent = `Stabilizations: ${rounds} / 3  •  +${money(reward)}`;
+      if(rounds >= 3){
+        bonusCollect.disabled = false;
+        btn.disabled = true;
+        bonusText.textContent = `Core stabilized. Bonus accrued: ${money(bonusTotal)}`;
+        if(raf) cancelAnimationFrame(raf);
+      }else{
+        bonusText.textContent = `Stabilization recorded. ${3-rounds} remaining.`;
+      }
+    });
   }
 
   function closeBonus(){
@@ -1377,7 +1549,17 @@ function prettyKey(k){
     return { mult: 0, kind:"MISS", key:null };
   }
 
-  async function spin(){
+  
+  function glitchCabinet(){
+    cabinet.classList.remove("glitchBurst"); void cabinet.offsetWidth; cabinet.classList.add("glitchBurst");
+    marquee.classList.remove("marqueeFlicker"); void marquee.offsetWidth; marquee.classList.add("marqueeFlicker");
+  }
+  function personalityPing(msg){
+    // Rare little cabinet mood swings on big wins
+    setTimeout(()=>{ setMarquee(msg, true); }, 80);
+    glitchCabinet();
+  }
+async function spin(){
     if (spinning) return;
     if (balance < bet){
       setMsg("NO FUNDS","Insufficient balance.","Lower the bet or reset.");
@@ -1451,11 +1633,20 @@ function prettyKey(k){
         screen.classList.remove("shake"); void screen.offsetWidth; screen.classList.add("shake");
         fx.burst(200, 35);
         jackpot();
+        if (isHuge || Math.random() < 0.22){
+          const lines = ["HOUSE LIGHTS: UNSCHEDULED", "CABINET: PLEASED", "SIGNAL: STRONG", "LUCK: ANOMALOUS"];
+          personalityPing(lines[(Math.random()*lines.length)|0]);
+        } else if (Math.random() < 0.08){
+          glitchCabinet();
+        }
       } else {
         fx.burst(90, 190);
         winJingle();
+        if (Math.random() < 0.04) glitchCabinet();
       }
     } else {
+      // streak logic (invisible)
+      drySpins = Math.min(999, drySpins + 1);
       setMsg("MISS","No match.", `Result: ${final.join(" | ")}  •  Try again.`);
       setMarquee("TRY AGAIN", false);
     }
