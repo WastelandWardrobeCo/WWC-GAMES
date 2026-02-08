@@ -1,954 +1,747 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Zone 13 — Power & Rations (Isometric Prototype v0)</title>
-<style>
-  :root{
-    --bg:#0b0f14;
-    --panel:#121821;
-    --text:#d7dee8;
-    --muted:#8ea0b6;
-    --green:#34d399;
-    --yellow:#fbbf24;
-    --red:#ef4444;
-    --cyan:#60a5fa;
-    --glow: 0 0 12px rgba(52,211,153,.25);
-  }
-  html,body{height:100%; margin:0; background:var(--bg); color:var(--text);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;}
-  .wrap{display:grid; grid-template-columns: 1fr 320px; gap:14px; padding:14px; height:100%; box-sizing:border-box;}
-  .left{display:flex; flex-direction:column; gap:12px; min-width:0;}
-  .topbar{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-    border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);}
-  .label{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);}
-  .value{font-size:18px; font-weight:700; margin-top:3px;}
-  .sub{font-size:11px; color:var(--muted); margin-top:2px;}
-  .boardCard{flex:1; min-height:420px; position:relative; overflow:hidden;}
-  canvas{width:100%; height:100%; display:block; border-radius:12px;}
-  .hudBottom{
-    position:absolute; left:14px; right:14px; bottom:14px;
-    display:flex; gap:10px; align-items:center; justify-content:space-between;
-    pointer-events:none;
-  }
-  .pill{pointer-events:auto; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10);
-    border-radius:999px; padding:10px 12px; display:flex; gap:10px; align-items:center;
-    box-shadow:0 12px 28px rgba(0,0,0,.35); backdrop-filter: blur(6px);}
-  .pill small{color:var(--muted); font-size:11px;}
-  input[type="range"]{width:180px;}
-  .btn{pointer-events:auto; cursor:pointer; user-select:none; background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.12); padding:10px 12px; border-radius:10px; font-weight:700;}
-  .btn:hover{background:rgba(255,255,255,.09);}
-  .side{display:flex; flex-direction:column; gap:12px;}
-  .statusBig{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-  .badge{padding:8px 10px; border-radius:999px; font-weight:800; font-size:12px; letter-spacing:.04em;
-    border:1px solid rgba(255,255,255,.14);}
-  .badge.ok{color:var(--green); box-shadow: var(--glow);}
-  .badge.bad{color:var(--red);}
-  .badge.warn{color:var(--yellow);}
-  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
-  .log{height:220px; overflow:auto; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10);
-    border-radius:10px; padding:10px; font-size:12px; color:#cbd5e1;}
-  .log div{margin:2px 0;}
-  .muted{color:var(--muted);}
-  .divider{height:1px; background:rgba(255,255,255,.08); margin:8px 0;}
-  .splash{
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background: radial-gradient(1200px 700px at 30% 30%, rgba(52,211,153,.10), transparent 60%),
-                radial-gradient(900px 600px at 75% 40%, rgba(96,165,250,.10), transparent 60%),
-                rgba(0,0,0,.72);
-    padding:18px;
-  }
-  .splash .box{
-    width:min(860px, 96vw);
-    background:linear-gradient(180deg, rgba(18,24,33,.98), rgba(10,14,20,.98));
-    border:1px solid rgba(255,255,255,.10);
-    border-radius:16px;
-    box-shadow: 0 30px 80px rgba(0,0,0,.55);
-    padding:18px 18px 14px;
-  }
-  .splash h1{margin:0 0 8px; font-size:18px; letter-spacing:.02em;}
-  .splash p{margin:8px 0; color:#cbd5e1; line-height:1.45;}
-  .splash ul{margin:10px 0 0 18px; color:#cbd5e1;}
-  .splash li{margin:6px 0;}
-  .splash .row{display:flex; gap:10px; justify-content:flex-end; margin-top:12px;}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zone 13 | Flat Demo v1 (Store Glow)</title>
+  <style>
+    :root{
+      --bg:#070b0e;
+      --panel:#0d141a;
+      --panel2:#0a1015;
+      --border:#1b2a33;
+      --ink:#d6dee6;
+      --muted:#8ea0ad;
+      --good:#22c55e;
+      --warn:#eab308;
+      --bad:#ef4444;
+      --cyan:#22d3ee;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box;}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+    .app{height:100%;display:grid;grid-template-columns:360px 1fr 420px;gap:12px;padding:12px;}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:12px;overflow:hidden;}
+    .panel h2{margin:0 0 10px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-variant-numeric:tabular-nums;}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .row:last-child{border-bottom:none;}
+    .k{font-size:12px;color:var(--muted);}
+    .v{font-size:13px;}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:12px;}
+    .pill.good{color:var(--good);border-color:rgba(34,197,94,.35);}
+    .pill.warn{color:var(--warn);border-color:rgba(234,179,8,.35);}
+    .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.35);}
+    .pill.cyan{color:var(--cyan);border-color:rgba(34,211,238,.35);}
+    button{
+      background:#0a1116;border:1px solid var(--border);color:var(--ink);
+      padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px;
+    }
+    button:hover{border-color:rgba(34,211,238,.45);color:var(--cyan);}
+    button[disabled]{opacity:.45;cursor:not-allowed;}
+    .glow{
+      box-shadow:0 0 0 2px rgba(34,211,238,.08), 0 0 18px rgba(34,211,238,.18);
+      border-color:rgba(34,211,238,.35);
+    }
 
-    #helpBtn{width:44px; text-align:center; font-weight:800;}
+    .center{display:grid;grid-template-rows:auto 1fr;gap:12px;min-width:0;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .brand{display:flex;flex-direction:column;gap:2px;}
+    .brand .title{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#b9c8d4;}
+    .brand .sub{font-size:12px;color:var(--muted);}
+    .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);font-size:12px;color:#cfe0ee;}
 
-</style>
+    .map{
+      background:linear-gradient(180deg, rgba(34,211,238,.04), rgba(0,0,0,0));
+      border:1px solid var(--border);border-radius:14px;
+      position:relative;overflow:hidden;
+      display:flex;align-items:center;justify-content:center;
+      min-height:520px;
+    }
+    .gridWrap{position:relative; width:min(920px, 100%); height:560px; padding:18px;}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(12, 56px);
+      grid-template-rows:repeat(9, 56px);
+      gap:10px;
+      justify-content:center;
+      align-content:center;
+      user-select:none;
+    }
+    .tile{
+      width:56px;height:56px;border-radius:12px;
+      background:#0a1116;
+      border:1px solid rgba(255,255,255,.09);
+      position:relative;
+      cursor:pointer;
+    }
+    .tile:hover{border-color:rgba(34,211,238,.22);}
+    .tile.occupied{cursor:pointer;}
+    .bldg{
+      position:absolute; inset:6px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(9,16,22,.75);
+      display:flex;align-items:center;justify-content:center;
+      text-align:center;
+      padding:4px;
+    }
+    .bldg .name{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#cfe0ee;line-height:1.1;}
+    .bldg .state{margin-top:3px;font-size:10px;color:var(--muted);}
+    .bldg.online{border-color:rgba(34,197,94,.35);}
+    .bldg.offline{border-color:rgba(239,68,68,.28);}
+    .bldg.fuel{border-color:rgba(34,211,238,.25);}
+    .bldg.life{border-color:rgba(168,85,247,.22);}
+    .bldg.gen{border-color:rgba(234,179,8,.18);}
+
+    .toasts{
+      position:absolute;right:16px;bottom:16px;
+      display:flex;flex-direction:column;gap:8px;
+      z-index:50;
+      pointer-events:none;
+      width:min(380px, 92vw);
+    }
+    .toast{
+      pointer-events:none;
+      background:rgba(9,16,22,.86);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:10px 12px;
+      box-shadow:0 14px 28px rgba(0,0,0,.35);
+      transform:translateY(6px);
+      opacity:0;
+      transition:opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{opacity:1;transform:translateY(0);}
+    .toast .t{font-size:12px;color:#d7e3ec;margin-bottom:3px;}
+    .toast .b{font-size:12px;color:var(--muted);line-height:1.35;}
+    .toast.good{border-color:rgba(34,197,94,.22);}
+    .toast.warn{border-color:rgba(234,179,8,.22);}
+    .toast.bad{border-color:rgba(239,68,68,.22);}
+    .toast.cyan{border-color:rgba(34,211,238,.22);}
+
+    .right{display:flex;flex-direction:column;gap:12px;min-width:0;}
+    .storeHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .storeMoney{font-size:12px;color:#b9c8d4;}
+    .item{
+      background:var(--panel2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+      margin-top:8px;
+    }
+    .itemTitle{font-size:13px;}
+    .itemMeta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35;}
+    .itemRight{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+    .cost{font-size:12px;color:#cfe0ee;}
+    .log{
+      flex:1;min-height:160px;
+      background:#070c10;border:1px solid var(--border);border-radius:12px;
+      padding:10px;overflow:auto;white-space:pre-wrap;
+      font-size:12px;line-height:1.35;color:#c6d3de;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    }
+
+    .splash{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.72);
+      display:flex;align-items:center;justify-content:center;
+      z-index:200;
+      padding:18px;
+    }
+    .card{
+      width:min(760px, 96vw);
+      background:rgba(9,16,22,.92);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      box-shadow:0 24px 60px rgba(0,0,0,.55);
+      padding:16px;
+    }
+    .card h1{
+      margin:0 0 8px 0;
+      font-size:14px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:#cfe0ee;
+    }
+    .card p{margin:0 0 10px 0;font-size:12px;color:var(--muted);line-height:1.45;}
+    .card .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;}
+    .kbd{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(10,16,21,.8);font-size:11px;color:#cfe0ee;}
+
+    @media (max-width: 980px){
+      .app{grid-template-columns:1fr;}
+      .grid{grid-template-columns:repeat(10, 52px);grid-template-rows:repeat(10, 52px);gap:8px;}
+      .tile{width:52px;height:52px;}
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="left">
-    <div class="topbar">
-      <div class="card">
-        <div class="label">Power Reserve</div>
-        <div class="value" id="powerReserve">+0.0 hr</div>
-        <div class="sub" id="powerNet">(+0.0 net/hr)</div>
-      </div>
-      <div class="card">
-        <div class="label">Food Reserve</div>
-        <div class="value" id="foodReserve">+0.0 hr</div>
-        <div class="sub" id="foodNet">(+0.0 net/hr)</div>
-      </div>
-      <div class="card">
-        <div class="label">Habitability</div>
-        <div class="value" id="habit">--%</div>
-        <div class="sub">Life support integrity</div>
-      </div>
-      <div class="card">
-        <div class="label">System Stability</div>
-        <div class="value" id="stability">--%</div>
-        <div class="sub" id="notice">Awaiting routing input…</div>
-      </div>
-    </div>
 
-    <div class="card boardCard">
-      <canvas id="board"></canvas>
-
-      <div class="hudBottom">
-        <div class="pill">
-          <div class="mono" style="font-size:12px;">
-            <div><span class="muted">Isometric v0:</span> click a port, then click a glowing target.</div>
-            <div class="muted">Click the active port again to cancel. Reset clears all routing.</div>
-          </div>
-        </div>
-
-        <div class="pill">
-          <small class="muted">Harvester Throttle</small>
-          <input id="throttle" type="range" min="0" max="100" value="60" />
-          <div class="mono" id="throttlePct" style="width:44px; text-align:right;">60%</div>
-        </div>
-
-        <div class="btn" id="helpBtn">?</div>
-        <div class="btn" id="resetBtn">Reset</div>
-        <div class="btn" id="helpBtn" title="Help">?</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="side">
-    <div class="card statusBig">
-      <div>
-        <div class="label">System</div>
-        <div class="value" id="systemTitle" style="font-size:16px;">Boot Sequence</div>
-      </div>
-      <div class="badge warn" id="systemBadge">INIT</div>
-    </div>
-
-    <div class="card">
-      <div class="label">System Status</div>
-      <div class="divider"></div>
-      <div class="mono" style="font-size:12px; line-height:1.35;">
-        <div><span class="muted">State:</span> <span id="stateLine">SYSTEM OFFLINE</span></div>
-        <div><span class="muted">Life Support:</span> <span id="lifeLine">OFFLINE</span></div>
-        <div><span class="muted">Harvester:</span> <span id="harvLine">OFFLINE</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="label">Harvester</div>
-      <div class="divider"></div>
-      <div class="mono" style="font-size:12px; line-height:1.35;">
-        <div><span class="muted">Requested:</span> <span id="reqPct">60%</span></div>
-        <div><span class="muted">Effective:</span> <span id="effPct">0%</span></div>
-        <div><span class="muted">Harvesting:</span> <span id="harvRate">+0.000 / min</span></div>
-        <div><span class="muted">Rations Stored:</span> <span id="rations">0.0000</span></div>
-        <div><span class="muted">Grid Efficiency:</span> <span id="efficiency">100%</span></div>
-        <div><span class="muted">Shift Quota:</span> <span id="quotaLine">0.000 / 5.000</span></div>
-      </div>
-    </div>
-
-    
-    <div class="card">
-      <div class="label">Maintenance</div>
-      <div class="divider"></div>
-      <div class="mono" style="font-size:12px; line-height:1.35;">
-        <div><span class="muted">Action:</span> Recalibrate grid to restore efficiency.</div>
-        <div class="muted">Cost: <span class="mono">0.500 rations</span> • Cooldown: <span class="mono">30s</span></div>
-      </div>
-      <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-        <div class="btn" id="recalBtn">RECALIBRATE</div>
-        <div class="mono muted" id="recalStatus" style="font-size:12px;">READY</div>
-      </div>
-    </div>
-
-<div class="card">
-      <div class="label">Operator Log</div>
-      <div class="divider"></div>
-      <div class="log mono" id="log"></div>
+<!-- Splash -->
+<div class="splash" id="splash">
+  <div class="card">
+    <h1>ZONE 13 - STABILIZATION DEMO</h1>
+    <p>
+      Bring the zone online in the correct order. Once Life Support is online, the Store will highlight the next step.
+    </p>
+    <p class="mono" style="margin-top:6px;">
+      Goal (Demo): Generator ONLINE → Life Support ONLINE → Buy Fuel Station → Fuel starts producing.
+    </p>
+    <div class="actions">
+      <span class="kbd">Click buildings to toggle</span>
+      <button id="btnOk">OK, START</button>
     </div>
   </div>
 </div>
 
-<div class="splash" id="splash">
-  <div class="box">
-    <h1>ZONE 13: POWER &amp; RATIONS</h1>
-    <p class="muted mono">Objective: restore Life Support, then power the Harvester. Throttle harvest to stay stable.</p>
-    <ul>
-      <li><b>Route Power:</b> Click a port, then click a <b>glowing</b> valid port to connect.</li>
-      <li><b>Bring Life Support Online:</b> Without Life Support, the Harvester is disabled.</li>
-      <li><b>Optimize Harvest:</b> Higher throttle yields rations faster but stresses relays and stability.</li>
-    </ul>
-    <p class="muted">Tip: Green cables indicate stable flow. If the system drops offline, re-route and recover.</p>
+<div class="app">
+  <!-- LEFT HUD -->
+  <section class="panel">
+    <h2>HUD</h2>
+
+    <div class="row"><div class="k">Tick</div><div class="v mono" id="hudTick">0</div></div>
+
     <div class="row">
-      <div class="btn" id="hideSplash">OK, START</div>
+      <div class="k">System</div>
+      <div class="v"><span class="pill bad" id="hudSystem">OFFLINE</span></div>
     </div>
-  </div>
+
+    <div class="row">
+      <div class="k">Power</div>
+      <div class="v">
+        <span class="pill bad" id="hudPowerState">RED</span>
+        <span class="mono" id="hudPowerNums">(0.0 / 0.0)</span>
+      </div>
+    </div>
+
+    <div class="row"><div class="k">Population</div><div class="v mono" id="hudPop">0</div></div>
+
+    <div class="row">
+      <div class="k">Happiness</div>
+      <div class="v"><span class="pill warn" id="hudHappyState">NEUTRAL</span> <span class="mono" id="hudHappy">50</span></div>
+    </div>
+
+    <div class="row"><div class="k">Money</div><div class="v mono" id="hudMoney">50.00</div></div>
+
+    <div class="row"><div class="k">Fuel</div><div class="v mono" id="hudFuel">0.000</div></div>
+
+    <div class="row">
+      <div class="k">Life Support</div>
+      <div class="v"><span class="pill bad" id="hudLife">OFFLINE</span></div>
+    </div>
+
+    <div class="row">
+      <div class="k">Fuel Station</div>
+      <div class="v"><span class="pill bad" id="hudFuelStation">OFFLINE</span></div>
+    </div>
+
+    <div class="row" style="border-bottom:none;">
+      <div class="k">Note</div>
+      <div class="v" style="font-size:12px;color:var(--muted);">
+        Store glows once Life Support is ON.
+      </div>
+    </div>
+  </section>
+
+  <!-- CENTER -->
+  <section class="center">
+    <div class="panel topbar">
+      <div class="brand">
+        <div class="title">Zone 13</div>
+        <div class="sub">Flat Demo v1 • Store Glow • Start Money = 50</div>
+      </div>
+      <div class="tools">
+        <button id="btnStart">Start</button>
+        <button id="btnPause">Pause</button>
+        <button id="btnStep">Step Tick</button>
+        <button id="btnReset">Reset</button>
+        <span class="chip mono">No isometric. No cables. Just loop.</span>
+      </div>
+    </div>
+
+    <div class="map panel">
+      <div class="gridWrap">
+        <div class="grid" id="grid"></div>
+        <div class="toasts" id="toasts"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT -->
+  <section class="right">
+    <div class="panel" id="storePanel">
+      <div class="storeHeader">
+        <h2 style="margin:0;">Store</h2>
+        <div class="storeMoney">Available: <span class="mono" id="storeMoney">50.00</span></div>
+      </div>
+
+      <div class="item">
+        <div>
+          <div class="itemTitle">Fuel Station</div>
+          <div class="itemMeta">
+            Produces fuel when the grid is not RED.<br/>
+            <span class="mono">Demo behavior:</span> buying auto-places it for you.
+          </div>
+        </div>
+        <div class="itemRight">
+          <div class="cost">Cost: <span class="mono" id="fuelCost">30</span></div>
+          <button id="btnBuyFuel" disabled>Locked</button>
+        </div>
+      </div>
+
+      <div class="item">
+        <div>
+          <div class="itemTitle">Coming Soon</div>
+          <div class="itemMeta">Food • Water • Tech • Events (later)</div>
+        </div>
+        <div class="itemRight">
+          <div class="cost">—</div>
+          <button disabled>—</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px;min-height:240px;">
+      <h2>Debug Log</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </section>
 </div>
 
 <script>
 (() => {
-  const $ = (id)=>document.getElementById(id);
-  const clamp = (v, a, b)=>Math.max(a, Math.min(b, v));
-  const nowStamp = () => new Date().toTimeString().slice(0,8);
-  const logEl = $("log");
-  
-  // --- Persistence (v0.6) ---
-  const SAVE_KEY = "zone13_persist_v0_12";
-  const saveState = () => {
-    try{
-      const state = {
-        cables,
-        throttle: Number($("throttle").value),
-        rationsStored
-      };
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    }catch(e){}
-  };
-  const loadState = () => {
-    try{
-      const raw = localStorage.getItem(SAVE_KEY);
-      if(!raw) return false;
-      const state = JSON.parse(raw);
-      if(state.cables) cables = state.cables;
-      if(typeof state.throttle === "number") $("throttle").value = state.throttle;
-      if(typeof state.rationsStored === "number") rationsStored = state.rationsStored;
-      return true;
-    }catch(e){ return false; }
-  };
-const pushLog = (msg) => {
-    const line = document.createElement("div");
-    line.textContent = `[${nowStamp()}] ${msg}`;
-    logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-  };
-  // Autosave: rations change frequently; persist on a gentle interval to avoid heavy writes.
-  let _autosaveAcc = 0;
-  let _lastSavedRations = null;
+  // ====== TUNABLES (this is the exact flat demo baseline) ======
+  const GRID_W = 12, GRID_H = 9;
 
+  const START_MONEY = 50;
+  const FUEL_STATION_COST = 30;
 
-  // Isometric layout settings. tileW/tileH are auto-sized per screen in resize().
-  const ISO = { tileW:110, tileH:58, ox:0, oy:0,
-    toScreen(gx, gy, gz=0){
-      return { x:(gx-gy)*(this.tileW/2)+this.ox, y:(gx+gy)*(this.tileH/2)+this.oy-gz };
-    }
+  const GEN_SUPPLY = 4.0;
+  const LIFE_DEMAND = 1.0;
+  const FUEL_DEMAND = 1.0;
+
+  const STARTER_FUEL = 0.80;
+  const FUEL_PROD_PER_TICK = 0.10;     // fuel station output
+  const GEN_BURN_PER_TICK = 0.05;      // generator burn
+
+  const POP_SEED = 12;                 // arrives once system online
+  const TAX_PER_POP_PER_TICK = 0.03;   // money engine
+
+  const POS_GEN  = {x:3, y:3};
+  const POS_LIFE = {x:5, y:3};
+  const POS_FUEL_AUTO = {x:4, y:5};    // demo-only auto placement
+
+  let timer = null;
+
+  // ====== STATE ======
+  const state = {
+    tick: 0,
+    money: START_MONEY,
+    fuel: 0,
+    pop: 0,
+    happy: 50,
+
+    buildings: new Map(), // key "x,y" -> {type,name,online}
+    unlockedFuel: false,
+    boughtFuel: false,
+    placedFuel: false,
+
+    power: { supply:0, demand:0, state:"RED" }
   };
 
-  const NODES = [
-    // Layout tweak: spread the board so ports are easier to see/click.
-    {id:'genA',  name:'Primary Generator A', type:'gen',   gx:2,  gy:7,  ports:2, supply:60},
-    {id:'genB',  name:'Primary Generator B', type:'gen',   gx:2,  gy:11, ports:2, supply:60},
-    {id:'aux',   name:'Auxiliary',           type:'aux',   gx:7,  gy:5,  ports:4, demand:15},
-    {id:'relayA',name:'Relay A',             type:'relay', gx:7,  gy:9,  ports:4, cap:90},
-    {id:'relayB',name:'Relay B',             type:'relay', gx:9,  gy:9,  ports:4, cap:72},
-    {id:'harv',  name:'Food Harvester',      type:'harv',  gx:13, gy:6,  ports:2, baseDemand:30},
-    {id:'life',  name:'Life Support',        type:'life',  gx:14, gy:12, ports:2, demand:55},
-    {id:'gate',  name:'Sector Gate',         type:'gate',  gx:13, gy:9,  ports:0},
-  ];
-  const nodeById = Object.fromEntries(NODES.map(n=>[n.id,n]));
+  // ====== DOM ======
+  const el = {
+    splash: q("#splash"),
+    btnOk: q("#btnOk"),
 
-  let cables = [];
-  let activePort = null;
-  let rationsStored = 0.0;
-  // Engagement layer (Option 2): efficiency + shift quotas
-  let gridEfficiency = 1.0;          // 0.50–1.00
-  let shiftQuota = 5.0;              // target rations for the current shift
-  let shiftProgress = 0.0;           // accumulated rations toward quota
-  let recalCooldownUntil = 0;        // performance.now() ms
+    grid: q("#grid"),
+    toasts: q("#toasts"),
 
-  // Event-based efficiency faults (Satisfactory-style autonomy):
-  // Systems run indefinitely at 100% unless a fault event occurs.
-  let effFaultActive = false;
-  let effFaultTarget = 1.0;          // efficiency during fault (0.70–0.85)
-  let nextEffFaultAt = performance.now() + (120000 + Math.random()*180000); // 2–5 minutes from start
+    hudTick: q("#hudTick"),
+    hudSystem: q("#hudSystem"),
+    hudPowerState: q("#hudPowerState"),
+    hudPowerNums: q("#hudPowerNums"),
+    hudPop: q("#hudPop"),
+    hudHappyState: q("#hudHappyState"),
+    hudHappy: q("#hudHappy"),
+    hudMoney: q("#hudMoney"),
+    hudFuel: q("#hudFuel"),
+    hudLife: q("#hudLife"),
+    hudFuelStation: q("#hudFuelStation"),
 
+    storePanel: q("#storePanel"),
+    storeMoney: q("#storeMoney"),
+    btnBuyFuel: q("#btnBuyFuel"),
 
-  const portKey = (nid, pi) => `${nid}:p${pi}`;
-  const parsePortKey = (k) => { const [nid,p]=k.split(":p"); return {nid, pi:Number(p)}; };
-  const isPortUsed = (k)=>cables.some(c=>c.a===k||c.b===k);
+    btnStart: q("#btnStart"),
+    btnPause: q("#btnPause"),
+    btnStep: q("#btnStep"),
+    btnReset: q("#btnReset"),
 
-  const allow = {
-    gen: new Set(["relay","aux"]),
-    aux: new Set(["relay"]),
-    relay: new Set(["gen","relay","aux","life","harv"]),
-    life: new Set(["relay"]),
-    harv: new Set(["relay"]),
-    gate: new Set([])
-  };
-  const typeAllows = (aType,bType)=> (allow[aType]?.has(bType) || allow[bType]?.has(aType));
-  const canConnect = (aKey,bKey)=>{
-    if(aKey===bKey) return false;
-    if(isPortUsed(aKey)||isPortUsed(bKey)) return false;
-    const a=parsePortKey(aKey), b=parsePortKey(bKey);
-    const an=nodeById[a.nid], bn=nodeById[b.nid];
-    if(!an||!bn) return false;
-    if(an.ports<=a.pi||bn.ports<=b.pi) return false;
-    if(an.type==='gate'||bn.type==='gate') return false;
-    if(!typeAllows(an.type,bn.type)) return false;
-    return true;
+    log: q("#log"),
   };
 
-  const adjacency = ()=>{
-    const adj={}; NODES.forEach(n=>adj[n.id]=new Set());
-    cables.forEach(c=>{
-      const a=parsePortKey(c.a), b=parsePortKey(c.b);
-      adj[a.nid].add(b.nid); adj[b.nid].add(a.nid);
-    });
-    return adj;
-  };
+  // ====== INIT ======
+  buildGrid();
+  placeInitial();
+  renderAll();
+  log("Loaded: Flat Demo v1 baseline.");
 
-  const reachableFromGens = ()=>{
-    const adj=adjacency();
-    const gens=NODES.filter(n=>n.type==='gen').map(n=>n.id);
-    const vis=new Set(gens);
-    const q=[...gens];
-    while(q.length){
-      const cur=q.shift();
-      for(const nx of adj[cur]){
-        if(!vis.has(nx)){ vis.add(nx); q.push(nx); }
-      }
-    }
-    return vis;
-  };
-  const isConnectedToGens = (id)=>reachableFromGens().has(id);
+  // Splash
+  el.btnOk.addEventListener("click", () => {
+    el.splash.style.display = "none";
+    toast("READY", "Click the Generator, then Life Support. Store will glow.", "cyan");
+  });
 
-  
-  // --- Periodic Power Fluctuation (v0.9) ---
-  let fluct = {
-    active: false,
-    genId: null,
-    factor: 1,
-    until: 0,
-    nextAt: performance.now() + (45000 + Math.random()*45000)
-  };
-const computeStats = ()=>{
-    const throttle=Number($("throttle").value)/100;
-    const lifeOnline=isConnectedToGens('life');
-    const systemOnline=lifeOnline;
-    const harvPowered=systemOnline && isConnectedToGens('harv');
+  // Controls
+  el.btnStart.addEventListener("click", start);
+  el.btnPause.addEventListener("click", pause);
+  el.btnStep.addEventListener("click", stepTick);
+  el.btnReset.addEventListener("click", reset);
 
-    const lifeDemand = lifeOnline ? nodeById.life.demand : 0;
-    const auxDemand  = isConnectedToGens('aux') ? nodeById.aux.demand : 0;
+  // Store
+  el.btnBuyFuel.addEventListener("click", buyFuel);
 
-    let supply=0;
-    for(const g of NODES.filter(n=>n.type==='gen')){
-      const active=cables.some(c=>parsePortKey(c.a).nid===g.id || parsePortKey(c.b).nid===g.id);
-      if(active){
-        let supplyFactor = 1;
-        if(fluct.active && fluct.genId===g.id){
-          supplyFactor = fluct.factor;
-        }
-        supply += g.supply * supplyFactor;
-      }
-    }
+  // ====== CORE LOOP ======
+  function start(){
+    if (timer) return;
+    timer = setInterval(stepTick, 1000);
+    log("ENGINE start");
+  }
+  function pause(){
+    if (!timer) return;
+    clearInterval(timer);
+    timer = null;
+    log("ENGINE pause");
+  }
+  function reset(){
+    pause();
+    state.tick = 0;
+    state.money = START_MONEY;
+    state.fuel = 0;
+    state.pop = 0;
+    state.unlockedFuel = false;
+    state.boughtFuel = false;
+    state.placedFuel = false;
+    state.power = {supply:0,demand:0,state:"RED"};
 
-    let notice="System routing stable.";
-    let effectiveThrottle=0;
+    state.buildings.clear();
+    placeInitial();
+    renderAll();
+    toast("RESET", "Returned to initial state.", "warn");
+    log("RESET complete");
+  }
 
-    if(harvPowered && throttle>0){
-      const harvLinkedToRelayB = cables.some(c=>{
-        const a=parsePortKey(c.a), b=parsePortKey(c.b);
-        return (a.nid==='harv'&&b.nid==='relayB')||(b.nid==='harv'&&a.nid==='relayB');
-      });
-      if(harvLinkedToRelayB){
-        const baseDemand=lifeDemand+auxDemand;
-        const remaining=Math.max(0, nodeById.relayB.cap - baseDemand);
-        const requested=nodeById.harv.baseDemand*throttle;
-        const effDemand=Math.min(requested, remaining);
-        effectiveThrottle = effDemand / nodeById.harv.baseDemand;
-        if(requested>remaining+0.001) notice="NOTICE: Throttle limited (relay capacity).";
+  function stepTick(){
+    state.tick++;
+
+    // Demand: Life + Fuel station (if online)
+    let demand = 0;
+    const life = getB(POS_LIFE.x, POS_LIFE.y);
+    const gen  = getB(POS_GEN.x, POS_GEN.y);
+    const fuelStation = findFirst("fuel");
+
+    if (life?.online) demand += LIFE_DEMAND;
+    if (fuelStation?.online) demand += FUEL_DEMAND;
+
+    // Supply: Generator if online AND has fuel
+    let supply = 0;
+    if (gen?.online) {
+      if (state.fuel > 0) {
+        supply += GEN_SUPPLY;
+        state.fuel = Math.max(0, state.fuel - GEN_BURN_PER_TICK);
       } else {
-        effectiveThrottle=throttle;
+        gen.online = false;
+        toast("GENERATOR OFFLINE", "Fuel depleted. Restore fuel supply.", "bad");
+        log("Generator OFFLINE (fuel depleted)");
       }
     }
 
-    
-    // During output variance, the grid naturally browns out high-draw equipment first.
-    // This keeps fluctuation from feeling like an instant fail-state while still applying pressure.
-    if(fluct.active && harvPowered && effectiveThrottle>0){
-      effectiveThrottle = Math.max(0, effectiveThrottle * 0.85);
-      notice = "NOTICE: Output variance. Harvester draw automatically reduced.";
-    }
+    // Power state
+    state.power.supply = supply;
+    state.power.demand = demand;
+    state.power.state = computePowerState(supply, demand);
 
-    const harvDemand=harvPowered ? nodeById.harv.baseDemand*effectiveThrottle : 0;
-    const demand=lifeDemand+auxDemand+harvDemand;
-
-    const deficit=Math.max(0, demand - supply);
-    const stability=clamp(100 - deficit*0.75, 0, 100);
-
-    const powerNetPerHr=(supply-demand)/100;
-    const powerReserveHr=clamp(0.2+powerNetPerHr, -9.9, 9.9);
-
-    const foodNetPerHr = harvPowered ? (effectiveThrottle*1.5) : -0.7;
-    const foodReserveHr=clamp(1.0+foodNetPerHr, -9.9, 9.9);
-
-    const habit = lifeOnline ? clamp(70 + stability*0.3, 0, 100) : clamp(20 + stability*0.2, 0, 100);
-
-    // Rations per minute at 100% effective. Higher value = more visible progress.
-    // 1.0 feels "alive" even when effective throttle is low.
-    const harvRate = harvPowered ? (effectiveThrottle * 1.000) : 0;
-
-    return {systemOnline, lifeOnline, harvPowered, throttle, effectiveThrottle,
-      stability, habit, powerReserveHr, powerNetPerHr, foodReserveHr, foodNetPerHr, harvRate, notice};
-  };
-
-  const canvas=$("board");
-  const ctx=canvas.getContext("2d",{alpha:false});
-  const pointer={x:0,y:0};
-
-  const resize=()=>{
-    const r=canvas.getBoundingClientRect();
-    const dpr=Math.max(1, Math.min(2, window.devicePixelRatio||1));
-    canvas.width=Math.floor(r.width*dpr);
-    canvas.height=Math.floor(r.height*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-
-    // Roominess pass: on large screens, increase spacing so ports aren't cramped.
-    // On smaller screens, keep it tight enough that auto-fit can still keep everything visible.
-    const base = Math.min(r.width * 0.82, r.height * 0.78);
-    ISO.tileW = Math.max(92, Math.min(155, base / 5.6));
-    ISO.tileH = ISO.tileW * 0.52;
-
-    // Auto-fit: center all nodes in the available board area (prevents off-screen layouts).
-    const rawToScreen=(gx,gy)=>({
-      x:(gx-gy)*(ISO.tileW/2),
-      y:(gx+gy)*(ISO.tileH/2)
-    });
-    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-    for(const n of NODES){
-      const p=rawToScreen(n.gx,n.gy);
-      minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
-      minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
-    }
-    const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
-
-    // Leave room for the bottom HUD and right panel; bias slightly left/up.
-    const usableW=r.width * 0.82;   // right panel takes ~18%
-    const usableH=r.height * 0.78;  // bottom HUD takes ~22%
-    const targetX=(usableW/2);
-    const targetY=(usableH/2);
-
-    ISO.ox = targetX - cx + 20;
-    ISO.oy = targetY - cy + 40;
-  };
-  window.addEventListener("resize", resize);
-
-  const drawGrid=(w,h)=>{
-    ctx.save();
-    ctx.globalAlpha=0.12;
-    ctx.strokeStyle="rgba(255,255,255,.10)";
-    ctx.lineWidth=1;
-    for(let gx=-2; gx<18; gx++){
-      const a=ISO.toScreen(gx,-2), b=ISO.toScreen(gx,16);
-      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-    }
-    for(let gy=-2; gy<18; gy++){
-      const a=ISO.toScreen(-2,gy), b=ISO.toScreen(16,gy);
-      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-    }
-    ctx.restore();
-  };
-
-  const nodeSortKey=(n)=>n.gx+n.gy;
-
-  const nodeTint=(t)=>{
-    if(t==='gen') return {top:"#1f2a3a", side:"#151e2a", edge:"rgba(96,165,250,.35)"};
-    if(t==='relay') return {top:"#262d38", side:"#171d26", edge:"rgba(251,191,36,.35)"};
-    if(t==='life') return {top:"#22302b", side:"#151f1c", edge:"rgba(52,211,153,.35)"};
-    if(t==='harv') return {top:"#262834", side:"#151620", edge:"rgba(52,211,153,.25)"};
-    if(t==='aux') return {top:"#2a2733", side:"#171522", edge:"rgba(167,139,250,.30)"};
-    return {top:"#222", side:"#111", edge:"rgba(255,255,255,.18)"};
-  };
-
-  const drawIsoBlock=(cx,cy,w,h,height,tint)=>{
-    const hw=w/2, hh=h/2;
-    const top=[
-      {x:cx,y:cy-height},{x:cx+hw,y:cy-height+hh},{x:cx,y:cy-height+h},{x:cx-hw,y:cy-height+hh}
-    ];
-    const left=[
-      {x:cx-hw,y:cy-height+hh},{x:cx,y:cy-height+h},{x:cx,y:cy+h},{x:cx-hw,y:cy+hh}
-    ];
-    const right=[
-      {x:cx+hw,y:cy-height+hh},{x:cx,y:cy-height+h},{x:cx,y:cy+h},{x:cx+hw,y:cy+hh}
-    ];
-    ctx.save();
-    ctx.fillStyle=tint.side;
-    ctx.beginPath(); ctx.moveTo(left[0].x,left[0].y); left.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha=0.92;
-    ctx.beginPath(); ctx.moveTo(right[0].x,right[0].y); right.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha=1;
-    ctx.fillStyle=tint.top;
-    ctx.beginPath(); ctx.moveTo(top[0].x,top[0].y); top.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.fill();
-
-    ctx.strokeStyle=tint.edge; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(top[0].x,top[0].y); top.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.stroke();
-    ctx.strokeStyle="rgba(255,255,255,.08)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(top[0].x,top[0].y); top.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.closePath(); ctx.stroke();
-    ctx.restore();
-  };
-
-  const getNodeRect=(n)=>{
-    const base=ISO.toScreen(n.gx,n.gy,0);
-    const w=(n.type==='relay')?120:(n.type==='harv'?150:130);
-    const h=72, height=22;
-    return {cx:base.x, cy:base.y-10, w, h, height};
-  };
-
-  const portScreenPos=(n,pi)=>{
-    const r=getNodeRect(n);
-
-    // Relays: 4 ports, one per corner for clarity (purely visual/hitbox positioning).
-    if(n.type==='relay' && n.ports===4){
-      const padX=16;
-      const padY=18;
-      const topY=-r.height+padY;
-      const botY=-r.height+padY+34;
-      const corners=[
-        {x:-r.w/2+padX, y:topY},   // NW
-        {x: r.w/2-padX, y:topY},   // NE
-        {x: r.w/2-padX, y:botY},   // SE
-        {x:-r.w/2+padX, y:botY},   // SW
-      ];
-      const o=corners[pi]||corners[0];
-      return {x:r.cx+o.x, y:r.cy+o.y};
-    }
-
-    // Default: split ports along left/right edges.
-    const offs=[];
-    for(let i=0;i<Math.ceil(n.ports/2);i++) offs.push({x:-r.w/2+14, y:-r.height+22+i*18});
-    for(let i=0;i<Math.floor(n.ports/2);i++) offs.push({x:r.w/2-14, y:-r.height+22+i*18});
-    const o=offs[pi]||offs[0]||{x:0,y:0};
-    return {x:r.cx+o.x, y:r.cy+o.y};
-  };
-
-  const drawPort=(n,pi,stats)=>{
-    const k=portKey(n.id,pi);
-    const used=isPortUsed(k);
-    const pos=portScreenPos(n,pi);
-    const isActive=activePort===k;
-    let isValid=false;
-    if(activePort && activePort!==k) isValid=canConnect(activePort,k);
-    const rad=9;
-    ctx.save();
-    ctx.lineWidth=2.2;
-    let ring="rgba(255,255,255,.20)";
-    if(used) ring="rgba(255,255,255,.10)";
-    if(isValid) ring="rgba(52,211,153,.90)";
-    if(isActive) ring="rgba(96,165,250,.95)";
-    ctx.strokeStyle=ring;
-    ctx.fillStyle=used?"rgba(0,0,0,.40)":"rgba(0,0,0,.25)";
-    ctx.beginPath(); ctx.arc(pos.x,pos.y,rad,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    if(isValid){
-      ctx.shadowColor="rgba(52,211,153,.55)"; ctx.shadowBlur=18;
-      ctx.strokeStyle="rgba(52,211,153,1)";
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,rad+1.5,0,Math.PI*2); ctx.stroke();
-    }
-    if(isActive){
-      ctx.shadowColor="rgba(96,165,250,.55)"; ctx.shadowBlur=18;
-      ctx.strokeStyle="rgba(96,165,250,1)";
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,rad+1.5,0,Math.PI*2); ctx.stroke();
-    }
-    ctx.restore();
-  };
-
-  const cableColor=(stats)=>{
-    if(!stats.systemOnline) return "rgba(148,163,184,.35)";
-    if(stats.stability>=80) return fluct.active ? "rgba(251,191,36,.85)" : "rgba(52,211,153,.95)";
-    if(stats.stability>=55) return "rgba(251,191,36,.95)";
-    return "rgba(239,68,68,.95)";
-  };
-
-  const drawCable=(aKey,bKey,stats)=>{
-    const a=parsePortKey(aKey), b=parsePortKey(bKey);
-    const an=nodeById[a.nid], bn=nodeById[b.nid];
-    if(!an||!bn) return;
-    const p1=portScreenPos(an,a.pi), p2=portScreenPos(bn,b.pi);
-    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2 - 18;
-    ctx.save();
-    const col=cableColor(stats);
-    ctx.lineWidth=6; ctx.lineCap="round"; ctx.strokeStyle=col;
-    ctx.shadowColor=col; ctx.shadowBlur=14;
-    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(mx,my,p2.x,p2.y); ctx.stroke();
-    ctx.shadowBlur=0;
-    ctx.lineWidth=2.5; ctx.strokeStyle="rgba(255,255,255,.14)";
-    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.quadraticCurveTo(mx,my,p2.x,p2.y); ctx.stroke();
-    ctx.restore();
-  };
-
-  const drawNode=(n,stats)=>{
-    const r=getNodeRect(n);
-    ctx.save();
-    ctx.fillStyle="rgba(0,0,0,.35)";
-    ctx.beginPath();
-    ctx.ellipse(r.cx, r.cy + r.h/2 + 18, r.w*0.32, 14, 0, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    drawIsoBlock(r.cx,r.cy,r.w,r.h,r.height,nodeTint(n.type));
-
-    ctx.save();
-    ctx.font="700 13px ui-sans-serif, system-ui";
-    ctx.fillStyle="rgba(215,222,232,.92)";
-    ctx.textAlign="center";
-    ctx.fillText(n.name, r.cx, r.cy - r.height + r.h + 18);
-    ctx.font="12px ui-monospace, Menlo, Consolas, monospace";
-    ctx.fillStyle="rgba(142,160,182,.95)";
-    if(n.type==='gen') ctx.fillText(`Supply: ${n.supply}`, r.cx, r.cy - r.height + r.h + 35);
-    else if(n.type==='relay') ctx.fillText(`Capacity: ${n.cap}`, r.cx, r.cy - r.height + r.h + 35);
-    else if(n.type==='life') ctx.fillText(`Demand: ${n.demand}`, r.cx, r.cy - r.height + r.h + 35);
-    else if(n.type==='harv'){
-      const req=Math.round(stats.throttle*100);
-      const load=(stats.systemOnline && stats.harvPowered)?Math.round(n.baseDemand*stats.effectiveThrottle):0;
-      ctx.fillText(`Load: ${load} / ${n.baseDemand}  (Req ${req}%)`, r.cx, r.cy - r.height + r.h + 35);
-    } else if(n.type==='aux') ctx.fillText("Aux-link", r.cx, r.cy - r.height + r.h + 35);
-    else if(n.type==='gate') ctx.fillText("INACTIVE", r.cx, r.cy - r.height + r.h + 35);
-    ctx.restore();
-
-    for(let i=0;i<n.ports;i++) drawPort(n,i,stats);
-  };
-
-  const draw=()=>{
-    const r=canvas.getBoundingClientRect();
-    ctx.save();
-    ctx.fillStyle="#0b0f14";
-    ctx.fillRect(0,0,r.width,r.height);
-
-    const vg=ctx.createRadialGradient(r.width*0.45,r.height*0.45,80,r.width*0.55,r.height*0.55,Math.max(r.width,r.height));
-    vg.addColorStop(0,"rgba(255,255,255,.03)");
-    vg.addColorStop(1,"rgba(0,0,0,.35)");
-    ctx.fillStyle=vg; ctx.fillRect(0,0,r.width,r.height);
-
-    drawGrid(r.width,r.height);
-
-    const stats=computeStats();
-
-    for(const c of cables) drawCable(c.a,c.b,stats);
-
-    if(activePort){
-      const ap=parsePortKey(activePort);
-      const an=nodeById[ap.nid];
-      if(an){
-        const p1=portScreenPos(an,ap.pi);
-        ctx.save();
-        ctx.lineWidth=3.5; ctx.setLineDash([6,6]);
-        ctx.strokeStyle="rgba(96,165,250,.65)";
-        ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(pointer.x,pointer.y); ctx.stroke();
-        ctx.restore();
+    // If RED, force dependent systems offline (simple rule)
+    if (state.power.state === "RED") {
+      if (fuelStation) fuelStation.online = false;
+      if (life?.online) {
+        life.online = false;
+        toast("LIFE SUPPORT OFFLINE", "Insufficient power.", "bad");
+        log("Life Support OFFLINE (RED)");
       }
     }
 
-    [...NODES].sort((a,b)=>nodeSortKey(a)-nodeSortKey(b)).forEach(n=>drawNode(n,stats));
+    // Fuel production if fuel station online and not RED
+    if (fuelStation?.online && state.power.state !== "RED") {
+      state.fuel += FUEL_PROD_PER_TICK;
+    }
 
-    ctx.save();
-    ctx.font="900 16px ui-sans-serif, system-ui";
-    ctx.textAlign="right";
-    ctx.fillStyle=stats.systemOnline?"rgba(52,211,153,.95)":"rgba(239,68,68,.92)";
-    ctx.fillText(stats.systemOnline?"SYSTEM ONLINE":"SYSTEM OFFLINE", r.width-18, 34);
-    ctx.restore();
+    // System online condition: generator online + life online + not RED
+    const systemOnline = isSystemOnline();
 
-    ctx.restore();
-  };
+    // First population seed when system comes online
+    if (systemOnline && state.pop === 0) {
+      state.pop = POP_SEED;
+      toast("POPULATION INCREASED", `+${POP_SEED} trust the system.`, "good");
+      log(`Population seeded: ${state.pop}`);
+    }
 
-  const canvasToLocal=(ev)=>{
-    const r=canvas.getBoundingClientRect();
-    return {x:ev.clientX-r.left, y:ev.clientY-r.top};
-  };
+    // Taxes only when system online
+    if (systemOnline && state.pop > 0) {
+      state.money += state.pop * TAX_PER_POP_PER_TICK;
+    }
 
-  const allPorts=()=>{
-    const out=[];
-    for(const n of NODES){
-      for(let i=0;i<n.ports;i++){
-        const pos=portScreenPos(n,i);
-        out.push({k:portKey(n.id,i), x:pos.x, y:pos.y});
+    // Update store glow + buttons
+    updateStore();
+
+    renderAll();
+  }
+
+  function computePowerState(supply, demand){
+    if (demand <= 0) return "GREEN";
+    if (supply < demand) return "RED";
+    if (supply <= demand * 1.10) return "YELLOW";
+    return "GREEN";
+  }
+
+  // ====== INTERACTION ======
+  function onTileClick(x,y){
+    const b = getB(x,y);
+    if (!b) return;
+
+    // Toggle generator
+    if (b.type === "gen") {
+      b.online = !b.online;
+      if (b.online) {
+        if (state.fuel <= 0) {
+          state.fuel = STARTER_FUEL;
+          toast("GENERATOR ONLINE", "Starter fuel loaded (fuel is finite).", "cyan");
+          log("Generator ONLINE + starter fuel");
+        } else {
+          toast("GENERATOR ONLINE", "Power supply available.", "good");
+          log("Generator ONLINE");
+        }
+      } else {
+        toast("GENERATOR OFFLINE", "Power supply stopped.", "warn");
+        log("Generator OFFLINE");
       }
-    }
-    return out;
-  };
-  const hitPort=(x,y)=>{
-    let best=null, bestD=1e9;
-    for(const p of allPorts()){
-      const dx=p.x-x, dy=p.y-y;
-      const d=Math.hypot(dx,dy);
-      if(d<16 && d<bestD){ best=p; bestD=d; }
-    }
-    return best;
-  };
-
-  const connect=(a,b)=>{
-    cables.push({a,b}); saveState();
-    pushLog(`Cable connected: ${a} -> ${b}`);
-  };
-
-  const reset=()=>{
-    cables=[]; activePort=null; rationsStored=0.0;
-    pushLog("System reset: all routing cleared.");
-  };
-
-  canvas.addEventListener("mousemove",(ev)=>{
-    const p=canvasToLocal(ev);
-    pointer.x=p.x; pointer.y=p.y;
-  });
-
-  canvas.addEventListener("click",(ev)=>{
-    const p=canvasToLocal(ev);
-    pointer.x=p.x; pointer.y=p.y;
-    const hit=hitPort(p.x,p.y);
-    if(!hit){
-      if(activePort){ activePort=null; pushLog("Routing selection cleared."); }
-      return;
-    }
-    if(isPortUsed(hit.k)){
-      // Disconnect QoL: click an occupied port (when not actively routing) to remove its cable.
-      // This keeps iteration fast and prevents "permanent" mistakes.
-      if(!activePort){
-        const before = cables.length;
-        cables = cables.filter(c => !(c.a===hit.k || c.b===hit.k)); saveState();
-        const removed = before - cables.length;
-        if(removed>0) pushLog(`Cable removed from: ${hit.k}`);
-        return;
-      }
-      // If currently routing, keep selection; occupied ports cannot accept new connections.
-      pushLog("Port is occupied.");
+      renderAll();
       return;
     }
 
-    if(!activePort){
-      activePort=hit.k; pushLog(`Selected port: ${hit.k}`); return;
+    // Toggle life support
+    if (b.type === "life") {
+      b.online = !b.online;
+      if (b.online) {
+        toast("LIFE SUPPORT ONLINE", "Stabilization initiated.", "good");
+        log("Life Support ONLINE");
+
+        // Unlock store item (this triggers glow)
+        if (!state.unlockedFuel) {
+          state.unlockedFuel = true;
+          toast("STORE UPDATED", "Fuel Station unlocked. Buy it next.", "cyan");
+          log("UNLOCK: Fuel Station");
+        }
+      } else {
+        toast("LIFE SUPPORT OFFLINE", "Stabilization interrupted.", "bad");
+        log("Life Support OFFLINE");
+      }
+      updateStore();
+      renderAll();
+      return;
     }
-    if(activePort===hit.k){ activePort=null; pushLog("Selection cancelled."); return; }
-    if(canConnect(activePort, hit.k)){ connect(activePort, hit.k); activePort=null; return; }
 
-    activePort=hit.k; pushLog(`Selected port: ${hit.k}`);
-  });
+    // Fuel station (inspect only)
+    if (b.type === "fuel") {
+      toast("FUEL STATION", b.online ? "ONLINE" : "OFFLINE", "cyan");
+    }
+  }
 
-  $("resetBtn").addEventListener("click", ()=>{ reset(); saveState(); });
+  function buyFuel(){
+    if (!state.unlockedFuel) return;
+    if (state.money < FUEL_STATION_COST) {
+      toast("INSUFFICIENT FUNDS", "Taxes accumulate while system is online.", "warn");
+      return;
+    }
+    if (state.boughtFuel) return;
 
-  // Help re-opens splash anytime
-  const helpBtn = $("helpBtn");
-  if(helpBtn){ helpBtn.addEventListener("click", ()=>{ splash.style.display="flex"; }); }
+    state.money -= FUEL_STATION_COST;
+    state.boughtFuel = true;
 
-  // Recalibrate: trade rations for restored efficiency (extends sessions without adding complexity).
-  const recalBtn=$("recalBtn");
-  if(recalBtn){
-    recalBtn.addEventListener("click", ()=>{
-      const now=performance.now();
-      if(now < recalCooldownUntil) return;
-      if(rationsStored < 0.5){ pushLog("RECALIBRATE FAILED: insufficient rations."); return; }
-      const wasFault = effFaultActive;
+    // DEMO ONLY: auto-place it for the player
+    if (!getB(POS_FUEL_AUTO.x, POS_FUEL_AUTO.y)) {
+      setB(POS_FUEL_AUTO.x, POS_FUEL_AUTO.y, { type:"fuel", name:"Fuel Station", online:true });
+      state.placedFuel = true;
+      toast("FUEL ONLINE", "Fuel production started.", "good");
+      log(`Fuel Station auto-placed at ${POS_FUEL_AUTO.x},${POS_FUEL_AUTO.y}`);
+    } else {
+      toast("PLACEMENT BLOCKED", "Auto placement tile occupied.", "warn");
+      log("WARN: Auto placement blocked");
+    }
 
-      rationsStored=Math.max(0, rationsStored-0.5);
-      gridEfficiency=1.0;
-      effFaultActive=false;
-      effFaultTarget=1.0;
-      recalCooldownUntil=now+30000; // 30s
+    updateStore();
+    renderAll();
+  }
 
-      pushLog(wasFault ? "MAINTENANCE: Recalibration complete. Fault cleared." : "MAINTENANCE: Grid recalibrated. Efficiency restored.");
-      saveState();
+  // ====== STORE ======
+  function updateStore(){
+    el.storeMoney.textContent = state.money.toFixed(2);
+
+    if (!state.unlockedFuel) {
+      el.btnBuyFuel.disabled = true;
+      el.btnBuyFuel.textContent = "Locked";
+      el.storePanel.classList.remove("glow");
+      return;
+    }
+
+    const canBuy = state.money >= FUEL_STATION_COST && !state.boughtFuel;
+    el.btnBuyFuel.disabled = !canBuy;
+    el.btnBuyFuel.textContent = state.boughtFuel ? "Purchased" : "Buy";
+
+    // Glow only when it is the next logical step
+    const shouldGlow = state.unlockedFuel && !state.boughtFuel;
+    el.storePanel.classList.toggle("glow", shouldGlow);
+  }
+
+  // ====== RENDER ======
+  function renderAll(){
+    renderGrid();
+    renderHUD();
+    updateStore();
+  }
+
+  function renderHUD(){
+    el.hudTick.textContent = String(state.tick);
+
+    // System online badge
+    const online = isSystemOnline();
+    el.hudSystem.textContent = online ? "ONLINE" : "OFFLINE";
+    el.hudSystem.className = "pill " + (online ? "good" : "bad");
+
+    // Power badge
+    el.hudPowerState.textContent = state.power.state;
+    el.hudPowerState.className = "pill " + (state.power.state === "GREEN" ? "good" : state.power.state === "YELLOW" ? "warn" : "bad");
+    el.hudPowerNums.textContent = `(${state.power.supply.toFixed(1)} / ${state.power.demand.toFixed(1)})`;
+
+    el.hudPop.textContent = String(state.pop);
+    el.hudHappy.textContent = String(state.happy);
+    el.hudMoney.textContent = state.money.toFixed(2);
+    el.hudFuel.textContent = state.fuel.toFixed(3);
+
+    const life = getB(POS_LIFE.x, POS_LIFE.y);
+    el.hudLife.textContent = life?.online ? "ONLINE" : "OFFLINE";
+    el.hudLife.className = "pill " + (life?.online ? "good" : "bad");
+
+    const fuel = findFirst("fuel");
+    el.hudFuelStation.textContent = fuel?.online ? "ONLINE" : "OFFLINE";
+    el.hudFuelStation.className = "pill " + (fuel?.online ? "cyan" : "bad");
+  }
+
+  function renderGrid(){
+    const tiles = el.grid.querySelectorAll(".tile");
+    tiles.forEach(tile => {
+      const x = Number(tile.dataset.x), y = Number(tile.dataset.y);
+      tile.innerHTML = "";
+      tile.classList.toggle("occupied", !!getB(x,y));
+      const b = getB(x,y);
+      if (b) {
+        const badge = document.createElement("div");
+        badge.className = "bldg " + (b.online ? "online" : "offline") + " " + (b.type==="fuel" ? "fuel" : b.type==="life" ? "life" : b.type==="gen" ? "gen" : "");
+        badge.innerHTML = `<div><div class="name">${labelFor(b)}</div><div class="state">${b.online ? "ONLINE" : "OFFLINE"}</div></div>`;
+        tile.appendChild(badge);
+      }
     });
   }
-$("helpBtn").addEventListener("click", ()=>openSplash());
 
-  const setBadge=(kind,text)=>{
-    const b=$("systemBadge");
-    b.classList.remove("ok","bad","warn");
-    if(kind==="ok") b.classList.add("ok");
-    if(kind==="bad") b.classList.add("bad");
-    if(kind==="warn") b.classList.add("warn");
-    b.textContent=text;
-  };
+  function labelFor(b){
+    if (b.type === "gen") return "Generator";
+    if (b.type === "life") return "Life Support";
+    if (b.type === "fuel") return "Fuel";
+    return b.name || "Unit";
+  }
 
-  const fmt=(n,d=1)=>{
-    const s=(Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d);
-    return (n>=0?"+":"")+s;
-  };
+  function isSystemOnline(){
+    const gen = getB(POS_GEN.x, POS_GEN.y);
+    const life = getB(POS_LIFE.x, POS_LIFE.y);
+    return !!(gen?.online && life?.online && state.power.state !== "RED");
+  }
 
-  const renderHUD=(s)=>{
-    $("throttlePct").textContent=`${Math.round(s.throttle*100)}%`;
-    $("reqPct").textContent=`${Math.round(s.throttle*100)}%`;
-    $("effPct").textContent=`${Math.round(s.effectiveThrottle*100)}%`;
-
-    $("powerReserve").textContent=`${fmt(s.powerReserveHr,1)} hr`;
-    $("powerNet").textContent=`(${fmt(s.powerNetPerHr,2)} net/hr)`;
-    $("foodReserve").textContent=`${fmt(s.foodReserveHr,1)} hr`;
-    $("foodNet").textContent=`(${fmt(s.foodNetPerHr,2)} net/hr)`;
-
-    $("habit").textContent=`${Math.round(s.habit)}%`;
-    $("stability").textContent=`${Math.round(s.stability)}%`;
-    $("notice").textContent=s.notice;
-
-    // Extra precision makes the "stopwatch" feel, especially at low throttle.
-    $("rations").textContent=rationsStored.toFixed(4);
-    const effEl=$("efficiency"); if(effEl) effEl.textContent=`${Math.round(gridEfficiency*100)}%`;
-    const qEl=$("quotaLine"); if(qEl) qEl.textContent=`${shiftProgress.toFixed(3)} / ${shiftQuota.toFixed(3)}`;
-
-    const ab=document.getElementById("alertBanner");
-    const at=document.getElementById("alertText");
-    if(ab){
-      if(effFaultActive){
-        ab.style.display="flex";
-        if(at) at.textContent = `Efficiency fault detected (${Math.round(gridEfficiency*100)}%). Recalibration recommended.`;
-      }else{
-        ab.style.display="none";
+  // ====== GRID SETUP ======
+  function buildGrid(){
+    el.grid.innerHTML = "";
+    el.grid.style.gridTemplateColumns = `repeat(${GRID_W}, 56px)`;
+    el.grid.style.gridTemplateRows = `repeat(${GRID_H}, 56px)`;
+    for (let y=0; y<GRID_H; y++){
+      for (let x=0; x<GRID_W; x++){
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.dataset.x = String(x);
+        tile.dataset.y = String(y);
+        tile.addEventListener("click", () => onTileClick(x,y));
+        el.grid.appendChild(tile);
       }
     }
+  }
 
-    // Recalibrate button status
-    const now=performance.now();
-    const rs=$("recalStatus");
-    const rb=$("recalBtn");
-    if(rs && rb){
-      if(rationsStored < 0.5){
-        rs.textContent="NEED 0.500 RATIONS";
-        rb.style.opacity="0.45";
-      }else if(now < recalCooldownUntil){
-        const left=Math.ceil((recalCooldownUntil-now)/1000);
-        rs.textContent=`COOLDOWN ${left}s`;
-        rb.style.opacity="0.6";
-      }else{
-        rs.textContent = effFaultActive ? "RECOMMENDED" : "READY";
-        rb.style.opacity="1";
-      }
-    }
-$("harvRate").textContent=`+${s.harvRate.toFixed(3)} / min`;
+  function placeInitial(){
+    setB(POS_GEN.x, POS_GEN.y, { type:"gen", name:"Generator", online:false });
+    setB(POS_LIFE.x, POS_LIFE.y, { type:"life", name:"Life Support", online:false });
+    updateStore();
+  }
 
-    if(s.systemOnline){
-      $("systemTitle").textContent="System Healthy";
-      setBadge("ok","ONLINE");
-      $("stateLine").textContent="SYSTEM ONLINE";
-      $("lifeLine").textContent="ONLINE";
-    } else {
-      $("systemTitle").textContent="System Critical";
-      setBadge("bad","OFFLINE");
-      $("stateLine").textContent="SYSTEM OFFLINE";
-      $("lifeLine").textContent="OFFLINE";
+  // ====== BUILDING MAP ======
+  function keyOf(x,y){ return `${x},${y}`; }
+  function setB(x,y,b){ state.buildings.set(keyOf(x,y), b); }
+  function getB(x,y){ return state.buildings.get(keyOf(x,y)) || null; }
+  function findFirst(type){
+    for (const b of state.buildings.values()){
+      if (b.type === type) return b;
     }
+    return null;
+  }
 
-    if(s.systemOnline && s.harvPowered && s.effectiveThrottle>0){
-      $("harvLine").textContent = (s.effectiveThrottle < s.throttle) ? `THROTTLED (${Math.round(s.effectiveThrottle*100)}%)` : "ONLINE";
-    } else {
-      $("harvLine").textContent="OFFLINE";
-    }
-  };
+  // ====== TOASTS + LOG ======
+  function toast(title, body, kind="cyan"){
+    const node = document.createElement("div");
+    node.className = `toast ${kind}`;
+    node.innerHTML = `<div class="t">${esc(title)}</div><div class="b">${esc(body)}</div>`;
+    el.toasts.appendChild(node);
+    requestAnimationFrame(() => node.classList.add("show"));
+    setTimeout(() => {
+      node.classList.remove("show");
+      setTimeout(() => node.remove(), 180);
+    }, 2600);
+  }
+  function log(msg){
+    const now = new Date();
+    const stamp = now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+    el.log.textContent += `[${stamp}] ${msg}\n`;
+    el.log.scrollTop = el.log.scrollHeight;
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function q(sel){ return document.querySelector(sel); }
 
-  let lastT=performance.now();
-  const tick=(t)=>{
-    // --- Fluctuation timing ---
-    if(!fluct.active && t >= fluct.nextAt){
-      const gens = NODES.filter(n=>n.type==='gen');
-      const pick = gens[Math.floor(Math.random()*gens.length)];
-      fluct.active = true;
-      fluct.genId = pick.id;
-      fluct.factor = 0.90 + Math.random()*0.08; // 90–98% output (gentle variance)
-      fluct.until = t + 15000 + Math.random()*10000;
-      fluct.nextAt = t + 90000 + Math.random()*60000;
-      pushLog(`NOTICE: Output variance detected on ${pick.name}.`);
-    }
-    if(fluct.active && t >= fluct.until){
-      pushLog(`INFO: ${nodeById[fluct.genId].name} output stabilized.`);
-      fluct.active = false;
-      fluct.genId = null;
-      fluct.factor = 1;
-    }
+  // Start money shown immediately in store
+  q("#storeMoney").textContent = state.money.toFixed(2);
 
-    const dt=(t-lastT)/1000; lastT=t;
-    const s=computeStats();
+  // Wire up buttons
+  function wireButtons(){
+    q("#btnStart").addEventListener("click", start);
+    q("#btnPause").addEventListener("click", pause);
+    q("#btnStep").addEventListener("click", stepTick);
+    q("#btnReset").addEventListener("click", reset);
+  }
+  wireButtons();
 
-    // Event-based efficiency faults: rare, readable, non-fatal. Harvest continues slower until recalibrated.
-    if(!effFaultActive && t >= nextEffFaultAt){
-      effFaultActive = true;
-      effFaultTarget = 0.70 + Math.random()*0.15; // 70–85%
-      gridEfficiency = effFaultTarget;
-      nextEffFaultAt = t + (180000 + Math.random()*240000); // schedule next one 3–7 minutes out
-      pushLog(`GRID NOTICE: Efficiency fault detected (${Math.round(gridEfficiency*100)}%).`);
-      saveState();
-    }
-
-if(s.systemOnline && s.harvPowered && s.harvRate>0){
-      rationsStored += (s.harvRate/60)*dt;
-      shiftProgress += (s.harvRate/60)*dt;
-    // Autosave every ~2 seconds if rations changed
-    _autosaveAcc += dt;
-    if(_autosaveAcc >= 2){
-      _autosaveAcc = 0;
-      if(_lastSavedRations === null || Math.abs(rationsStored - _lastSavedRations) > 0.0005){
-        _lastSavedRations = rationsStored;
-        saveState();
-      }
-    }
-    }
-        // Shift quota progression: complete quotas to create a longer play session.
-    if(shiftProgress >= shiftQuota){
-      pushLog(`SHIFT COMPLETE: Quota met (${shiftQuota.toFixed(3)} rations).`);
-      shiftProgress = 0;
-      shiftQuota = Math.min(50, shiftQuota + (shiftQuota < 10 ? 2.5 : 5));
-      gridEfficiency = Math.min(1.0, gridEfficiency + 0.10);
-      saveState();
-    }
-    renderHUD(s);
-    draw();
-    window.addEventListener("beforeunload", ()=>{ saveState(); });
-    requestAnimationFrame(tick);
-  };
-
-  const splash=$("splash");
-  const KEY="zone13_iso_splash_seen_v0_12";
-  const showSplash=()=>{ splash.style.display="flex"; };
-  const hideSplash=()=>{ splash.style.display="none"; try{localStorage.setItem(KEY,"1");}catch(e){} };
-  $("hideSplash").addEventListener("click", hideSplash);
-  window.addEventListener("keydown",(ev)=>{ if(ev.key==="Escape" && splash.style.display==="flex") hideSplash(); });
-
-  const init=()=>{
-    const resumed = loadState();
-
-    resize();
-    pushLog("Boot sequence loaded. Awaiting routing input…");
-    if(resumed){
-      const t=document.getElementById("toast");
-      if(t){ t.style.opacity="1"; setTimeout(()=>t.style.opacity="0",1800);} 
-      pushLog("SYSTEM RESUMED FROM LAST SESSION.");
-    }
-    pushLog("Tip: Click a port, then click a glowing target port.");
-    try{ if(localStorage.getItem(KEY)!=="1") showSplash(); }catch(e){ showSplash(); }
-    window.addEventListener("beforeunload", ()=>{ saveState(); });
-    requestAnimationFrame(tick);
-  };
-  init();
+  // Make sure store reflects initial lock state
+  updateStore();
 })();
 </script>
-
-<div id="toast" style="position:fixed; top:18px; right:18px;
-background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.18);
-color:#34d399; padding:10px 14px; border-radius:10px;
-font-weight:700; opacity:0; transition:opacity .4s ease;
-pointer-events:none; z-index:9999;">
-SYSTEM RESUMED
-</div>
-
-
-  <div id="alertBanner" style="
-    position:absolute; left:16px; top:16px;
-    padding:10px 12px; border-radius:12px;
-    background:rgba(0,0,0,.55);
-    border:1px solid rgba(255,255,255,.18);
-    display:none; gap:10px; align-items:center;
-    z-index:50;">
-    <div style="font-weight:800; letter-spacing:.06em; font-size:12px; color:#fbbf24;">GRID NOTICE</div>
-    <div class="mono" id="alertText" style="font-size:12px; color:#e5e7eb;">Efficiency fault detected.</div>
-  </div>
-
 </body>
 </html>
