@@ -1,747 +1,917 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Zone 13 | Flat Demo v1 (Store Glow)</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Zone 13 | v0.2.1 Fuel + Pop Fix</title>
   <style>
     :root{
-      --bg:#070b0e;
-      --panel:#0d141a;
-      --panel2:#0a1015;
-      --border:#1b2a33;
-      --ink:#d6dee6;
-      --muted:#8ea0ad;
-      --good:#22c55e;
-      --warn:#eab308;
-      --bad:#ef4444;
-      --cyan:#22d3ee;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --bg:#070b0e; --panel:#0d141a; --panel2:#0a1015; --border:#1b2a33;
+      --ink:#d6dee6; --muted:#8ea0ad;
+      --good:#22c55e; --warn:#eab308; --bad:#ef4444; --cyan:#22d3ee;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
     }
     *{box-sizing:border-box;}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);
       font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
-    .app{height:100%;display:grid;grid-template-columns:360px 1fr 420px;gap:12px;padding:12px;}
-    .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:12px;overflow:hidden;}
+    .app{height:100%;display:grid;grid-template-columns:380px 1fr 420px;gap:12px;padding:12px;}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px;overflow:hidden;}
     .panel h2{margin:0 0 10px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-variant-numeric:tabular-nums;}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);}
     .row:last-child{border-bottom:none;}
     .k{font-size:12px;color:var(--muted);}
     .v{font-size:13px;}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:12px;}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:12px;}
     .pill.good{color:var(--good);border-color:rgba(34,197,94,.35);}
     .pill.warn{color:var(--warn);border-color:rgba(234,179,8,.35);}
     .pill.bad{color:var(--bad);border-color:rgba(239,68,68,.35);}
     .pill.cyan{color:var(--cyan);border-color:rgba(34,211,238,.35);}
-    button{
-      background:#0a1116;border:1px solid var(--border);color:var(--ink);
-      padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px;
-    }
+    button{background:#0a1116;border:1px solid var(--border);color:var(--ink);
+      padding:8px 10px;border-radius:10px;cursor:pointer;font-size:13px;}
     button:hover{border-color:rgba(34,211,238,.45);color:var(--cyan);}
     button[disabled]{opacity:.45;cursor:not-allowed;}
-    .glow{
-      box-shadow:0 0 0 2px rgba(34,211,238,.08), 0 0 18px rgba(34,211,238,.18);
-      border-color:rgba(34,211,238,.35);
+    .glowPulse{
+      animation: pulse 1.4s ease-in-out infinite;
+      border-color: rgba(34,211,238,.55) !important;
+      box-shadow: 0 0 0 2px rgba(34,211,238,.10), 0 0 22px rgba(34,211,238,.25);
+      color: var(--cyan) !important;
+    }
+    @keyframes pulse{
+      0%{ box-shadow: 0 0 0 2px rgba(34,211,238,.06), 0 0 18px rgba(34,211,238,.12); }
+      50%{ box-shadow: 0 0 0 2px rgba(34,211,238,.14), 0 0 30px rgba(34,211,238,.28); }
+      100%{ box-shadow: 0 0 0 2px rgba(34,211,238,.06), 0 0 18px rgba(34,211,238,.12); }
     }
 
-    .center{display:grid;grid-template-rows:auto 1fr;gap:12px;min-width:0;}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
     .brand{display:flex;flex-direction:column;gap:2px;}
     .brand .title{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#b9c8d4;}
     .brand .sub{font-size:12px;color:var(--muted);}
     .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);font-size:12px;color:#cfe0ee;}
+    .mapPanel{display:grid;grid-template-rows:auto 1fr;gap:12px;min-width:0;}
+    .map{background:linear-gradient(180deg, rgba(34,211,238,.04), rgba(0,0,0,0));
+      border:1px solid var(--border);border-radius:14px;position:relative;overflow:hidden;
+      display:flex;align-items:center;justify-content:center;min-height:560px;}
+    canvas{display:block; width:100%; height:100%;}
+    .overlayHint{
+      position:absolute; left:14px; top:14px;
+      padding:8px 10px; border-radius:12px;
+      background:rgba(9,16,22,.80); border:1px solid rgba(255,255,255,.10);
+      font-size:12px; color:#cfe0ee;
+    }
+    .overlayHint b{color:var(--cyan); font-weight:600;}
+    .rightCol{display:flex;flex-direction:column;gap:12px;min-width:0;}
 
-    .map{
-      background:linear-gradient(180deg, rgba(34,211,238,.04), rgba(0,0,0,0));
-      border:1px solid var(--border);border-radius:14px;
-      position:relative;overflow:hidden;
-      display:flex;align-items:center;justify-content:center;
-      min-height:520px;
-    }
-    .gridWrap{position:relative; width:min(920px, 100%); height:560px; padding:18px;}
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(12, 56px);
-      grid-template-rows:repeat(9, 56px);
-      gap:10px;
-      justify-content:center;
-      align-content:center;
-      user-select:none;
-    }
-    .tile{
-      width:56px;height:56px;border-radius:12px;
-      background:#0a1116;
-      border:1px solid rgba(255,255,255,.09);
-      position:relative;
-      cursor:pointer;
-    }
-    .tile:hover{border-color:rgba(34,211,238,.22);}
-    .tile.occupied{cursor:pointer;}
-    .bldg{
-      position:absolute; inset:6px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(9,16,22,.75);
-      display:flex;align-items:center;justify-content:center;
-      text-align:center;
-      padding:4px;
-    }
-    .bldg .name{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#cfe0ee;line-height:1.1;}
-    .bldg .state{margin-top:3px;font-size:10px;color:var(--muted);}
-    .bldg.online{border-color:rgba(34,197,94,.35);}
-    .bldg.offline{border-color:rgba(239,68,68,.28);}
-    .bldg.fuel{border-color:rgba(34,211,238,.25);}
-    .bldg.life{border-color:rgba(168,85,247,.22);}
-    .bldg.gen{border-color:rgba(234,179,8,.18);}
+    .box{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:10px;}
+    .sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 
-    .toasts{
-      position:absolute;right:16px;bottom:16px;
-      display:flex;flex-direction:column;gap:8px;
-      z-index:50;
-      pointer-events:none;
-      width:min(380px, 92vw);
-    }
-    .toast{
-      pointer-events:none;
-      background:rgba(9,16,22,.86);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:12px;
-      padding:10px 12px;
-      box-shadow:0 14px 28px rgba(0,0,0,.35);
-      transform:translateY(6px);
-      opacity:0;
-      transition:opacity .18s ease, transform .18s ease;
-    }
-    .toast.show{opacity:1;transform:translateY(0);}
-    .toast .t{font-size:12px;color:#d7e3ec;margin-bottom:3px;}
-    .toast .b{font-size:12px;color:var(--muted);line-height:1.35;}
-    .toast.good{border-color:rgba(34,197,94,.22);}
-    .toast.warn{border-color:rgba(234,179,8,.22);}
-    .toast.bad{border-color:rgba(239,68,68,.22);}
-    .toast.cyan{border-color:rgba(34,211,238,.22);}
-
-    .right{display:flex;flex-direction:column;gap:12px;min-width:0;}
-    .storeHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-    .storeMoney{font-size:12px;color:#b9c8d4;}
-    .item{
-      background:var(--panel2);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px;
-      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
-      margin-top:8px;
-    }
+    .item{background:#070c10;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-top:8px;}
     .itemTitle{font-size:13px;}
     .itemMeta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35;}
     .itemRight{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
-    .cost{font-size:12px;color:#cfe0ee;}
-    .log{
-      flex:1;min-height:160px;
-      background:#070c10;border:1px solid var(--border);border-radius:12px;
-      padding:10px;overflow:auto;white-space:pre-wrap;
-      font-size:12px;line-height:1.35;color:#c6d3de;
-      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
-    }
+    .tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
+      font-size:11px;color:#cfe0ee;background:rgba(10,16,21,.8);}
+    .tag.locked{color:#b3c1cc;border-color:rgba(255,255,255,.10);opacity:.9;}
+    .tag.built{color:var(--good);border-color:rgba(34,197,94,.25);}
+    .tag.owned{color:#7dd3fc;border-color:rgba(125,211,252,.25);}
 
-    .splash{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.72);
-      display:flex;align-items:center;justify-content:center;
-      z-index:200;
-      padding:18px;
-    }
-    .card{
-      width:min(760px, 96vw);
-      background:rgba(9,16,22,.92);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
-      box-shadow:0 24px 60px rgba(0,0,0,.55);
-      padding:16px;
-    }
-    .card h1{
-      margin:0 0 8px 0;
-      font-size:14px;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      color:#cfe0ee;
-    }
-    .card p{margin:0 0 10px 0;font-size:12px;color:var(--muted);line-height:1.45;}
-    .card .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap;}
-    .kbd{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(10,16,21,.8);font-size:11px;color:#cfe0ee;}
+    .invRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+    .invRow:last-child{border-bottom:none;}
+    .invName{font-size:12px;color:#cfe0ee;}
+    .invCount{font-size:12px;color:var(--muted);}
+    .log{min-height:190px;background:#070c10;border:1px solid var(--border);border-radius:12px;
+      padding:10px;overflow:auto;white-space:pre-wrap;font-size:12px;line-height:1.35;color:#c6d3de;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;}
 
-    @media (max-width: 980px){
-      .app{grid-template-columns:1fr;}
-      .grid{grid-template-columns:repeat(10, 52px);grid-template-rows:repeat(10, 52px);gap:8px;}
-      .tile{width:52px;height:52px;}
-    }
+    @media (max-width: 980px){ .app{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
-
-<!-- Splash -->
-<div class="splash" id="splash">
-  <div class="card">
-    <h1>ZONE 13 - STABILIZATION DEMO</h1>
-    <p>
-      Bring the zone online in the correct order. Once Life Support is online, the Store will highlight the next step.
-    </p>
-    <p class="mono" style="margin-top:6px;">
-      Goal (Demo): Generator ONLINE → Life Support ONLINE → Buy Fuel Station → Fuel starts producing.
-    </p>
-    <div class="actions">
-      <span class="kbd">Click buildings to toggle</span>
-      <button id="btnOk">OK, START</button>
-    </div>
-  </div>
-</div>
-
 <div class="app">
-  <!-- LEFT HUD -->
   <section class="panel">
     <h2>HUD</h2>
-
     <div class="row"><div class="k">Tick</div><div class="v mono" id="hudTick">0</div></div>
+    <div class="row"><div class="k">Mode</div><div class="v"><span class="pill cyan" id="hudMode">SELECT</span></div></div>
+    <div class="row"><div class="k">Selected</div><div class="v mono" id="hudSelected">None</div></div>
 
-    <div class="row">
-      <div class="k">System</div>
-      <div class="v"><span class="pill bad" id="hudSystem">OFFLINE</span></div>
-    </div>
-
-    <div class="row">
-      <div class="k">Power</div>
-      <div class="v">
-        <span class="pill bad" id="hudPowerState">RED</span>
-        <span class="mono" id="hudPowerNums">(0.0 / 0.0)</span>
-      </div>
-    </div>
+    <div class="row"><div class="k">System</div><div class="v"><span class="pill bad" id="hudSystem">OFFLINE</span></div></div>
+    <div class="row"><div class="k">Power</div><div class="v"><span class="pill bad" id="hudPowerState">RED</span> <span class="mono" id="hudPowerNums">(0.0 / 0.0)</span></div></div>
 
     <div class="row"><div class="k">Population</div><div class="v mono" id="hudPop">0</div></div>
+    <div class="row"><div class="k">Happiness</div><div class="v"><span class="pill warn" id="hudHappyState">NEUTRAL</span> <span class="mono" id="hudHappy">50</span></div></div>
+    <div class="row"><div class="k">Money</div><div class="v mono" id="hudMoney">100.00</div></div>
 
-    <div class="row">
-      <div class="k">Happiness</div>
-      <div class="v"><span class="pill warn" id="hudHappyState">NEUTRAL</span> <span class="mono" id="hudHappy">50</span></div>
-    </div>
+    <div class="row"><div class="k">Fuel</div><div class="v mono" id="hudFuel">0.800</div></div>
+    <div class="row"><div class="k">Food</div><div class="v mono" id="hudFood">6.000</div></div>
+    <div class="row"><div class="k">Water</div><div class="v mono" id="hudWater">6.000</div></div>
 
-    <div class="row"><div class="k">Money</div><div class="v mono" id="hudMoney">50.00</div></div>
-
-    <div class="row"><div class="k">Fuel</div><div class="v mono" id="hudFuel">0.000</div></div>
-
-    <div class="row">
-      <div class="k">Life Support</div>
-      <div class="v"><span class="pill bad" id="hudLife">OFFLINE</span></div>
-    </div>
-
-    <div class="row">
-      <div class="k">Fuel Station</div>
-      <div class="v"><span class="pill bad" id="hudFuelStation">OFFLINE</span></div>
-    </div>
-
-    <div class="row" style="border-bottom:none;">
-      <div class="k">Note</div>
-      <div class="v" style="font-size:12px;color:var(--muted);">
-        Store glows once Life Support is ON.
-      </div>
-    </div>
+    <div class="row"><div class="k">Life Support</div><div class="v"><span class="pill bad" id="hudLife">OFFLINE</span></div></div>
+    <div class="row" style="border-bottom:none;"><div class="k">Generator</div><div class="v"><span class="pill bad" id="hudGen">OFFLINE</span></div></div>
   </section>
 
-  <!-- CENTER -->
-  <section class="center">
+  <section class="mapPanel">
     <div class="panel topbar">
       <div class="brand">
         <div class="title">Zone 13</div>
-        <div class="sub">Flat Demo v1 • Store Glow • Start Money = 50</div>
+        <div class="sub">v0.2.1 • Fuel production + population/taxes (fix standstill)</div>
       </div>
       <div class="tools">
         <button id="btnStart">Start</button>
         <button id="btnPause">Pause</button>
         <button id="btnStep">Step Tick</button>
         <button id="btnReset">Reset</button>
-        <span class="chip mono">No isometric. No cables. Just loop.</span>
+        <span class="chip mono">Milestone 2</span>
       </div>
     </div>
 
-    <div class="map panel">
-      <div class="gridWrap">
-        <div class="grid" id="grid"></div>
-        <div class="toasts" id="toasts"></div>
+    <div class="map panel" id="map">
+      <canvas id="c"></canvas>
+      <div class="overlayHint">
+        <div><b>Click</b> buildings to select.</div>
+        <div><b>Toggle Online</b> to activate (fuel/food/water must be ONLINE to produce).</div>
+        <div class="mono" style="margin-top:6px;opacity:.85;">ESC cancels placement.</div>
       </div>
     </div>
   </section>
 
-  <!-- RIGHT -->
-  <section class="right">
-    <div class="panel" id="storePanel">
-      <div class="storeHeader">
+  <section class="rightCol">
+    <div class="panel">
+      <div class="sectionTitle">
         <h2 style="margin:0;">Store</h2>
-        <div class="storeMoney">Available: <span class="mono" id="storeMoney">50.00</span></div>
+        <button id="btnStore" style="padding:6px 10px;">STORE</button>
       </div>
 
-      <div class="item">
-        <div>
-          <div class="itemTitle">Fuel Station</div>
-          <div class="itemMeta">
-            Produces fuel when the grid is not RED.<br/>
-            <span class="mono">Demo behavior:</span> buying auto-places it for you.
-          </div>
+      <div class="box" id="storeBox" style="margin-top:8px;display:none;">
+        <div class="sectionTitle">
+          <div class="mono">Available</div>
+          <div style="font-size:12px;color:#b9c8d4;">Money: <span class="mono" id="storeMoney">100.00</span></div>
         </div>
-        <div class="itemRight">
-          <div class="cost">Cost: <span class="mono" id="fuelCost">30</span></div>
-          <button id="btnBuyFuel" disabled>Locked</button>
-        </div>
+        <div id="storeItems"></div>
       </div>
+    </div>
 
-      <div class="item">
-        <div>
-          <div class="itemTitle">Coming Soon</div>
-          <div class="itemMeta">Food • Water • Tech • Events (later)</div>
-        </div>
-        <div class="itemRight">
-          <div class="cost">—</div>
-          <button disabled>—</button>
+    <div class="panel">
+      <div class="sectionTitle">
+        <h2 style="margin:0;">Inventory</h2>
+        <span class="chip mono" id="modeTag">SELECT</span>
+      </div>
+      <div class="box" style="margin-top:8px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Purchased items become placement tokens.</div>
+        <div id="invList"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="sectionTitle">
+        <h2 style="margin:0;">Selection</h2>
+        <span class="chip mono" id="selCoord">—</span>
+      </div>
+      <div class="box" style="margin-top:8px;">
+        <div class="mono" id="selName" style="font-size:13px;">Nothing selected</div>
+        <div id="selState" style="margin-top:8px;color:var(--muted);font-size:12px;">Click a building on the map.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button id="btnToggleOnline" disabled>Toggle</button>
+                    <button id="btnDelete" disabled>Remove</button>
+          <button id="btnCancelPlace" disabled>Cancel Placement</button>
         </div>
       </div>
     </div>
 
-    <div class="panel" style="display:flex;flex-direction:column;gap:10px;min-height:240px;">
-      <h2>Debug Log</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px;min-height:220px;">
+      <h2>Log</h2>
       <div class="log" id="log"></div>
     </div>
   </section>
 </div>
 
 <script>
+
 (() => {
-  // ====== TUNABLES (this is the exact flat demo baseline) ======
-  const GRID_W = 12, GRID_H = 9;
+  const MAP_COLS = 12, MAP_ROWS = 9;
+  const TILE_W = 86, TILE_H = 44, BOARD_PAD_Y = 50;
 
-  const START_MONEY = 50;
-  const FUEL_STATION_COST = 30;
+  // ECON tuning
+  const START_MONEY = 100;
+  const START_FUEL = 0.8;
+  const FUEL_CAP = 5.0;
+  const FUEL_PROD_PER_TICK = 0.06;
+  const FUEL_DRAIN_PER_TICK = 0.06;
+  const FOOD_CAP = 10.0, WATER_CAP = 10.0;
+  const FOOD_PROD_PER_TICK = 0.04, WATER_PROD_PER_TICK = 0.04;
 
-  const GEN_SUPPLY = 4.0;
-  const LIFE_DEMAND = 1.0;
-  const FUEL_DEMAND = 1.0;
+  // Consumption + scarcity
+  const FOOD_CONS_PER_POP_PER_TICK = 0.002;
+  const WATER_CONS_PER_POP_PER_TICK = 0.002;
+  const SCARCITY_SUSTAIN_TICKS = 25; // ~25 seconds at 1 tick/sec
+  const HAPPY_DOWN_SCARCITY = 0.08;
+  const HAPPY_DOWN_SUSTAINED_SCARCITY = 0.18;
 
-  const STARTER_FUEL = 0.80;
-  const FUEL_PROD_PER_TICK = 0.10;     // fuel station output
-  const GEN_BURN_PER_TICK = 0.05;      // generator burn
+  // Population + taxes
+  const POP_SEED = 12;
+  const TAX_PER_PERSON_PER_TICK = 0.01;
+  const POP_GROWTH_PER_TICK = 0.03;
+  const POP_DECLINE_PER_TICK = 0.04;
 
-  const POP_SEED = 12;                 // arrives once system online
-  const TAX_PER_POP_PER_TICK = 0.03;   // money engine
+  // Happiness
+  const HAPPY_UP_STABLE = 0.08;
+  const HAPPY_DOWN_UNSTABLE = 0.08;
 
-  const POS_GEN  = {x:3, y:3};
-  const POS_LIFE = {x:5, y:3};
-  const POS_FUEL_AUTO = {x:4, y:5};    // demo-only auto placement
+  const CATALOG = {
+    fuel:    {type:"fuel",    name:"Fuel Station",   cost:30, oneOnly:true,  unlock: s => isLifeOnline(s)},
+    food:    {type:"food",    name:"Food Processor", cost:35, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
+    water:   {type:"water",   name:"Water Pump",     cost:40, oneOnly:true,  unlock: s => isBuilt(s,"food")},
+    tech:    {type:"tech",    name:"Tech Facility",  cost:60, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
+    housing: {type:"housing", name:"Housing Block",  cost:40, oneOnly:false, unlock: s => isSystemOnline(s)}
+  };
 
-  let timer = null;
-
-  // ====== STATE ======
   const state = {
-    tick: 0,
-    money: START_MONEY,
-    fuel: 0,
-    pop: 0,
-    happy: 50,
-
-    buildings: new Map(), // key "x,y" -> {type,name,online}
-    unlockedFuel: false,
-    boughtFuel: false,
-    placedFuel: false,
-
-    power: { supply:0, demand:0, state:"RED" }
+    tick:0, running:false, timer:null,
+    money:START_MONEY, fuel:START_FUEL, food:6.0, water:6.0,
+    pop:0, happy:50,
+    foodShortTicks:0, waterShortTicks:0,
+    powerSupply:0, powerDemand:0, powerState:"RED",
+    buildings:new Map(), builtCount:new Map(),
+    selectedKey:null, placingToken:null, hoverTile:null,
+    inventory:new Map(),
+    storeOpenedOnce:false, storeNeedsNudge:false, popSeeded:false
   };
 
-  // ====== DOM ======
+  const START_GEN = {x:4,y:3};
+  const START_LIFE = {x:6,y:3};
+
   const el = {
-    splash: q("#splash"),
-    btnOk: q("#btnOk"),
-
-    grid: q("#grid"),
-    toasts: q("#toasts"),
-
-    hudTick: q("#hudTick"),
-    hudSystem: q("#hudSystem"),
-    hudPowerState: q("#hudPowerState"),
-    hudPowerNums: q("#hudPowerNums"),
-    hudPop: q("#hudPop"),
-    hudHappyState: q("#hudHappyState"),
-    hudHappy: q("#hudHappy"),
-    hudMoney: q("#hudMoney"),
-    hudFuel: q("#hudFuel"),
-    hudLife: q("#hudLife"),
-    hudFuelStation: q("#hudFuelStation"),
-
-    storePanel: q("#storePanel"),
-    storeMoney: q("#storeMoney"),
-    btnBuyFuel: q("#btnBuyFuel"),
-
-    btnStart: q("#btnStart"),
-    btnPause: q("#btnPause"),
-    btnStep: q("#btnStep"),
-    btnReset: q("#btnReset"),
-
-    log: q("#log"),
+    canvas: document.querySelector("#c"),
+    map: document.querySelector("#map"),
+    log: document.querySelector("#log"),
+    hudTick: document.querySelector("#hudTick"),
+    hudMode: document.querySelector("#hudMode"),
+    hudSelected: document.querySelector("#hudSelected"),
+    hudSystem: document.querySelector("#hudSystem"),
+    hudPowerState: document.querySelector("#hudPowerState"),
+    hudPowerNums: document.querySelector("#hudPowerNums"),
+    hudPop: document.querySelector("#hudPop"),
+    hudHappyState: document.querySelector("#hudHappyState"),
+    hudHappy: document.querySelector("#hudHappy"),
+    hudMoney: document.querySelector("#hudMoney"),
+    hudFuel: document.querySelector("#hudFuel"),
+    hudFood: document.querySelector("#hudFood"),
+    hudWater: document.querySelector("#hudWater"),
+    hudLife: document.querySelector("#hudLife"),
+    hudGen: document.querySelector("#hudGen"),
+    btnStart: document.querySelector("#btnStart"),
+    btnPause: document.querySelector("#btnPause"),
+    btnStep: document.querySelector("#btnStep"),
+    btnReset: document.querySelector("#btnReset"),
+    btnStore: document.querySelector("#btnStore"),
+    storeBox: document.querySelector("#storeBox"),
+    storeMoney: document.querySelector("#storeMoney"),
+    storeItems: document.querySelector("#storeItems"),
+    invList: document.querySelector("#invList"),
+    modeTag: document.querySelector("#modeTag"),
+    selCoord: document.querySelector("#selCoord"),
+    selName: document.querySelector("#selName"),
+    selState: document.querySelector("#selState"),
+    btnToggleOnline: document.querySelector("#btnToggleOnline"),
+    btnDelete: document.querySelector("#btnDelete"),
+    btnCancelPlace: document.querySelector("#btnCancelPlace"),
   };
 
-  // ====== INIT ======
-  buildGrid();
-  placeInitial();
-  renderAll();
-  log("Loaded: Flat Demo v1 baseline.");
+  const ctx = el.canvas.getContext("2d");
 
-  // Splash
-  el.btnOk.addEventListener("click", () => {
-    el.splash.style.display = "none";
-    toast("READY", "Click the Generator, then Life Support. Store will glow.", "cyan");
-  });
+  const keyOf = (x,y)=>`${x},${y}`;
+  const clamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
-  // Controls
-  el.btnStart.addEventListener("click", start);
-  el.btnPause.addEventListener("click", pause);
-  el.btnStep.addEventListener("click", stepTick);
-  el.btnReset.addEventListener("click", reset);
+  function log(msg){
+    const t = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+    el.log.textContent += `[${t}] ${msg}\n`;
+    el.log.scrollTop = el.log.scrollHeight;
+  }
 
-  // Store
-  el.btnBuyFuel.addEventListener("click", buyFuel);
+  function getB(x,y){ return state.buildings.get(keyOf(x,y)) || null; }
+  function setB(b){
+    state.buildings.set(keyOf(b.x,b.y), b);
+    state.builtCount.set(b.type, (state.builtCount.get(b.type)||0) + 1);
+  }
+  function delB(x,y){
+    const b = getB(x,y);
+    if(!b) return;
+    state.buildings.delete(keyOf(x,y));
+    state.builtCount.set(b.type, Math.max(0,(state.builtCount.get(b.type)||1)-1));
+  }
+  function isBuilt(s,type){ return (s.builtCount.get(type)||0) > 0; }
+  function isOwned(s,type){ return (s.builtCount.get(type)||0) > 0 || (s.inventory.get(type)||0) > 0; }
+  function countOnline(type){
+    let n=0;
+    for(const b of state.buildings.values()) if(b.type===type && b.online) n++;
+    return n;
+  }
+  function isGenOnline(){ return !!getB(START_GEN.x,START_GEN.y)?.online; }
+  function isLifeOnline(){ return !!getB(START_LIFE.x,START_LIFE.y)?.online; }
+  function isSystemOnline(){ return isGenOnline() && isLifeOnline() && state.powerState!=="RED"; }
 
-  // ====== CORE LOOP ======
+  function tileToScreen(x,y){
+    return {x:(x-y)*(TILE_W/2), y:(x+y)*(TILE_H/2)};
+  }
+  function screenToTile(px,py){
+    const x = (px/(TILE_W/2) + py/(TILE_H/2)) / 2;
+    const y = (py/(TILE_H/2) - px/(TILE_W/2)) / 2;
+    return {x,y};
+  }
+  function boardOrigin(){
+    const r = el.map.getBoundingClientRect();
+    return {x:r.width/2, y:BOARD_PAD_Y};
+  }
+  function inBounds(x,y){ return x>=0 && y>=0 && x<MAP_COLS && y<MAP_ROWS; }
+
   function start(){
-    if (timer) return;
-    timer = setInterval(stepTick, 1000);
+    if(state.running) return;
+    state.running=true;
+    state.timer=setInterval(tick, 1000);
     log("ENGINE start");
+    renderAll();
   }
   function pause(){
-    if (!timer) return;
-    clearInterval(timer);
-    timer = null;
+    if(!state.running) return;
+    state.running=false;
+    clearInterval(state.timer);
+    state.timer=null;
     log("ENGINE pause");
-  }
-  function reset(){
-    pause();
-    state.tick = 0;
-    state.money = START_MONEY;
-    state.fuel = 0;
-    state.pop = 0;
-    state.unlockedFuel = false;
-    state.boughtFuel = false;
-    state.placedFuel = false;
-    state.power = {supply:0,demand:0,state:"RED"};
-
-    state.buildings.clear();
-    placeInitial();
     renderAll();
-    toast("RESET", "Returned to initial state.", "warn");
-    log("RESET complete");
   }
+  function step(){ tick(); }
 
-  function stepTick(){
+  function tick(){
     state.tick++;
 
-    // Demand: Life + Fuel station (if online)
-    let demand = 0;
-    const life = getB(POS_LIFE.x, POS_LIFE.y);
-    const gen  = getB(POS_GEN.x, POS_GEN.y);
-    const fuelStation = findFirst("fuel");
+    // Production (FIX: fuel now increases)
+    const fOn = countOnline("fuel");
+    const foodOn = countOnline("food");
+    const waterOn = countOnline("water");
 
-    if (life?.online) demand += LIFE_DEMAND;
-    if (fuelStation?.online) demand += FUEL_DEMAND;
+    if(fOn>0) state.fuel = Math.min(FUEL_CAP, state.fuel + FUEL_PROD_PER_TICK*fOn);
+    if(foodOn>0) state.food = Math.min(FOOD_CAP, state.food + FOOD_PROD_PER_TICK*foodOn);
+    if(waterOn>0) state.water = Math.min(WATER_CAP, state.water + WATER_PROD_PER_TICK*waterOn);
 
-    // Supply: Generator if online AND has fuel
-    let supply = 0;
-    if (gen?.online) {
-      if (state.fuel > 0) {
-        supply += GEN_SUPPLY;
-        state.fuel = Math.max(0, state.fuel - GEN_BURN_PER_TICK);
-      } else {
-        gen.online = false;
-        toast("GENERATOR OFFLINE", "Fuel depleted. Restore fuel supply.", "bad");
+    
+    // Consumption (population drives demand)
+    const popNow = state.pop;
+    let foodShort = false, waterShort = false;
+    if(popNow > 0){
+      const needFood = popNow * FOOD_CONS_PER_POP_PER_TICK;
+      const needWater = popNow * WATER_CONS_PER_POP_PER_TICK;
+
+      if(state.food + 1e-9 < needFood){ foodShort = true; state.food = 0; }
+      else state.food = Math.max(0, state.food - needFood);
+
+      if(state.water + 1e-9 < needWater){ waterShort = true; state.water = 0; }
+      else state.water = Math.max(0, state.water - needWater);
+    }
+
+    // Scarcity counters (Stage 1 -> happiness pressure, Stage 2 -> population decline)
+    if(foodShort) state.foodShortTicks++; else state.foodShortTicks = Math.max(0, state.foodShortTicks - 2);
+    if(waterShort) state.waterShortTicks++; else state.waterShortTicks = Math.max(0, state.waterShortTicks - 2);
+    const scarcitySustained = (state.foodShortTicks >= SCARCITY_SUSTAIN_TICKS) || (state.waterShortTicks >= SCARCITY_SUSTAIN_TICKS);
+
+
+    // Power model
+    const gen = getB(START_GEN.x,START_GEN.y);
+    const life = getB(START_LIFE.x,START_LIFE.y);
+    state.powerDemand = life?.online ? 1 : 0;
+    state.powerSupply = (gen?.online && state.fuel>0) ? 1 : 0;
+    state.powerState = (state.powerDemand===0) ? "GREEN" : (state.powerSupply>=state.powerDemand ? "GREEN" : "RED");
+
+    // Drain
+    if(gen?.online && state.powerSupply>0){
+      state.fuel = Math.max(0, state.fuel - (FUEL_DRAIN_PER_TICK*state.powerSupply));
+      if(state.fuel===0){
+        gen.online=false;
         log("Generator OFFLINE (fuel depleted)");
       }
     }
 
-    // Power state
-    state.power.supply = supply;
-    state.power.demand = demand;
-    state.power.state = computePowerState(supply, demand);
+    // Happiness (scarcity affects happiness first; population reacts later)
+    const stable = isSystemOnline();
+    let happyDelta = (stable?HAPPY_UP_STABLE:-HAPPY_DOWN_UNSTABLE);
+    if(foodShort || waterShort) happyDelta -= HAPPY_DOWN_SCARCITY;
+    if(scarcitySustained) happyDelta -= HAPPY_DOWN_SUSTAINED_SCARCITY;
+    state.happy = clamp(state.happy + happyDelta, 0, 100);
+    const hs = state.happy>=70 ? "GREEN" : state.happy<=35 ? "RED" : "NEUTRAL";
 
-    // If RED, force dependent systems offline (simple rule)
-    if (state.power.state === "RED") {
-      if (fuelStation) fuelStation.online = false;
-      if (life?.online) {
-        life.online = false;
-        toast("LIFE SUPPORT OFFLINE", "Insufficient power.", "bad");
-        log("Life Support OFFLINE (RED)");
-      }
-    }
-
-    // Fuel production if fuel station online and not RED
-    if (fuelStation?.online && state.power.state !== "RED") {
-      state.fuel += FUEL_PROD_PER_TICK;
-    }
-
-    // System online condition: generator online + life online + not RED
-    const systemOnline = isSystemOnline();
-
-    // First population seed when system comes online
-    if (systemOnline && state.pop === 0) {
+    // Pop seed + dynamics (FIX: pop moves)
+    if(stable && !state.popSeeded){
       state.pop = POP_SEED;
-      toast("POPULATION INCREASED", `+${POP_SEED} trust the system.`, "good");
-      log(`Population seeded: ${state.pop}`);
+      state.popSeeded=true;
+      log(`Population seeded: ${POP_SEED}`);
+      if(!state.storeOpenedOnce) state.storeNeedsNudge=true;
     }
+    if(stable && hs==="GREEN" && !scarcitySustained) state.pop += POP_GROWTH_PER_TICK;
+    else if(!stable) state.pop -= POP_DECLINE_PER_TICK;
+    else if(scarcitySustained && hs==="RED") state.pop -= POP_DECLINE_PER_TICK;
+    state.pop = Math.max(0, state.pop);
 
-    // Taxes only when system online
-    if (systemOnline && state.pop > 0) {
-      state.money += state.pop * TAX_PER_POP_PER_TICK;
-    }
+    // Taxes (FIX: money keeps moving)
+    if(stable && state.pop>0) state.money += state.pop * TAX_PER_PERSON_PER_TICK;
 
-    // Update store glow + buttons
-    updateStore();
+    // Store nudge
+    if(isLifeOnline() && !state.storeOpenedOnce) state.storeNeedsNudge=true;
 
     renderAll();
   }
 
-  function computePowerState(supply, demand){
-    if (demand <= 0) return "GREEN";
-    if (supply < demand) return "RED";
-    if (supply <= demand * 1.10) return "YELLOW";
-    return "GREEN";
-  }
+  function reset(){
+    pause();
+    state.tick=0;
+    state.money=START_MONEY;
+    state.fuel=START_FUEL;
+    state.food=6.0;
+    state.water=6.0;
+    state.pop=0;
+    state.happy=50;
+    state.foodShortTicks=0; state.waterShortTicks=0;
+    state.powerSupply=0; state.powerDemand=0; state.powerState="RED";
 
-  // ====== INTERACTION ======
-  function onTileClick(x,y){
-    const b = getB(x,y);
-    if (!b) return;
+    state.buildings.clear();
+    state.builtCount.clear();
+    state.selectedKey=null;
+    state.placingToken=null;
+    state.hoverTile=null;
+    state.inventory.clear();
 
-    // Toggle generator
-    if (b.type === "gen") {
-      b.online = !b.online;
-      if (b.online) {
-        if (state.fuel <= 0) {
-          state.fuel = STARTER_FUEL;
-          toast("GENERATOR ONLINE", "Starter fuel loaded (fuel is finite).", "cyan");
-          log("Generator ONLINE + starter fuel");
-        } else {
-          toast("GENERATOR ONLINE", "Power supply available.", "good");
-          log("Generator ONLINE");
-        }
-      } else {
-        toast("GENERATOR OFFLINE", "Power supply stopped.", "warn");
-        log("Generator OFFLINE");
-      }
-      renderAll();
-      return;
-    }
+    state.storeOpenedOnce=false;
+    state.storeNeedsNudge=false;
+    state.popSeeded=false;
 
-    // Toggle life support
-    if (b.type === "life") {
-      b.online = !b.online;
-      if (b.online) {
-        toast("LIFE SUPPORT ONLINE", "Stabilization initiated.", "good");
-        log("Life Support ONLINE");
+    setB({type:"generator", name:"Generator", online:false, x:START_GEN.x, y:START_GEN.y});
+    setB({type:"life", name:"Life Support", online:false, x:START_LIFE.x, y:START_LIFE.y});
 
-        // Unlock store item (this triggers glow)
-        if (!state.unlockedFuel) {
-          state.unlockedFuel = true;
-          toast("STORE UPDATED", "Fuel Station unlocked. Buy it next.", "cyan");
-          log("UNLOCK: Fuel Station");
-        }
-      } else {
-        toast("LIFE SUPPORT OFFLINE", "Stabilization interrupted.", "bad");
-        log("Life Support OFFLINE");
-      }
-      updateStore();
-      renderAll();
-      return;
-    }
+    el.storeBox.style.display="none";
+    el.btnStore.classList.remove("glowPulse");
 
-    // Fuel station (inspect only)
-    if (b.type === "fuel") {
-      toast("FUEL STATION", b.online ? "ONLINE" : "OFFLINE", "cyan");
-    }
-  }
-
-  function buyFuel(){
-    if (!state.unlockedFuel) return;
-    if (state.money < FUEL_STATION_COST) {
-      toast("INSUFFICIENT FUNDS", "Taxes accumulate while system is online.", "warn");
-      return;
-    }
-    if (state.boughtFuel) return;
-
-    state.money -= FUEL_STATION_COST;
-    state.boughtFuel = true;
-
-    // DEMO ONLY: auto-place it for the player
-    if (!getB(POS_FUEL_AUTO.x, POS_FUEL_AUTO.y)) {
-      setB(POS_FUEL_AUTO.x, POS_FUEL_AUTO.y, { type:"fuel", name:"Fuel Station", online:true });
-      state.placedFuel = true;
-      toast("FUEL ONLINE", "Fuel production started.", "good");
-      log(`Fuel Station auto-placed at ${POS_FUEL_AUTO.x},${POS_FUEL_AUTO.y}`);
-    } else {
-      toast("PLACEMENT BLOCKED", "Auto placement tile occupied.", "warn");
-      log("WARN: Auto placement blocked");
-    }
-
-    updateStore();
+    log("RESET complete");
     renderAll();
   }
 
-  // ====== STORE ======
-  function updateStore(){
-    el.storeMoney.textContent = state.money.toFixed(2);
+  function toggleStore(){
+    const open = el.storeBox.style.display!=="none";
+    el.storeBox.style.display = open ? "none" : "block";
+    if(!open){
+      state.storeOpenedOnce=true;
+      state.storeNeedsNudge=false;
+      el.btnStore.classList.remove("glowPulse");
+      log("STORE opened");
+    } else log("STORE closed");
+    renderStore();
+  }
 
-    if (!state.unlockedFuel) {
-      el.btnBuyFuel.disabled = true;
-      el.btnBuyFuel.textContent = "Locked";
-      el.storePanel.classList.remove("glow");
+  function purchase(type){
+    const item = CATALOG[type];
+    if(!item) return;
+    if(!item.unlock(state)){ log(`${item.name} is LOCKED.`); return; }
+    if(item.oneOnly && isBuilt(state,type)){ log(`${item.name} already built.`); return; }
+    if(state.money < item.cost){ log(`Insufficient funds for ${item.name}.`); return; }
+    state.money -= item.cost;
+    state.inventory.set(type, (state.inventory.get(type)||0)+1);
+    log(`Purchased: ${item.name} (+1 token)`);
+    beginTokenPlacement(type);
+    renderAll();
+  }
+
+  function beginTokenPlacement(type){
+    const item = CATALOG[type];
+    if(!item) return;
+    if((state.inventory.get(type)||0) <= 0){ log(`No ${item.name} tokens.`); return; }
+    state.placingToken = {type, name:item.name};
+    state.selectedKey = null;
+    el.btnCancelPlace.disabled=false;
+    log(`Placement mode: ${item.name}`);
+    renderAll();
+  }
+  function cancelPlacement(){
+    if(!state.placingToken) return;
+    state.placingToken=null;
+    el.btnCancelPlace.disabled=true;
+    log("Placement cancelled (token kept).");
+    renderAll();
+  }
+
+  function selectKey(k){
+    state.selectedKey=k;
+    state.placingToken=null;
+    el.btnCancelPlace.disabled=true;
+    renderAll();
+  }
+  function clearSelection(){ state.selectedKey=null; renderAll(); }
+
+  function toggleSelectedOnline(){
+  if(!state.selectedKey) return;
+  const b = state.buildings.get(state.selectedKey);
+  if(!b) return;
+  b.online = !b.online;
+  log((b.name||b.type)+" "+(b.online?"ONLINE":"OFFLINE"));
+  renderAll();
+}
+
+function deleteSelected(){
+    if(!state.selectedKey) return;
+    const b = state.buildings.get(state.selectedKey);
+    if(!b) return;
+    if((b.x===START_GEN.x && b.y===START_GEN.y) || (b.x===START_LIFE.x && b.y===START_LIFE.y)){
+      log("Cannot remove starter buildings in v0.2.1");
       return;
     }
 
-    const canBuy = state.money >= FUEL_STATION_COST && !state.boughtFuel;
-    el.btnBuyFuel.disabled = !canBuy;
-    el.btnBuyFuel.textContent = state.boughtFuel ? "Purchased" : "Buy";
+    // Return building to inventory instead of deleting it forever.
+    // This prevents new players from soft-locking themselves by experimenting with Remove.
+    const type = b.type;
+    const item = CATALOG[type];
+    if(item){
+      const cur = state.inventory.get(type)||0;
+      if(item.oneOnly){
+        // one-only items should never accumulate multiple tokens
+        state.inventory.set(type, Math.min(1, cur + 1));
+      } else {
+        state.inventory.set(type, cur + 1);
+      }
+    }
 
-    // Glow only when it is the next logical step
-    const shouldGlow = state.unlockedFuel && !state.boughtFuel;
-    el.storePanel.classList.toggle("glow", shouldGlow);
-  }
-
-  // ====== RENDER ======
-  function renderAll(){
-    renderGrid();
-    renderHUD();
-    updateStore();
+    delB(b.x,b.y);
+    log(`Removed to inventory: ${b.name}`);
+    state.selectedKey=null;
+    renderAll();
   }
 
   function renderHUD(){
     el.hudTick.textContent = String(state.tick);
+    const mode = state.placingToken ? "PLACE" : "SELECT";
+    el.hudMode.textContent = mode;
+    el.modeTag.textContent = mode;
 
-    // System online badge
-    const online = isSystemOnline();
-    el.hudSystem.textContent = online ? "ONLINE" : "OFFLINE";
-    el.hudSystem.className = "pill " + (online ? "good" : "bad");
+    const sel = state.selectedKey ? state.buildings.get(state.selectedKey) : null;
+    el.hudSelected.textContent = sel ? `${sel.name} @ ${sel.x},${sel.y}` : "None";
 
-    // Power badge
-    el.hudPowerState.textContent = state.power.state;
-    el.hudPowerState.className = "pill " + (state.power.state === "GREEN" ? "good" : state.power.state === "YELLOW" ? "warn" : "bad");
-    el.hudPowerNums.textContent = `(${state.power.supply.toFixed(1)} / ${state.power.demand.toFixed(1)})`;
+    const sysOn = isSystemOnline();
+    el.hudSystem.textContent = sysOn ? "ONLINE" : "OFFLINE";
+    el.hudSystem.className = "pill " + (sysOn ? "good" : "bad");
 
-    el.hudPop.textContent = String(state.pop);
-    el.hudHappy.textContent = String(state.happy);
+    el.hudPowerState.textContent = state.powerState;
+    el.hudPowerState.className = "pill " + (state.powerState==="GREEN" ? "good" : "bad");
+    el.hudPowerNums.textContent = `(${state.powerSupply.toFixed(1)} / ${state.powerDemand.toFixed(1)})`;
+
+    el.hudPop.textContent = String(Math.floor(state.pop));
+    const hs = state.happy>=70 ? "GREEN" : state.happy<=35 ? "RED" : "NEUTRAL";
+    el.hudHappyState.textContent = hs;
+    el.hudHappyState.className = "pill " + (hs==="GREEN" ? "good" : hs==="RED" ? "bad" : "warn");
+    el.hudHappy.textContent = String(Math.round(state.happy));
+
     el.hudMoney.textContent = state.money.toFixed(2);
-    el.hudFuel.textContent = state.fuel.toFixed(3);
+    el.storeMoney.textContent = state.money.toFixed(2);
 
-    const life = getB(POS_LIFE.x, POS_LIFE.y);
+    el.hudFuel.textContent = state.fuel.toFixed(3);
+    el.hudFood.textContent = state.food.toFixed(3);
+    el.hudWater.textContent = state.water.toFixed(3);
+
+    const gen = getB(START_GEN.x,START_GEN.y);
+    const life = getB(START_LIFE.x,START_LIFE.y);
+    el.hudGen.textContent = gen?.online ? "ONLINE" : "OFFLINE";
+    el.hudGen.className = "pill " + (gen?.online ? "good" : "bad");
     el.hudLife.textContent = life?.online ? "ONLINE" : "OFFLINE";
     el.hudLife.className = "pill " + (life?.online ? "good" : "bad");
 
-    const fuel = findFirst("fuel");
-    el.hudFuelStation.textContent = fuel?.online ? "ONLINE" : "OFFLINE";
-    el.hudFuelStation.className = "pill " + (fuel?.online ? "cyan" : "bad");
+    if(state.storeNeedsNudge) el.btnStore.classList.add("glowPulse");
   }
 
-  function renderGrid(){
-    const tiles = el.grid.querySelectorAll(".tile");
-    tiles.forEach(tile => {
-      const x = Number(tile.dataset.x), y = Number(tile.dataset.y);
-      tile.innerHTML = "";
-      tile.classList.toggle("occupied", !!getB(x,y));
-      const b = getB(x,y);
-      if (b) {
-        const badge = document.createElement("div");
-        badge.className = "bldg " + (b.online ? "online" : "offline") + " " + (b.type==="fuel" ? "fuel" : b.type==="life" ? "life" : b.type==="gen" ? "gen" : "");
-        badge.innerHTML = `<div><div class="name">${labelFor(b)}</div><div class="state">${b.online ? "ONLINE" : "OFFLINE"}</div></div>`;
-        tile.appendChild(badge);
-      }
-    });
+  function storeHint(type, locked, placed, owned){
+    if(placed) return "Already built."; 
+    if(owned) return "Owned. Place from inventory.";
+    if(locked){
+      if(type==="fuel") return "Unlock: Life Support ONLINE.";
+      if(type==="food") return "Unlock: Fuel Station built.";
+      if(type==="water") return "Unlock: Food Processor built.";
+      if(type==="tech") return "Unlock: Fuel Station built.";
+      if(type==="housing") return "Unlock: System ONLINE.";
+      return "Locked.";
+    }
+    if(type==="housing") return "Repeatable. Raises capacity later.";
+    if(type==="tech") return "One-only. Generates tech points later.";
+    if(type==="fuel") return "Produces fuel while ONLINE.";
+    if(type==="food") return "Produces food while ONLINE.";
+    if(type==="water") return "Produces water while ONLINE.";
+    return "Purchase creates a placement token.";
   }
 
-  function labelFor(b){
-    if (b.type === "gen") return "Generator";
-    if (b.type === "life") return "Life Support";
-    if (b.type === "fuel") return "Fuel";
-    return b.name || "Unit";
-  }
+  function renderStore(){
+    el.storeItems.innerHTML="";
+    for(const [k,item] of Object.entries(CATALOG)){
+      const locked = !item.unlock(state);
+      const placed = item.oneOnly && isBuilt(state,item.type);
+      const owned = item.oneOnly && isOwned(state,item.type);
+      const canBuy = !locked && !owned && state.money>=item.cost;
 
-  function isSystemOnline(){
-    const gen = getB(POS_GEN.x, POS_GEN.y);
-    const life = getB(POS_LIFE.x, POS_LIFE.y);
-    return !!(gen?.online && life?.online && state.power.state !== "RED");
-  }
+      const div = document.createElement("div");
+      div.className="item";
 
-  // ====== GRID SETUP ======
-  function buildGrid(){
-    el.grid.innerHTML = "";
-    el.grid.style.gridTemplateColumns = `repeat(${GRID_W}, 56px)`;
-    el.grid.style.gridTemplateRows = `repeat(${GRID_H}, 56px)`;
-    for (let y=0; y<GRID_H; y++){
-      for (let x=0; x<GRID_W; x++){
-        const tile = document.createElement("div");
-        tile.className = "tile";
-        tile.dataset.x = String(x);
-        tile.dataset.y = String(y);
-        tile.addEventListener("click", () => onTileClick(x,y));
-        el.grid.appendChild(tile);
-      }
+      const left = document.createElement("div");
+      left.innerHTML = `<div class="itemTitle">${item.name}</div><div class="itemMeta">${storeHint(item.type,locked,placed,owned)}</div>`;
+
+      const right = document.createElement("div");
+      right.className="itemRight";
+
+      const tag = document.createElement("div");
+      tag.className="tag " + (placed ? "built" : locked ? "locked" : owned ? "owned" : "");
+      tag.textContent = placed ? "BUILT" : locked ? "LOCKED" : owned ? "OWNED" : "AVAILABLE";
+
+      const cost = document.createElement("div");
+      cost.className="mono"; cost.style.fontSize="12px";
+      cost.textContent = `Cost: ${item.cost}`;
+
+      const btn = document.createElement("button");
+      btn.textContent = owned ? "Owned" : "Buy";
+      btn.disabled = owned || locked || !canBuy;
+      btn.addEventListener("click", ()=>purchase(item.type));
+
+      right.appendChild(tag); right.appendChild(cost); right.appendChild(btn);
+      div.appendChild(left); div.appendChild(right);
+      el.storeItems.appendChild(div);
     }
   }
 
-  function placeInitial(){
-    setB(POS_GEN.x, POS_GEN.y, { type:"gen", name:"Generator", online:false });
-    setB(POS_LIFE.x, POS_LIFE.y, { type:"life", name:"Life Support", online:false });
-    updateStore();
+  function renderInventory(){
+    el.invList.innerHTML="";
+    const keys = [...state.inventory.keys()];
+    if(keys.length===0){
+      const d=document.createElement("div");
+      d.style.color="var(--muted)"; d.style.fontSize="12px";
+      d.textContent="No tokens yet. Buy something in the store.";
+      el.invList.appendChild(d);
+      return;
+    }
+    for(const type of keys){
+      const count = state.inventory.get(type)||0;
+      if(count<=0) continue;
+      const item = CATALOG[type];
+
+      const row=document.createElement("div");
+      row.className="invRow";
+
+      const left=document.createElement("div");
+      left.innerHTML = `<div class="invName">${item.name}</div><div class="invCount">Tokens: <span class="mono">${count}</span></div>`;
+
+      const btn=document.createElement("button");
+      btn.textContent="Place";
+      btn.addEventListener("click", ()=>beginTokenPlacement(type));
+
+      row.appendChild(left); row.appendChild(btn);
+      el.invList.appendChild(row);
+    }
   }
 
-  // ====== BUILDING MAP ======
-  function keyOf(x,y){ return `${x},${y}`; }
-  function setB(x,y,b){ state.buildings.set(keyOf(x,y), b); }
-  function getB(x,y){ return state.buildings.get(keyOf(x,y)) || null; }
-  function findFirst(type){
-    for (const b of state.buildings.values()){
-      if (b.type === type) return b;
+  function renderSelectionPanel(){
+    const sel = state.selectedKey ? state.buildings.get(state.selectedKey) : null;
+    if(!sel){
+      el.selCoord.textContent="—";
+      el.selName.textContent="Nothing selected";
+      el.selState.textContent = state.placingToken ? `Placing: ${state.placingToken.name}. Click an empty tile.` : "Click a building on the map.";
+      el.btnToggleOnline.disabled=true;
+    el.btnToggleOnline.textContent="Toggle ONLINE";
+      el.btnDelete.disabled=true;
+      el.btnCancelPlace.disabled=!state.placingToken;
+      return;
     }
+    el.selCoord.textContent = `${sel.x},${sel.y}`;
+    el.selName.textContent = sel.name;
+    el.selState.innerHTML = `<div style="font-size:12px;color:var(--muted);line-height:1.4;">
+      Type: <span class="mono">${sel.type}</span><br/>
+      Status: <span class="mono">${sel.online ? "ONLINE":"OFFLINE"}</span></div>`;
+    el.btnToggleOnline.disabled=false;
+        el.btnToggleOnline.textContent = sel.online ? "Toggle OFFLINE" : "Toggle ONLINE";
+el.btnDelete.disabled=false;
+  }
+
+  function renderAll(){
+    renderHUD();
+    renderStore();
+    renderInventory();
+    renderSelectionPanel();
+    draw();
+  }
+
+  function resizeCanvas(){
+    const r = el.map.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    el.canvas.width = Math.floor(r.width*dpr);
+    el.canvas.height = Math.floor(r.height*dpr);
+    el.canvas.style.width = r.width+"px";
+    el.canvas.style.height = r.height+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  window.addEventListener("resize", resizeCanvas);
+
+  function draw(){
+    const r = el.map.getBoundingClientRect();
+    ctx.clearRect(0,0,r.width,r.height);
+    const origin = boardOrigin();
+
+    ctx.globalAlpha=0.18;
+    ctx.fillStyle="#0a1217";
+    ctx.fillRect(0,0,r.width,r.height);
+    ctx.globalAlpha=1;
+
+    for(let y=0;y<MAP_ROWS;y++) for(let x=0;x<MAP_COLS;x++) drawTile(x,y,origin);
+
+    const arr=[...state.buildings.values()].sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+    for(const b of arr) drawBuilding(b,origin);
+
+    if(state.placingToken && state.hoverTile){
+      const {x,y}=state.hoverTile;
+      if(inBounds(x,y) && !getB(x,y)) drawGhost(x,y,origin);
+    }
+
+    if(state.selectedKey){
+      const b = state.buildings.get(state.selectedKey);
+      if(b) drawSelectRing(b.x,b.y,origin);
+    }
+  }
+
+  function drawTile(x,y,origin){
+    const p = tileToScreen(x,y);
+    const cx = origin.x + p.x;
+    const cy = origin.y + p.y;
+
+    const hover = state.hoverTile && state.hoverTile.x===x && state.hoverTile.y===y;
+    const occupied = !!getB(x,y);
+    const fill = occupied ? "rgba(10,16,21,.90)" : "rgba(9,14,19,.85)";
+    const stroke = hover ? "rgba(34,211,238,.55)" : "rgba(255,255,255,.10)";
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - TILE_H/2);
+    ctx.lineTo(cx + TILE_W/2, cy);
+    ctx.lineTo(cx, cy + TILE_H/2);
+    ctx.lineTo(cx - TILE_W/2, cy);
+    ctx.closePath();
+
+    ctx.fillStyle=fill; ctx.fill();
+    ctx.lineWidth=1; ctx.strokeStyle=stroke; ctx.stroke();
+  }
+
+  function roundRect(x,y,w,h,r,fill,stroke,fillStyle,strokeStyle){
+    const rr=Math.min(r,w/2,h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+    if(fill){ ctx.fillStyle=fillStyle||"rgba(9,16,22,.9)"; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle=strokeStyle||"rgba(255,255,255,.10)"; ctx.stroke(); }
+  }
+
+  function shortLabel(type){
+    switch(type){
+      case "generator": return "GENERATOR";
+      case "life": return "LIFE SUPPORT";
+      case "fuel": return "FUEL";
+      case "food": return "FOOD";
+      case "water": return "WATER";
+      case "tech": return "TECH";
+      case "housing": return "HOUSING";
+      default: return "UNIT";
+    }
+  }
+
+  function drawBuilding(b,origin){
+    const p=tileToScreen(b.x,b.y);
+    const cx=origin.x+p.x, cy=origin.y+p.y;
+    const w=64,h=38; const topY=cy-36;
+
+    ctx.save();
+    ctx.globalAlpha=0.30;
+    ctx.fillStyle="#000";
+    roundRect(cx-w/2+5, cy-8, w-10, 14, 8, true, false);
+    ctx.restore();
+
+    const edge = b.online ? "rgba(34,197,94,.45)" : "rgba(255,255,255,.14)";
+    roundRect(cx-w/2, topY, w, h, 10, true, true, "rgba(9,16,22,.92)", edge);
+
+    ctx.fillStyle = b.online ? "rgba(34,197,94,.95)" : "rgba(214,222,230,.90)";
+    ctx.font="11px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(shortLabel(b.type), cx, topY+14);
+
+    ctx.fillStyle="rgba(214,222,230,.70)";
+    ctx.font="10px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+    ctx.fillText(b.online?"ONLINE":"OFFLINE", cx, topY+28);
+  }
+
+  function drawGhost(x,y,origin){
+    const p=tileToScreen(x,y);
+    const cx=origin.x+p.x, cy=origin.y+p.y;
+    const w=64,h=38; const topY=cy-36;
+
+    ctx.save();
+    ctx.globalAlpha=0.55;
+    roundRect(cx-w/2, topY, w, h, 10, true, true, "rgba(34,211,238,.10)", "rgba(34,211,238,.55)");
+    ctx.fillStyle="rgba(34,211,238,.85)";
+    ctx.font="10px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("PLACE", cx, topY+h/2);
+    ctx.restore();
+  }
+
+  function drawSelectRing(x,y,origin){
+    const p=tileToScreen(x,y);
+    const cx=origin.x+p.x, cy=origin.y+p.y;
+    ctx.save();
+    ctx.lineWidth=2;
+    ctx.strokeStyle="rgba(34,211,238,.75)";
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - TILE_H/2 + 2);
+    ctx.lineTo(cx + TILE_W/2 - 2, cy);
+    ctx.lineTo(cx, cy + TILE_H/2 - 2);
+    ctx.lineTo(cx - TILE_W/2 + 2, cy);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Inputs
+  el.btnStart.addEventListener("click", start);
+  el.btnPause.addEventListener("click", pause);
+  el.btnStep.addEventListener("click", step);
+  el.btnReset.addEventListener("click", reset);
+  el.btnStore.addEventListener("click", toggleStore);
+  el.btnToggleOnline.addEventListener("click", toggleSelectedOnline);
+  el.btnDelete.addEventListener("click", deleteSelected);
+  el.btnCancelPlace.addEventListener("click", cancelPlacement);
+  window.addEventListener("keydown",(e)=>{ if(e.key==="Escape") cancelPlacement(); });
+function canvasPoint(e){
+    const r=el.canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left, y:e.clientY-r.top};
+  }
+  function pickTile(px,py){
+    const origin=boardOrigin();
+    const bx=px-origin.x, by=py-origin.y;
+    const raw=screenToTile(bx,by);
+    const tx=Math.floor(raw.x+0.5), ty=Math.floor(raw.y+0.5);
+    if(!inBounds(tx,ty)) return null;
+
+    const center=tileToScreen(tx,ty);
+    const cx=origin.x+center.x, cy=origin.y+center.y;
+    const dx=Math.abs(px-cx)/(TILE_W/2);
+    const dy=Math.abs(py-cy)/(TILE_H/2);
+    if(dx+dy<=1.0) return {x:tx,y:ty};
     return null;
   }
 
-  // ====== TOASTS + LOG ======
-  function toast(title, body, kind="cyan"){
-    const node = document.createElement("div");
-    node.className = `toast ${kind}`;
-    node.innerHTML = `<div class="t">${esc(title)}</div><div class="b">${esc(body)}</div>`;
-    el.toasts.appendChild(node);
-    requestAnimationFrame(() => node.classList.add("show"));
-    setTimeout(() => {
-      node.classList.remove("show");
-      setTimeout(() => node.remove(), 180);
-    }, 2600);
-  }
-  function log(msg){
-    const now = new Date();
-    const stamp = now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
-    el.log.textContent += `[${stamp}] ${msg}\n`;
-    el.log.scrollTop = el.log.scrollHeight;
-  }
-  function esc(s){
-    return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-  function q(sel){ return document.querySelector(sel); }
+  el.canvas.addEventListener("mousemove",(e)=>{
+    const pt=canvasPoint(e);
+    state.hoverTile = pickTile(pt.x,pt.y);
+    draw();
+  });
+  el.canvas.addEventListener("mouseleave",()=>{ state.hoverTile=null; draw(); });
 
-  // Start money shown immediately in store
-  q("#storeMoney").textContent = state.money.toFixed(2);
+  el.canvas.addEventListener("click",(e)=>{
+    const pt=canvasPoint(e);
+    const tile=pickTile(pt.x,pt.y);
+    if(!tile) return;
+    const k=keyOf(tile.x,tile.y);
+    const b=state.buildings.get(k);
 
-  // Wire up buttons
-  function wireButtons(){
-    q("#btnStart").addEventListener("click", start);
-    q("#btnPause").addEventListener("click", pause);
-    q("#btnStep").addEventListener("click", stepTick);
-    q("#btnReset").addEventListener("click", reset);
+    if(state.placingToken){
+      if(b){ log("Tile occupied. Choose an empty tile."); return; }
+      const type=state.placingToken.type;
+      const item=CATALOG[type];
+      if(item.oneOnly && isBuilt(state,type)){ log(`${item.name} is one-only and already built.`); state.placingToken=null; renderAll(); return; }
+
+      const count=state.inventory.get(type)||0;
+      if(count<=0){ log(`No ${item.name} tokens to place.`); state.placingToken=null; renderAll(); return; }
+      state.inventory.set(type, count-1);
+
+      setB({type, name:item.name, online:false, x:tile.x, y:tile.y});
+      log(`Placed: ${item.name} @ ${tile.x},${tile.y} (OFFLINE)`);
+
+      state.placingToken=null;
+      renderAll();
+      return;
+    }
+
+    if(b) selectKey(k);
+    else clearSelection();
+  });
+
+  // Init
+  function init(){
+    reset();
+    resizeCanvas();
+    log("Loaded v0.2.1 (fuel + pop + taxes fix).");
+    renderAll();
   }
-  wireButtons();
-
-  // Make sure store reflects initial lock state
-  updateStore();
+  init();
 })();
+
 </script>
 </body>
 </html>
