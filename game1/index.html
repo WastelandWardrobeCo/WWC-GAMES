@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Zone 13 | v0.2.1 Fuel + Pop Fix</title>
+  <title>Zone 13 | v0.2.7g Phase 4b Easy Fuel</title>
   <style>
     :root{
       --bg:#070b0e; --panel:#0d141a; --panel2:#0a1015; --border:#1b2a33;
@@ -132,6 +132,7 @@
         <div><b>Click</b> buildings to select.</div>
         <div><b>Toggle Online</b> to activate (fuel/food/water must be ONLINE to produce).</div>
         <div class="mono" style="margin-top:6px;opacity:.85;">ESC cancels placement.</div>
+        <div class="mono" style="margin-top:6px;opacity:.70;">System icons are placeholders.</div>
       </div>
     </div>
   </section>
@@ -194,11 +195,12 @@
 
   // ECON tuning
   const START_MONEY = 100;
-  const START_FUEL = 0.8;
-  const FUEL_CAP = 5.0;
-  const FUEL_PROD_PER_TICK = 0.06;
+  const START_FUEL = 2.0;
+  const FUEL_CAP = 20.0;
+  const FUEL_PROD_PER_TICK = 0.12;
   const FUEL_DRAIN_PER_TICK = 0.06;
-  const FOOD_CAP = 10.0, WATER_CAP = 10.0;
+  const FOOD_CAP = 15.0;
+  const WATER_CAP = 15.0;
   const FOOD_PROD_PER_TICK = 0.04, WATER_PROD_PER_TICK = 0.04;
 
   // Consumption + scarcity
@@ -219,6 +221,7 @@
   const HAPPY_DOWN_UNSTABLE = 0.08;
 
   const CATALOG = {
+    generator:{type:"generator", name:"Generator", cost:50, oneOnly:false, unlock: s => true},
     fuel:    {type:"fuel",    name:"Fuel Station",   cost:30, oneOnly:true,  unlock: s => isLifeOnline(s)},
     food:    {type:"food",    name:"Food Processor", cost:35, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
     water:   {type:"water",   name:"Water Pump",     cost:40, oneOnly:true,  unlock: s => isBuilt(s,"food")},
@@ -374,20 +377,58 @@
     if(waterShort) state.waterShortTicks++; else state.waterShortTicks = Math.max(0, state.waterShortTicks - 2);
     const scarcitySustained = (state.foodShortTicks >= SCARCITY_SUSTAIN_TICKS) || (state.waterShortTicks >= SCARCITY_SUSTAIN_TICKS);
 
+    // Power model (Phase 1 badge reads derived state; keep this core simple)
+// - Supply: sum of ONLINE generators (requires fuel)
+// - Demand: Life Support + (Phase 4) online producers/utility buildings that draw power
+const GEN_OUTPUT = 1.6;
+const LIFE_DEMAND = 1.0;
 
-    // Power model
-    const gen = getB(START_GEN.x,START_GEN.y);
-    const life = getB(START_LIFE.x,START_LIFE.y);
-    state.powerDemand = life?.online ? 1 : 0;
-    state.powerSupply = (gen?.online && state.fuel>0) ? 1 : 0;
-    state.powerState = (state.powerDemand===0) ? "GREEN" : (state.powerSupply>=state.powerDemand ? "GREEN" : "RED");
+// Phase 4: power coupling (keep it light for early game; tune later)
+const FUEL_DEMAND  = 0.05;  // fuel station/pump draw
+const FOOD_DEMAND  = 0.25;  // food processor draw
+const WATER_DEMAND = 0.25;  // water pump draw
+const TECH_DEMAND  = 0.15;  // tech facility draw (if present)
 
-    // Drain
-    if(gen?.online && state.powerSupply>0){
-      state.fuel = Math.max(0, state.fuel - (FUEL_DRAIN_PER_TICK*state.powerSupply));
-      if(state.fuel===0){
-        gen.online=false;
-        log("Generator OFFLINE (fuel depleted)");
+const onlineGens = countOnline("generator");
+const onlineLife = countOnline("life");
+
+const demandFuel = countOnline("fuel")  * FUEL_DEMAND;
+const demandFood = countOnline("food")  * FOOD_DEMAND;
+const demandWater= countOnline("water") * WATER_DEMAND;
+const demandTech = countOnline("tech")  * TECH_DEMAND;
+
+state.powerDemand = (onlineLife * LIFE_DEMAND) + demandFuel + demandFood + demandWater + demandTech;
+    // If fuel is empty, generators cannot produce.
+    state.powerSupply = (state.fuel > 0 ? (onlineGens * GEN_OUTPUT) : 0);
+
+    // Canon badge states (OFFLINE / CRITICAL / STRAINED / STABLE)
+    const sup = Number(state.powerSupply||0);
+    const dem = Number(state.powerDemand||0);
+    if(sup <= 0.000001) state.powerState = "OFFLINE";
+    else if(dem <= 0.000001) state.powerState = "STABLE";
+    else if(sup < dem) state.powerState = "CRITICAL";
+    else {
+      const buffer = 0.10 * dem;
+      state.powerState = (sup < dem + buffer) ? "STRAINED" : "STABLE";
+    }
+
+    // Phase 2: Fuel Drain (authoritative)
+    // - Any ONLINE generator consumes fuel continuously, even if nothing is drawing power yet.
+    // - If fuel hits 0, generator is forced OFFLINE.
+
+    // Drain fuel for ALL online generators.
+    const gensOnlineNow = [];
+    for(const b of state.buildings.values()){
+      if(b.type === "generator" && b.online) gensOnlineNow.push(b);
+    }
+    if(gensOnlineNow.length){
+      if(state.fuel > 0){
+        const drain = FUEL_DRAIN_PER_TICK * gensOnlineNow.length;
+        state.fuel = Math.max(0, state.fuel - drain);
+      }
+      if(state.fuel === 0){
+        for(const g of gensOnlineNow) g.online = false;
+        log("Generators OFFLINE (fuel depleted)");
       }
     }
 
@@ -556,7 +597,7 @@ function deleteSelected(){
     el.hudSystem.className = "pill " + (sysOn ? "good" : "bad");
 
     el.hudPowerState.textContent = state.powerState;
-    el.hudPowerState.className = "pill " + (state.powerState==="GREEN" ? "good" : "bad");
+    el.hudPowerState.className = "pill " + (state.powerState==="STABLE" ? "good" : state.powerState==="STRAINED" ? "warn" : "bad");
     el.hudPowerNums.textContent = `(${state.powerSupply.toFixed(1)} / ${state.powerDemand.toFixed(1)})`;
 
     el.hudPop.textContent = String(Math.floor(state.pop));
@@ -572,10 +613,10 @@ function deleteSelected(){
     el.hudFood.textContent = state.food.toFixed(3);
     el.hudWater.textContent = state.water.toFixed(3);
 
-    const gen = getB(START_GEN.x,START_GEN.y);
+    const genCount = countOnline("generator");
     const life = getB(START_LIFE.x,START_LIFE.y);
-    el.hudGen.textContent = gen?.online ? "ONLINE" : "OFFLINE";
-    el.hudGen.className = "pill " + (gen?.online ? "good" : "bad");
+    el.hudGen.textContent = genCount>0 ? `ONLINE (${genCount})` : "OFFLINE";
+    el.hudGen.className = "pill " + (genCount>0 ? "good" : "bad");
     el.hudLife.textContent = life?.online ? "ONLINE" : "OFFLINE";
     el.hudLife.className = "pill " + (life?.online ? "good" : "bad");
 
@@ -782,6 +823,125 @@ el.btnDelete.disabled=false;
     }
   }
 
+  function iconForType(type){
+    switch(type){
+      case "generator": return "⚡";
+      case "life": return "⛑";
+      case "fuel": return "⛽";
+      case "food": return "⬢";
+      case "water": return "💧";
+      case "tech": return "⌬";
+      case "housing": return "▦";
+      default: return "■";
+    }
+  }
+
+  function iconColor(type, online){
+    // Placeholder palette: muted when offline, slightly themed per system when online.
+    if(!online) return "rgba(214,222,230,.35)";
+    switch(type){
+      case "generator": return "rgba(34,197,94,.95)";      // green
+      case "life": return "rgba(34,211,238,.92)";          // cyan
+      case "fuel": return "rgba(234,179,8,.92)";           // amber
+      case "water": return "rgba(96,165,250,.92)";         // blue-ish
+      case "food": return "rgba(163,230,53,.92)";          // lime
+      case "tech": return "rgba(217,70,239,.85)";          // magenta
+      case "housing": return "rgba(248,113,113,.85)";      // soft red
+      default: return "rgba(214,222,230,.70)";
+    }
+  }
+
+
+  function powerPulseState(){
+    // Canon pulse states (v1.1): STABLE (green/calm), STRAINED (amber), CRITICAL (red/rapid), OFFLINE (dim)
+    // Purely visual: derived from existing supply/demand if full word state isn't present.
+    const sup = Number(state.powerSupply||0);
+    const dem = Number(state.powerDemand||0);
+    if(state.powerState) return state.powerState; // if engine provides it, use it
+    if(sup<=0.000001) return "OFFLINE";
+    if(dem<=0.000001) return "STABLE";
+    if(sup < dem) return "CRITICAL";
+    const buffer = 0.10 * dem;
+    if(sup < dem + buffer) return "STRAINED";
+    return "STABLE";
+  }
+
+  function drawPowerBadge(cx, topY, isOnline){
+    // Large industrial badge above generator card. Purely visual.
+    const mode = powerPulseState();
+    const online = !!isOnline;
+    const r = 18;
+    const bx = cx;
+    const by = topY - 18;
+
+    // Pulse speeds (per tick) and base alpha
+    let speed = 0.04, baseA = 0.75;
+    let col = "rgba(214,222,230,.35)";
+    if(online){
+      if(mode==="STABLE"){ col="rgba(34,197,94,.95)"; speed=0.025; baseA=0.75; }
+      if(mode==="STRAINED"){ col="rgba(234,179,8,.92)"; speed=0.018; baseA=0.68; }
+      if(mode==="CRITICAL"){ col="rgba(239,68,68,.92)"; speed=0.06; baseA=0.70; }
+    }
+    const pulse = online ? (baseA + (Math.sin(state.tick*speed)*0.18)) : 0.25;
+
+    ctx.save();
+    // Outer glow
+    if(online){
+      ctx.globalAlpha = Math.max(0, Math.min(1, pulse));
+      ctx.beginPath();
+      ctx.arc(bx, by, r+8, 0, Math.PI*2);
+      ctx.fillStyle = col;
+      ctx.filter = "blur(10px)";
+      ctx.fill();
+      ctx.filter = "none";
+    }
+
+    // Plate
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, r, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(9,16,22,.94)";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,.10)";
+    ctx.stroke();
+
+    // Bolt rivets
+    const riv = 2.2;
+    for(const a of [0, Math.PI/2, Math.PI, 3*Math.PI/2]){
+      const rx = bx + Math.cos(a)*(r-5);
+      const ry = by + Math.sin(a)*(r-5);
+      ctx.beginPath();
+      ctx.arc(rx, ry, riv, 0, Math.PI*2);
+      ctx.fillStyle = "rgba(255,255,255,.18)";
+      ctx.fill();
+    }
+
+    // Lightning glyph
+    ctx.globalAlpha = online ? 1 : 0.55;
+    ctx.fillStyle = col;
+    ctx.font = "18px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⚡", bx, by+0.5);
+
+    // Small mode dot (diagnostic)
+    let dot = "rgba(214,222,230,.35)";
+    if(online){
+      if(mode==="STABLE") dot="rgba(34,197,94,.95)";
+      if(mode==="STRAINED") dot="rgba(234,179,8,.92)";
+      if(mode==="CRITICAL") dot="rgba(239,68,68,.92)";
+    }
+    ctx.globalAlpha = online ? 0.95 : 0.35;
+    ctx.beginPath();
+    ctx.arc(bx + r - 4, by + r - 4, 3.2, 0, Math.PI*2);
+    ctx.fillStyle = dot;
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+
   function drawBuilding(b,origin){
     const p=tileToScreen(b.x,b.y);
     const cx=origin.x+p.x, cy=origin.y+p.y;
@@ -795,6 +955,23 @@ el.btnDelete.disabled=false;
 
     const edge = b.online ? "rgba(34,197,94,.45)" : "rgba(255,255,255,.14)";
     roundRect(cx-w/2, topY, w, h, 10, true, true, "rgba(9,16,22,.92)", edge);
+
+    // System icon overlay (placeholder)
+    const glyph = iconForType(b.type);
+    const ic = iconColor(b.type, b.online);
+    const box = 18;
+    const ix = cx - w/2 + 10;
+    const iy = topY - 9; // slightly above the card
+    ctx.save();
+    // subtle plate
+    roundRect(ix, iy, box, box, 5, true, true, "rgba(9,16,22,.92)", "rgba(255,255,255,.10)");
+    ctx.fillStyle = ic;
+    ctx.font = "12px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(glyph, ix + box/2, iy + box/2 + 0.5);
+    ctx.restore();
+    // Power badge (bigger visual identity)
+    if(b.type==="generator"){ drawPowerBadge(cx, topY, b.online); }
 
     ctx.fillStyle = b.online ? "rgba(34,197,94,.95)" : "rgba(214,222,230,.90)";
     ctx.font="11px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
