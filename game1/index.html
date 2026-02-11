@@ -940,6 +940,20 @@ el.btnDelete.disabled=false;
     }
   }
 
+  // --- Visual animation loop (independent of simulation ticks) ---
+  // Simulation advances on state.tick (1 Hz). Visuals animate smoothly using state.anim (~60 FPS).
+  state.anim = 0;
+  state._lastAnim = null;
+  function visualLoop(now){
+    if(state._lastAnim===null) state._lastAnim = now;
+    const dt = Math.min(0.05, (now - state._lastAnim)/1000);
+    state._lastAnim = now;
+    state.anim += dt * 60; // visual "ticks"
+    draw();
+    requestAnimationFrame(visualLoop);
+  }
+  requestAnimationFrame(visualLoop);
+
   function drawTile(x,y,origin){
     const p = tileToScreen(x,y);
     const cx = origin.x + p.x;
@@ -1110,19 +1124,142 @@ el.btnDelete.disabled=false;
     ctx.restore();
   }
 
-  function drawBuilding(b,origin){
+  
+  function drawTypeBadge(kind, cx, topY, isOnline){
+    const online = !!isOnline;
+    const r = 16;
+    const bx = cx;
+    const by = topY - 18;
+
+    // Color per kind (high contrast, matches silhouettes)
+    const colors = {
+      power: ["rgba(255,90,90,0.95)","rgba(255,200,140,0.95)"],
+      fuel:  ["rgba(255,210,70,0.95)","rgba(255,140,40,0.95)"],
+      life:  ["rgba(80,220,255,0.95)","rgba(200,255,255,0.95)"],
+      food:  ["rgba(34,197,94,0.95)","rgba(170,255,190,0.95)"],
+      water: ["rgba(59,130,246,0.95)","rgba(200,235,255,0.95)"],
+      tech:  ["rgba(168,85,247,0.95)","rgba(235,215,255,0.95)"],
+      house: ["rgba(245,245,245,0.85)","rgba(255,255,255,0.95)"]
+    };
+    const pal = colors[kind] || ["rgba(214,222,230,.55)","rgba(255,255,255,0.85)"];
+    const col = pal[0];
+    const icon = pal[1];
+
+    const speed = (kind==="power") ? 0.03 : 0.06;
+    const baseA = online ? 0.72 : 0.25;
+    const pulse = online ? (baseA + (Math.sin(state.tick*speed)*0.18)) : baseA;
+
+    ctx.save();
+
+    // Outer glow
+    if(online){
+      ctx.globalAlpha = Math.max(0, Math.min(1, pulse));
+      ctx.beginPath();
+      ctx.arc(bx, by, r+7, 0, Math.PI*2);
+      ctx.fillStyle = col;
+      ctx.fill();
+    }
+
+    // Badge body
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, r, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(10,12,14,0.86)";
+    ctx.fill();
+
+    // Ring
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = online ? col : "rgba(214,222,230,.35)";
+    ctx.stroke();
+
+    // Icon drawing
+    ctx.fillStyle = icon;
+    ctx.strokeStyle = icon;
+    ctx.lineWidth = 2;
+
+    if(kind==="fuel" || kind==="water"){
+      // Droplet
+      ctx.beginPath();
+      ctx.moveTo(bx, by-9);
+      ctx.bezierCurveTo(bx+7, by-2, bx+6, by+6, bx, by+9);
+      ctx.bezierCurveTo(bx-6, by+6, bx-7, by-2, bx, by-9);
+      ctx.closePath();
+      ctx.fill();
+      // inner highlight for fuel
+      if(kind==="fuel"){
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.beginPath();
+        ctx.moveTo(bx+2, by-6);
+        ctx.bezierCurveTo(bx+5, by-1, bx+4, by+3, bx+1, by+6);
+        ctx.bezierCurveTo(bx+2, by+2, bx+2, by, bx+2, by-6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+    } else if(kind==="food"){
+      // Leaf
+      ctx.beginPath();
+      ctx.ellipse(bx, by+1, 8, 10, -0.6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(bx-3, by+6);
+      ctx.lineTo(bx+6, by-6);
+      ctx.stroke();
+    } else if(kind==="life"){
+      // Medical cross
+      ctx.fillRect(bx-3, by-9, 6, 18);
+      ctx.fillRect(bx-9, by-3, 18, 6);
+    } else if(kind==="tech"){
+      // Chip
+      ctx.beginPath();
+      ctx.rect(bx-7, by-7, 14, 14);
+      ctx.stroke();
+      // pins
+      for(let i=-6;i<=6;i+=4){
+        ctx.beginPath(); ctx.moveTo(bx+i, by-10); ctx.lineTo(bx+i, by-8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx+i, by+10); ctx.lineTo(bx+i, by+8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx-10, by+i); ctx.lineTo(bx-8, by+i); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bx+10, by+i); ctx.lineTo(bx+8, by+i); ctx.stroke();
+      }
+    } else if(kind==="house"){
+      // Home
+      ctx.beginPath();
+      ctx.moveTo(bx-9, by+2);
+      ctx.lineTo(bx, by-8);
+      ctx.lineTo(bx+9, by+2);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(bx-6, by+2, 12, 9);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(bx-2, by+6, 4, 5);
+      ctx.fill();
+    } else {
+      // Fallback dot
+      ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI*2); ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+function drawBuilding(b,origin){
     const p=tileToScreen(b.x,b.y);
     const cx=origin.x+p.x, cy=origin.y+p.y;
+
+    const vt = (state.anim!=null ? state.anim : vt);
 
     // Small helper: soft halo so buildings pop on the muted slab
     function halo(color, alphaBase, speed){
       if(!b.online) return;
       ctx.save();
-      const pulse = 0.55 + 0.15*Math.sin(state.tick*(speed||0.06));
+      const pulse = 0.65 + 0.25*Math.sin(vt*(speed||0.06));
       ctx.globalAlpha = alphaBase + pulse*alphaBase;
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.ellipse(cx, cy-6, 26, 12, 0, 0, Math.PI*2);
+      ctx.ellipse(cx, cy-6, 30, 14, 0, 0, Math.PI*2);
       ctx.fill();
       ctx.restore();
     }
@@ -1152,6 +1289,10 @@ el.btnDelete.disabled=false;
 
     // === GENERATOR: bright industrial red (visibility-first) ===
     if(b.type==="generator"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.06+0.0)*1.1) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const GEN_GLOW = "rgba(255,70,70,1)";
       const GEN_BASE = "rgba(140,25,25,0.98)";
       const GEN_BODY = "rgba(220,55,55,0.96)";
@@ -1160,7 +1301,7 @@ el.btnDelete.disabled=false;
       const GEN_PANEL_ON  = "rgba(255,210,90,1)";
       const GEN_PANEL_OFF = "rgba(255,255,255,0.25)";
 
-      halo(GEN_GLOW, 0.16, 0.05);
+      halo(GEN_GLOW, 0.24, 0.05);
 
       // drop shadow
       ctx.save(); ctx.globalAlpha=0.38; ctx.fillStyle="#000";
@@ -1186,7 +1327,7 @@ el.btnDelete.disabled=false;
 
       // panel glow
       ctx.save();
-      ctx.globalAlpha = b.online ? (0.78 + 0.18*Math.sin(state.tick*0.06)) : 1.0;
+      ctx.globalAlpha = b.online ? (0.85 + 0.25*Math.sin(vt*0.06)) : 1.0;
       ctx.fillStyle = b.online ? GEN_PANEL_ON : GEN_PANEL_OFF;
       ctx.fillRect(cx-4, cy-32, 8, 8);
       ctx.restore();
@@ -1195,7 +1336,7 @@ el.btnDelete.disabled=false;
       if(b.online){
         ctx.save();
         ctx.translate(cx, cy-46);
-        ctx.rotate(state.tick*0.05);
+        ctx.rotate(vt*0.05);
         ctx.globalAlpha=0.75;
         ctx.strokeStyle="rgba(255,230,170,0.9)";
         ctx.lineWidth=1.5;
@@ -1208,11 +1349,16 @@ el.btnDelete.disabled=false;
 
       smallTag("GEN", cx, cy-6);
       drawPowerBadge(cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
     // === FUEL STATION: caution-amber, high contrast ===
     if(b.type==="fuel"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.05+1.2)*0.9) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const FUEL_GLOW = "rgba(255,210,70,1)";
       const FUEL_BASE = "rgba(80,55,15,0.98)";
       const FUEL_TANK = "rgba(255,200,60,0.98)";      // brighter!
@@ -1220,7 +1366,7 @@ el.btnDelete.disabled=false;
       const FUEL_PIPE = "rgba(35,24,8,1)";
       const STRIPE    = "rgba(20,14,6,0.85)";
 
-      halo(FUEL_GLOW, 0.14, 0.06);
+      halo(FUEL_GLOW, 0.24, 0.06);
 
       // shadow
       ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#000";
@@ -1257,21 +1403,52 @@ el.btnDelete.disabled=false;
 
       // indicator lamp
       ctx.save();
-      ctx.globalAlpha = b.online ? (0.75 + 0.2*Math.sin(state.tick*0.07)) : 0.35;
+      ctx.globalAlpha = b.online ? (0.85 + 0.25*Math.sin(vt*0.07)) : 0.35;
       ctx.fillStyle = "rgba(255,120,30,1)";
       ctx.beginPath(); ctx.arc(cx-10, cy-26, 3.5, 0, Math.PI*2); ctx.fill();
       ctx.restore();
 
+      // subtle exhaust puff (mechanical, not noisy)
+      if(b.online){
+        ctx.save();
+        const u = (_t*0.02)%1;                 // 0..1
+        const rise = 18*u;
+        ctx.globalAlpha = 0.30*(1-u);
+        ctx.fillStyle = "rgba(255,240,200,0.9)";
+        ctx.beginPath(); ctx.arc(cx+18, cy-34-rise, 3.8+2.6*u, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 0.20*(1-u);
+        ctx.beginPath(); ctx.arc(cx+14, cy-30-rise*0.8, 2.8+2.0*u, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+
+
       smallTag("FUEL", cx, cy-6);
-      // keep existing badge style for now (simple + readable)
-      drawPowerBadge(cx, topY-18, b.online);
+      drawTypeBadge("fuel", cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
     // === LIFE SUPPORT: cool-cyan facility ===
     if(b.type==="life"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.04+2.1)*0.75) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const C="rgba(80,220,255,1)";
-      halo(C, 0.12, 0.055);
+      halo(C, 0.22, 0.055);
+
+      // subtle dome pulse
+      if(b.online){
+        ctx.save();
+        const k = 0.65 + 0.25*Math.sin(_t*0.035);
+        ctx.globalAlpha = 0.30*k;
+        ctx.fillStyle = "rgba(80,220,255,1)";
+        ctx.beginPath();
+        ctx.ellipse(cx, cy-46, 18*k, 10*k, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+
 
       ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#000";
       ctx.beginPath(); ctx.ellipse(cx, cy-6, 22, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -1289,20 +1466,38 @@ el.btnDelete.disabled=false;
 
       // panel
       ctx.save();
-      ctx.globalAlpha = b.online ? (0.75 + 0.18*Math.sin(state.tick*0.06)) : 0.35;
+      ctx.globalAlpha = b.online ? (0.75 + 0.18*Math.sin(vt*0.06)) : 0.35;
       ctx.fillStyle="rgba(190,255,255,0.95)";
       ctx.fillRect(cx-4, cy-20, 8, 6);
       ctx.restore();
 
       smallTag("LIFE", cx, cy-6);
-      drawPowerBadge(cx, topY-18, b.online);
+      drawTypeBadge("life", cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
     // === FOOD: vivid green processor ===
     if(b.type==="food"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.05+3.0)*0.75) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const C="rgba(110,255,110,1)";
-      halo(C, 0.12, 0.06);
+      halo(C, 0.22, 0.06);
+
+      // subtle grow-light shimmer
+      if(b.online){
+        ctx.save();
+        const k = 0.7 + 0.2*Math.sin(_t*0.045);
+        ctx.globalAlpha = 0.26*k;
+        ctx.fillStyle = "rgba(34,197,94,1)";
+        ctx.beginPath();
+        ctx.ellipse(cx, cy-30, 22, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+
 
       ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#000";
       ctx.beginPath(); ctx.ellipse(cx, cy-6, 22, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -1318,20 +1513,39 @@ el.btnDelete.disabled=false;
 
       // indicator
       ctx.save();
-      ctx.globalAlpha = b.online ? (0.75 + 0.2*Math.sin(state.tick*0.065)) : 0.35;
+      ctx.globalAlpha = b.online ? (0.75 + 0.2*Math.sin(vt*0.065)) : 0.35;
       ctx.fillStyle="rgba(220,255,220,0.95)";
       ctx.beginPath(); ctx.arc(cx, cy-28, 4, 0, Math.PI*2); ctx.fill();
       ctx.restore();
 
       smallTag("FOOD", cx, cy-6);
-      drawPowerBadge(cx, topY-18, b.online);
+      drawTypeBadge("food", cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
     // === WATER: bright blue pump ===
     if(b.type==="water"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.05+4.0)*0.75) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const C="rgba(90,170,255,1)";
-      halo(C, 0.12, 0.06);
+      halo(C, 0.22, 0.06);
+
+      // subtle ripple tick
+      if(b.online){
+        ctx.save();
+        const s = Math.sin(_t*0.06);
+        ctx.globalAlpha = 0.38;
+        ctx.strokeStyle = "rgba(200,235,255,0.95)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy-34, 10+2*s, 0.2*Math.PI, 0.8*Math.PI);
+        ctx.stroke();
+        ctx.restore();
+      }
+
 
       ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#000";
       ctx.beginPath(); ctx.ellipse(cx, cy-6, 22, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -1351,7 +1565,7 @@ el.btnDelete.disabled=false;
 
       // droplet lamp
       ctx.save();
-      ctx.globalAlpha = b.online ? (0.75 + 0.2*Math.sin(state.tick*0.07)) : 0.35;
+      ctx.globalAlpha = b.online ? (0.85 + 0.25*Math.sin(vt*0.07)) : 0.35;
       ctx.fillStyle="rgba(210,240,255,0.95)";
       ctx.beginPath();
       ctx.moveTo(cx, cy-30);
@@ -1361,14 +1575,29 @@ el.btnDelete.disabled=false;
       ctx.restore();
 
       smallTag("WATR", cx, cy-6);
-      drawPowerBadge(cx, topY-18, b.online);
+      drawTypeBadge("water", cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
     // === TECH: purple comms node ===
     if(b.type==="tech"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.045+5.1)*0.7) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const C="rgba(200,120,255,1)";
-      halo(C, 0.11, 0.055);
+      halo(C, 0.20, 0.055);
+
+      // subtle status blink
+      if(b.online){
+        ctx.save();
+        ctx.globalAlpha = 0.70 + 0.30*Math.sin(_t*0.09);
+        ctx.fillStyle = "rgba(235,215,255,0.95)";
+        ctx.fillRect(cx-2, cy-44, 4, 4);
+        ctx.restore();
+      }
+
 
       ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#000";
       ctx.beginPath(); ctx.ellipse(cx, cy-6, 22, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -1390,14 +1619,19 @@ el.btnDelete.disabled=false;
       ctx.stroke();
 
       smallTag("TECH", cx, cy-6);
-      drawPowerBadge(cx, topY-18, b.online);
+      drawTypeBadge("tech", cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
     // === HOUSING: bright neutral block (reads clearly) ===
     if(b.type==="house"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.04+6.0)*0.65) : 0;
+      ctx.save();
+      ctx.translate(0, _drift);
       const C="rgba(255,255,255,1)";
-      halo("rgba(255,255,255,1)", 0.08, 0.05);
+      halo("rgba(255,255,255,1)", 0.16, 0.05);
 
       ctx.save(); ctx.globalAlpha=0.32; ctx.fillStyle="#000";
       ctx.beginPath(); ctx.ellipse(cx, cy-6, 22, 10, 0, 0, Math.PI*2); ctx.fill();
@@ -1417,7 +1651,8 @@ el.btnDelete.disabled=false;
       ctx.fillRect(cx+3, cy-34, 6, 6);
 
       smallTag("HOME", cx, cy-6);
-      drawPowerBadge(cx, topY-18, b.online);
+      drawTypeBadge("house", cx, topY-18, b.online);
+      ctx.restore();
       return;
     }
 
