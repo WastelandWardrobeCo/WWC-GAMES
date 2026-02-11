@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Zone 13 | v0.2.7f Phase 4 Power Coupling</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Zone 13 | v0.2.7f Phase 4 Power Coupling</title>
+<style>
     :root{
       --bg:#070b0e; --panel:#0d141a; --panel2:#0a1015; --border:#1b2a33;
       --ink:#d6dee6; --muted:#8ea0ad;
@@ -15,8 +16,14 @@
     html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);
       font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
     .app{height:100%;display:grid;grid-template-columns:380px 1fr 420px;gap:12px;padding:12px;}
+
+    .centerCol{display:flex;flex-direction:column;gap:12px;min-width:640px;}
+
     .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:12px;overflow:hidden;}
     .panel h2{margin:0 0 10px 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+    .hintBox{position:absolute;left:16px;top:92px;max-width:340px;background:rgba(10,16,21,.78);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;color:var(--ink);backdrop-filter:blur(6px);pointer-events:none;}
+    .hintBox b{color:var(--cyan);}
+
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-variant-numeric:tabular-nums;}
     .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);}
     .row:last-child{border-bottom:none;}
@@ -61,7 +68,7 @@
       font-size:12px; color:#cfe0ee;
     }
     .overlayHint b{color:var(--cyan); font-weight:600;}
-    .rightCol{display:flex;flex-direction:column;gap:12px;min-width:0;}
+    .rightCol{display:flex;flex-direction:column;gap:12px;min-width:0;align-self:stretch;}
 
     .box{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:10px;}
     .sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;}
@@ -85,107 +92,190 @@
       padding:10px;overflow:auto;white-space:pre-wrap;font-size:12px;line-height:1.35;color:#c6d3de;
       font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;}
 
-    @media (max-width: 980px){ .app{grid-template-columns:1fr;} }
-  </style>
+    @media (max-width: 520px){ .app{grid-template-columns:1fr;} }
+  
+    .phaseOverlay{
+      position:absolute;
+      top:14px;
+      left:50%;
+      transform:translateX(-50%);
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(6,12,18,.78);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      z-index:55;
+      min-width:340px;
+      text-align:center;
+    }
+    .phaseTitle{font:700 12px ui-monospace; letter-spacing:.5px; color:rgba(214,222,230,.95);}
+    .phaseObj{margin-top:4px; font:500 11px ui-monospace; color:rgba(214,222,230,.78); line-height:1.25;}
+    .phaseProg{margin-top:6px; font:700 12px ui-monospace; color:rgba(34,197,94,.90);}
+
+  
+    .phaseOverlay.phaseReady{
+      border-color: rgba(34,197,94,.55);
+      box-shadow: 0 0 0 2px rgba(34,197,94,.18), 0 10px 30px rgba(0,0,0,.35);
+      animation: phaseGlow 1.1s ease-in-out infinite;
+    }
+    @keyframes phaseGlow{
+      0%{ box-shadow:0 0 0 2px rgba(34,197,94,.10), 0 10px 30px rgba(0,0,0,.35); }
+      50%{ box-shadow:0 0 0 2px rgba(34,197,94,.26), 0 0 22px rgba(34,197,94,.16), 0 10px 30px rgba(0,0,0,.35); }
+      100%{ box-shadow:0 0 0 2px rgba(34,197,94,.10), 0 10px 30px rgba(0,0,0,.35); }
+    }
+    .confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .confetti i{
+      position:absolute;
+      width:6px; height:10px;
+      border-radius:2px;
+      opacity:.0;
+      transform: translateY(-10px) rotate(0deg);
+    }
+    .phaseOverlay.celebrate .confetti i{
+      opacity:1;
+      animation: confettiFall 900ms ease-out forwards;
+    }
+    @keyframes confettiFall{
+      0%{ transform: translateY(-8px) rotate(0deg); opacity:0; }
+      10%{ opacity:1; }
+      100%{ transform: translateY(62px) rotate(220deg); opacity:0; }
+    }
+
+  
+    .overlayHint, .hintBox, #hintBox, #onboardingHint, .onboardingHint { display:none !important; }
+
+  
+    .app{
+      display:grid !important;
+      grid-template-columns: 280px minmax(720px, 1fr) 360px !important;
+      grid-template-rows: 1fr !important;
+      gap: 14px !important;
+      width: 100% !important;
+      height: 100vh !important;
+      overflow: hidden !important;
+      align-items: stretch !important;
+    }
+    .hud{ grid-column:1; grid-row:1; min-width: 260px; }
+    .centerCol, .center, .main, main{ grid-column:2; grid-row:1; min-width: 720px; }
+    .right, .rightPanel, #rightPanel, aside.right{ grid-column:3; grid-row:1; min-width: 320px; }
+    @media (max-width: 1200px){
+      .app{ grid-template-columns: 260px minmax(560px,1fr) 320px !important; }
+    }
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr !important; grid-template-rows:auto auto auto !important; height:auto !important; overflow:auto !important; }
+      .hud{ grid-column:1; grid-row:1; }
+      .centerCol, .center, .main, main{ grid-column:1; grid-row:2; min-width: 0 !important; }
+      .right, .rightPanel, #rightPanel, aside.right{ grid-column:1; grid-row:3; min-width: 0 !important; }
+    }
+
+
+
+/* --- layout patch v0.4.13 --- */
+.rightCol{ grid-column:3; grid-row:1; min-width: 320px; }
+@media (max-width: 980px){
+  .rightCol{ grid-column:1; grid-row:3; min-width:0 !important; }
+}
+
+/* v0.4.14: remove residual ESC hint */
+.mono.escHint{display:none!important;}
+</style>
 </head>
 <body>
 <div class="app">
-  <section class="panel">
-    <h2>HUD</h2>
-    <div class="row"><div class="k">Tick</div><div class="v mono" id="hudTick">0</div></div>
-    <div class="row"><div class="k">Mode</div><div class="v"><span class="pill cyan" id="hudMode">SELECT</span></div></div>
-    <div class="row"><div class="k">Selected</div><div class="v mono" id="hudSelected">None</div></div>
-
-    <div class="row"><div class="k">System</div><div class="v"><span class="pill bad" id="hudSystem">OFFLINE</span></div></div>
-    <div class="row"><div class="k">Power</div><div class="v"><span class="pill bad" id="hudPowerState">RED</span> <span class="mono" id="hudPowerNums">(0.0 / 0.0)</span></div></div>
-
-    <div class="row"><div class="k">Population</div><div class="v mono" id="hudPop">0</div></div>
-    <div class="row"><div class="k">Happiness</div><div class="v"><span class="pill warn" id="hudHappyState">NEUTRAL</span> <span class="mono" id="hudHappy">50</span></div></div>
-    <div class="row"><div class="k">Money</div><div class="v mono" id="hudMoney">100.00</div></div>
-
-    <div class="row"><div class="k">Fuel</div><div class="v mono" id="hudFuel">0.800</div></div>
-    <div class="row"><div class="k">Food</div><div class="v mono" id="hudFood">6.000</div></div>
-    <div class="row"><div class="k">Water</div><div class="v mono" id="hudWater">6.000</div></div>
-
-    <div class="row"><div class="k">Life Support</div><div class="v"><span class="pill bad" id="hudLife">OFFLINE</span></div></div>
-    <div class="row" style="border-bottom:none;"><div class="k">Generator</div><div class="v"><span class="pill bad" id="hudGen">OFFLINE</span></div></div>
-  </section>
-
-  <section class="mapPanel">
-    <div class="panel topbar">
-      <div class="brand">
-        <div class="title">Zone 13</div>
-        <div class="sub">v0.2.1 • Fuel production + population/taxes (fix standstill)</div>
-      </div>
-      <div class="tools">
-        <button id="btnStart">Start</button>
-        <button id="btnPause">Pause</button>
-        <button id="btnStep">Step Tick</button>
-        <button id="btnReset">Reset</button>
-        <span class="chip mono">Milestone 2</span>
-      </div>
-    </div>
-
-    <div class="map panel" id="map">
-      <canvas id="c"></canvas>
-      <div class="overlayHint">
-        <div><b>Click</b> buildings to select.</div>
-        <div><b>Toggle Online</b> to activate (fuel/food/water must be ONLINE to produce).</div>
-        <div class="mono" style="margin-top:6px;opacity:.85;">ESC cancels placement.</div>
-        <div class="mono" style="margin-top:6px;opacity:.70;">System icons are placeholders.</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="rightCol">
-    <div class="panel">
-      <div class="sectionTitle">
-        <h2 style="margin:0;">Store</h2>
-        <button id="btnStore" style="padding:6px 10px;">STORE</button>
-      </div>
-
-      <div class="box" id="storeBox" style="margin-top:8px;display:none;">
-        <div class="sectionTitle">
-          <div class="mono">Available</div>
-          <div style="font-size:12px;color:#b9c8d4;">Money: <span class="mono" id="storeMoney">100.00</span></div>
-        </div>
-        <div id="storeItems"></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="sectionTitle">
-        <h2 style="margin:0;">Inventory</h2>
-        <span class="chip mono" id="modeTag">SELECT</span>
-      </div>
-      <div class="box" style="margin-top:8px;">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Purchased items become placement tokens.</div>
-        <div id="invList"></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="sectionTitle">
-        <h2 style="margin:0;">Selection</h2>
-        <span class="chip mono" id="selCoord">—</span>
-      </div>
-      <div class="box" style="margin-top:8px;">
-        <div class="mono" id="selName" style="font-size:13px;">Nothing selected</div>
-        <div id="selState" style="margin-top:8px;color:var(--muted);font-size:12px;">Click a building on the map.</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-          <button id="btnToggleOnline" disabled>Toggle</button>
-                    <button id="btnDelete" disabled>Remove</button>
-          <button id="btnCancelPlace" disabled>Cancel Placement</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel" style="display:flex;flex-direction:column;gap:10px;min-height:220px;">
-      <h2>Log</h2>
-      <div class="log" id="log"></div>
-    </div>
-  </section>
+<section class="panel">
+<h2>HUD</h2>
+<div class="row"><div class="k">Tick</div><div class="v mono" id="hudTick">0</div></div>
+<div class="row"><div class="k">Mode</div><div class="v"><span class="pill cyan" id="hudMode">SELECT</span></div></div>
+<div class="row"><div class="k">Selected</div><div class="v mono" id="hudSelected">None</div></div>
+<div class="row"><div class="k">System</div><div class="v"><span class="pill bad" id="hudSystem">OFFLINE</span></div></div>
+<div class="row"><div class="k">Phase</div><div class="v mono" id="hudPhase">PHASE 1</div></div>
+<div class="row"><div class="k">Objective</div><div class="v mono" id="hudObjective">BOOT SEQUENCE</div></div>
+<div class="row"><div class="k">Progress</div><div class="v mono" id="hudProgress">0 / 60</div></div>
+<div class="row"><div class="k">Power</div><div class="v"><span class="pill bad" id="hudPowerState">RED</span> <span class="mono" id="hudPowerNums">(0.0 / 0.0)</span></div></div>
+<div class="row"><div class="k">Population</div><div class="v mono" id="hudPop">0</div></div>
+<div class="row"><div class="k">Happiness</div><div class="v"><span class="pill warn" id="hudHappyState">NEUTRAL</span> <span class="mono" id="hudHappy">50</span></div></div>
+<div class="row"><div class="k">Money</div><div class="v mono" id="hudMoney">100.00</div></div>
+<div class="row"><div class="k">Fuel</div><div class="v mono" id="hudFuel">0.800</div></div>
+<div class="row"><div class="k">Food</div><div class="v mono" id="hudFood">6.000</div></div>
+<div class="row"><div class="k">Water</div><div class="v mono" id="hudWater">6.000</div></div>
+<div class="row"><div class="k">Life Support</div><div class="v"><span class="pill bad" id="hudLife">OFFLINE</span></div></div>
+<div class="row" style="border-bottom:none;"><div class="k">Generator</div><div class="v"><span class="pill bad" id="hudGen">OFFLINE</span></div></div>
+</section>
+<section class="centerCol">
+<div class="panel topbar">
+<div class="brand">
+<div class="title">Zone 13</div>
+<div class="sub">v0.2.1 • Fuel production + population/taxes (fix standstill)</div>
+<div class="confetti" id="confetti"></div>
 </div>
+<div class="tools">
+<button id="btnStart">Start</button>
+<button id="btnPause">Pause</button>
+<button id="btnStep">Step Tick</button>
+<button id="btnReset">Reset</button>
+<span class="chip mono" style="opacity:.55;">DEV</span>
+<button id="btnDev10" title="Fast-forward 10 ticks">+10</button>
+<button id="btnDev100" title="Fast-forward 100 ticks">+100</button>
+<input class="mono" id="devJump" min="0" placeholder="tick #" step="10" style="width:86px;padding:6px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:#d7e2ee;" type="number"/>
+<button id="btnDevGo" title="Jump forward to tick #">GO</button>
+<span class="chip mono">Milestone 2</span>
+</div>
+</div>
+<section class="map panel" id="map">
+<canvas id="c"></canvas>
+<div class="phaseOverlay" id="phaseOverlay">
+<div class="phaseTitle" id="phaseTitle">PHASE 1 — BOOT SEQUENCE</div>
+<div class="phaseObj" id="phaseObj">Stabilize Power + Life for 60s</div>
+<div class="phaseProg"><span id="phaseProg">0 / 60</span></div>
+</div>
+</section></section><section class="rightCol">
+<div class="panel">
+<div class="sectionTitle">
+<h2 style="margin:0;">Store</h2>
+<button id="btnStore" style="padding:6px 10px;">STORE</button>
+</div>
+<div class="box" id="storeBox" style="margin-top:8px;display:none;">
+<div class="sectionTitle">
+<div class="mono">Available</div>
+<div style="font-size:12px;color:#b9c8d4;">Money: <span class="mono" id="storeMoney">100.00</span></div>
+</div>
+<div id="storeItems"></div>
+</div>
+</div>
+<div class="panel">
+<div class="sectionTitle">
+<h2 style="margin:0;">Inventory</h2>
+<span class="chip mono" id="modeTag">SELECT</span>
+</div>
+<div class="box" style="margin-top:8px;">
+<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Purchased items become placement tokens.</div>
+<div id="invList"></div>
+</div>
+</div>
+<div class="panel">
+<div class="sectionTitle">
+<h2 style="margin:0;">Selection</h2>
+<span class="chip mono" id="selCoord">—</span>
+</div>
+<div class="box" style="margin-top:8px;">
+<div class="mono" id="selName" style="font-size:13px;">Nothing selected</div>
+<div id="selState" style="margin-top:8px;color:var(--muted);font-size:12px;">Click a building on the map.</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+<button disabled="" id="btnToggleOnline">Toggle</button>
+<button disabled="" id="btnDelete">Remove</button>
+<button disabled="" id="btnCancelPlace">Cancel Placement</button>
+</div>
+</div>
+</div>
+<div class="panel" style="display:flex;flex-direction:column;gap:10px;min-height:220px;">
+<h2>Log</h2>
+<div class="log" id="log"></div>
+</div>
+</section></div>
+
+
+
+
 
 <script>
 
@@ -232,7 +322,91 @@
   // ECON tuning
   const START_MONEY = 100;
   const START_FUEL = 3.0;
-  const FUEL_CAP = 5.0;
+  
+  // ===== Progression Phases (v1, explicit) =====
+  const PHASES = [
+    { id:2, name:"BOOT SEQUENCE", objective:"Stabilize Power + Life", hold:60,
+      ok: () => countOnline("generator")>0 && countOnline("life")>0 && state.fuel>0.0001 && (state.powerState==="STABLE" || state.powerState==="STRAINED")
+    },
+    { id:3, name:"CIVIL STABILIZATION", objective:"Reach Pop + Happiness", hold:30,
+      ok: () => state.pop>=25 && state.happy>=85 && state.foodShortTicks===0 && state.waterShortTicks===0
+    },
+    { id:4, name:"INDUSTRIAL PRESSURE", objective:"Hold STABLE power at Pop 50", hold:45,
+      ok: () => state.pop>=50 && state.powerState==="STABLE"
+    },
+    { id:5, name:"REACTOR TRANSITION", objective:"Reactor online replaces generators", hold:1,
+      ok: () => false // placeholder for next phase build
+    },
+  ];
+
+  function phaseSpec(){
+    if(state.phase===1){
+      const i = Math.min(state.directiveIndex||0, DIRECTIVES.length-1);
+      const txt = (DIRECTIVES[i]&&DIRECTIVES[i].text) ? DIRECTIVES[i].text : "—";
+      return { id:1, name:"ONBOARDING", objective:txt, hold:DIRECTIVES.length, isDirectives:true };
+    }
+    const found = PHASES.find(p=>p.id===state.phase);
+    if(found) return found;
+    // after last phase, stay at a "ZONE STABILIZED" state
+    const last = PHASES[PHASES.length-1];
+    return { id:last.id+1, name:"ZONE STABILIZED", objective:"Continue optimizing and expanding.", hold:1, ok:()=>true };
+  }
+
+  
+  // Onboarding directives (Phase 1 uses these instead of a separate panel)
+  const DIRECTIVES = [
+    { id:"select", text:"Click a building to select it.", ok:()=>state.selectedKey!=null },
+    { id:"toggle", text:"Toggle a building ONLINE.", ok:()=>anyOnline() },
+    { id:"store", text:"Open the STORE.", ok:()=>state.storeOpenedOnce===true },
+    { id:"fuel", text:"Buy and place a Fuel Station.", ok:()=>((state.builtCount.get("fuel")||0)>0) || (state.inventory.get("fuel")||0)>0 },
+  ];
+  function anyOnline(){ for(const b of state.buildings.values()){ if(b.online) return true; } return false; }
+  function updateDirectives(){
+    if(state.onboardingComplete) return;
+    const i = state.directiveIndex||0;
+    const d = DIRECTIVES[i];
+    if(!d){ state.onboardingComplete=true; return; }
+    if(d.ok()){
+      state.directiveIndex = i+1;
+      log(`DIRECTIVE COMPLETE — ${d.id.toUpperCase()}`);
+      if(state.directiveIndex >= DIRECTIVES.length){
+        state.onboardingComplete = true;
+        state.phaseFlash = 180;
+      }
+    }
+  }
+function updatePhase(){
+    if(state.phase===1){
+      updateDirectives();
+      // Phase 1 completes when onboarding directives are finished
+      if(state.onboardingComplete){
+        log(`PHASE 1 COMPLETE — ONBOARDING`);
+        state.phase = 2;
+        state.phaseHold = 0;
+        state.phaseFlash = 180;
+        state.celebrate = 60;
+      }
+      return;
+    }
+
+    const p = phaseSpec();
+    if(state.celebrate===60) spawnConfetti();
+    const ok = p.ok();
+    if(ok) state.phaseHold = Math.min(p.hold, state.phaseHold + 1);
+    else state.phaseHold = 0;
+
+    if(state.phaseHold >= p.hold){
+      log(`PHASE ${p.id} COMPLETE — ${p.name}`);
+      const lastId = PHASES[PHASES.length-1].id;
+      state.phase = Math.min(lastId+1, state.phase + 1);
+      state.celebrate = 60;
+      state.phaseHold = 0;
+      state.phaseFlash = 180; // frames-ish (renderHUD uses it as countdown)
+    }
+    if(state.phaseFlash>0) state.phaseFlash--;
+    if(state.celebrate>0) state.celebrate--;
+  }
+const FUEL_CAP = 5.0;
   const FUEL_PROD_PER_TICK = 0.06;
   const FUEL_DRAIN_PER_TICK = 0.06;
   const FOOD_CAP = 10.0, WATER_CAP = 10.0;
@@ -258,8 +432,8 @@
   const CATALOG = {
   fuel: {type:"fuel",    name:"Fuel Station",   cost:30, oneOnly:false,  unlock: s => isLifeOnline(s)},
   generator: {type:"generator", name:"Generator", cost:50, oneOnly:false, unlock: s => true},
-  food: {type:"food",    name:"Food Processor", cost:35, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
-  water: {type:"water",   name:"Water Pump",     cost:40, oneOnly:true,  unlock: s => isBuilt(s,"food")},
+  food: {type:"food",    name:"Food Processor", cost:35, oneOnly:false,  unlock: s => isBuilt(s,"fuel")},
+  water: {type:"water",   name:"Water Pump",     cost:40, oneOnly:false,  unlock: s => isBuilt(s,"food")},
   tech: {type:"tech",    name:"Tech Facility",  cost:60, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
   housing: {type:"housing", name:"Housing Block",  cost:40, oneOnly:false, unlock: s => isSystemOnline(s)}
 };
@@ -269,6 +443,9 @@
     money:START_MONEY, fuel:START_FUEL, food:6.0, water:6.0,
     pop:0, happy:50,
     foodShortTicks:0, waterShortTicks:0,
+    phase:1, phaseHold:0, phaseFlash:0,
+    directiveIndex:0, onboardingComplete:false,
+    celebrate:0,
     powerSupply:0, powerDemand:0, powerState:"RED",
     buildings:new Map(), builtCount:new Map(),
     selectedKey:null, placingToken:null, hoverTile:null,
@@ -287,6 +464,12 @@
     hudMode: document.querySelector("#hudMode"),
     hudSelected: document.querySelector("#hudSelected"),
     hudSystem: document.querySelector("#hudSystem"),
+    hudPhase: document.querySelector("#hudPhase"),
+    hudObjective: document.querySelector("#hudObjective"),
+    hudProgress: document.querySelector("#hudProgress"),
+    phaseTitle: document.querySelector("#phaseTitle"),
+    phaseObj: document.querySelector("#phaseObj"),
+    phaseProg: document.querySelector("#phaseProg"),
     hudPowerState: document.querySelector("#hudPowerState"),
     hudPowerNums: document.querySelector("#hudPowerNums"),
     hudPop: document.querySelector("#hudPop"),
@@ -302,6 +485,10 @@
     btnPause: document.querySelector("#btnPause"),
     btnStep: document.querySelector("#btnStep"),
     btnReset: document.querySelector("#btnReset"),
+    btnDev10: document.querySelector("#btnDev10"),
+    btnDev100: document.querySelector("#btnDev100"),
+    btnDevGo: document.querySelector("#btnDevGo"),
+    devJump: document.querySelector("#devJump"),
     btnStore: document.querySelector("#btnStore"),
     storeBox: document.querySelector("#storeBox"),
     storeMoney: document.querySelector("#storeMoney"),
@@ -625,7 +812,7 @@ state.powerDemand = (onlineLife * LIFE_DEMAND) + demandFuel + demandFood + deman
     // Store nudge
     if(isLifeOnline() && !state.storeOpenedOnce) state.storeNeedsNudge=true;
 
-    renderAll();
+    if(!state.fastForward) renderAll();
   }
 
   function reset(){
@@ -750,7 +937,22 @@ function deleteSelected(){
     renderAll();
   }
 
-  function renderHUD(){
+  
+  function spawnConfetti(){
+    const box = document.getElementById("confetti");
+    if(!box) return;
+    box.innerHTML = "";
+    const colors = ["#22c55e","#38bdf8","#f59e0b","#ef4444","#a78bfa","#eab308"];
+    for(let i=0;i<18;i++){
+      const el = document.createElement("i");
+      el.style.left = (8 + Math.random()*84) + "%";
+      el.style.top = (-10 - Math.random()*20) + "px";
+      el.style.background = colors[(Math.random()*colors.length)|0];
+      el.style.animationDelay = (Math.random()*120) + "ms";
+      box.appendChild(el);
+    }
+  }
+function renderHUD(){
     el.hudTick.textContent = String(state.tick);
     const mode = state.placingToken ? "PLACE" : "SELECT";
     el.hudMode.textContent = mode;
@@ -762,6 +964,54 @@ function deleteSelected(){
     const sysOn = isSystemOnline();
     el.hudSystem.textContent = sysOn ? "ONLINE" : "OFFLINE";
     el.hudSystem.className = "pill " + (sysOn ? "good" : "bad");
+
+    const p = phaseSpec();
+    el.hudPhase.textContent = `PHASE ${p.id} — ${p.name}`;
+    el.hudObjective.textContent = p.objective;
+    el.hudProgress.textContent = `${state.phaseHold} / ${p.hold}`;
+    if(el.phaseTitle){
+      el.phaseTitle.textContent = `PHASE ${p.id} — ${p.name}`;
+      // quest-style objective details
+      let detail = p.objective;
+      if(state.phase===1){
+        const step = Math.min(state.directiveIndex||0, DIRECTIVES.length);
+        const cur = Math.min(step+1, DIRECTIVES.length);
+        detail = (DIRECTIVES[Math.min(step, DIRECTIVES.length-1)]?.text) || "—";
+        el.phaseProg.textContent = `${cur} / ${DIRECTIVES.length}`;
+      } else if(p.id===2){
+        const g = countOnline("generator"), l = countOnline("life");
+        detail = `Gen ${g}/${Math.max(1,g)} • Life ${l}/${Math.max(1,l)} • Fuel ${state.fuel.toFixed(2)}+ • Power ${state.powerState}`;
+        el.phaseProg.textContent = `${state.phaseHold} / ${p.hold}`;
+      } else if(p.id===3){
+        detail = `Pop ${Math.floor(state.pop)}/25 • Happy ${Math.floor(state.happy)}/85 • Shortages ${(state.foodShortTicks||0)+(state.waterShortTicks||0)===0 ? "0" : "!"}`;
+        el.phaseProg.textContent = `${state.phaseHold} / ${p.hold}`;
+      } else if(p.id===4){
+        detail = `Pop ${Math.floor(state.pop)}/50 • Power ${state.powerState} (need STABLE)`;
+        el.phaseProg.textContent = `${state.phaseHold} / ${p.hold}`;
+      } else {
+        el.phaseProg.textContent = `${state.phaseHold} / ${p.hold}`;
+      }
+      el.phaseObj.textContent = detail;
+
+      // glow when metrics are met and we're holding
+      let okNow = false;
+      if(state.phase===1){
+        okNow = state.onboardingComplete===true;
+      } else {
+        okNow = !!p.ok();
+      }
+      const po = document.getElementById("phaseOverlay");
+      if(po){
+        po.classList.toggle("phaseReady", okNow && state.phaseHold>0);
+        po.classList.toggle("celebrate", state.celebrate>0);
+      }
+    }
+    if(state.phaseFlash>0){
+      el.hudPhase.style.color = "var(--good)";
+    } else {
+      el.hudPhase.style.color = "";
+    }
+
 
     el.hudPowerState.textContent = state.powerState;
     el.hudPowerState.className = "pill " + (state.powerState==="STABLE" ? "good" : state.powerState==="STRAINED" ? "warn" : "bad");
@@ -898,6 +1148,7 @@ el.btnDelete.disabled=false;
   }
 
   function renderAll(){
+    updatePhase();
     renderHUD();
     renderStore();
     renderInventory();
@@ -1866,6 +2117,30 @@ function drawBuilding(b,origin){
   el.btnPause.addEventListener("click", pause);
   el.btnStep.addEventListener("click", step);
   el.btnReset.addEventListener("click", reset);
+  // DEV fast-forward helpers (for testing)
+  function devFastForward(n){
+    // pause engine to avoid race with interval
+    if(state.running) pause();
+    state.fastForward = true;
+    for(let i=0;i<n;i++) tick();
+    state.fastForward = false;
+    renderAll();
+    log(`DEV fast-forward +${n} ticks`);
+  }
+  function devJumpTo(target){
+    if(state.running) pause();
+    target = Math.max(0, Math.floor(target||0));
+    if(target <= state.tick){ renderAll(); return; }
+    const n = target - state.tick;
+    devFastForward(n);
+  }
+  if(el.btnDev10) el.btnDev10.addEventListener("click", ()=>devFastForward(10));
+  if(el.btnDev100) el.btnDev100.addEventListener("click", ()=>devFastForward(100));
+  if(el.btnDevGo) el.btnDevGo.addEventListener("click", ()=>{
+    const v = el.devJump ? parseInt(el.devJump.value||"0",10) : 0;
+    devJumpTo(v);
+  });
+
   el.btnStore.addEventListener("click", toggleStore);
   el.btnToggleOnline.addEventListener("click", toggleSelectedOnline);
   el.btnDelete.addEventListener("click", deleteSelected);
