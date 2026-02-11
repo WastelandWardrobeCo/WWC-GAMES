@@ -231,7 +231,7 @@
 
   // ECON tuning
   const START_MONEY = 100;
-  const START_FUEL = 0.8;
+  const START_FUEL = 3.0;
   const FUEL_CAP = 5.0;
   const FUEL_PROD_PER_TICK = 0.06;
   const FUEL_DRAIN_PER_TICK = 0.06;
@@ -256,13 +256,13 @@
   const HAPPY_DOWN_UNSTABLE = 0.08;
 
   const CATALOG = {
-    generator:{type:"generator", name:"Generator", cost:50, oneOnly:false, unlock: s => true},
-    fuel:    {type:"fuel",    name:"Fuel Station",   cost:30, oneOnly:true,  unlock: s => isLifeOnline(s)},
-    food:    {type:"food",    name:"Food Processor", cost:35, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
-    water:   {type:"water",   name:"Water Pump",     cost:40, oneOnly:true,  unlock: s => isBuilt(s,"food")},
-    tech:    {type:"tech",    name:"Tech Facility",  cost:60, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
-    housing: {type:"housing", name:"Housing Block",  cost:40, oneOnly:false, unlock: s => isSystemOnline(s)}
-  };
+  fuel: {type:"fuel",    name:"Fuel Station",   cost:30, oneOnly:false,  unlock: s => isLifeOnline(s)},
+  generator: {type:"generator", name:"Generator", cost:50, oneOnly:false, unlock: s => true},
+  food: {type:"food",    name:"Food Processor", cost:35, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
+  water: {type:"water",   name:"Water Pump",     cost:40, oneOnly:true,  unlock: s => isBuilt(s,"food")},
+  tech: {type:"tech",    name:"Tech Facility",  cost:60, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
+  housing: {type:"housing", name:"Housing Block",  cost:40, oneOnly:false, unlock: s => isSystemOnline(s)}
+};
 
   const state = {
     tick:0, running:false, timer:null,
@@ -929,6 +929,8 @@ el.btnDelete.disabled=false;
     const arr=[...state.buildings.values()].sort((a,b)=>(a.x+a.y)-(b.x+b.y));
     for(const b of arr) drawBuilding(b,origin);
 
+    drawConnections(origin);
+
     if(state.placingToken && state.hoverTile){
       const {x,y}=state.hoverTile;
       if(inBounds(x,y) && !getB(x,y)) drawGhost(x,y,origin);
@@ -953,6 +955,72 @@ el.btnDelete.disabled=false;
     requestAnimationFrame(visualLoop);
   }
   requestAnimationFrame(visualLoop);
+
+  function drawConnections(origin){
+    // Show thin power routing hints.
+    // Visible when hovering a generator OR when the grid is strained/overloaded.
+    let show = false;
+    if(state.hoverTile){
+      const hb = getB(state.hoverTile.x, state.hoverTile.y);
+      if(hb && hb.type==="generator") show = true;
+    }
+    if(state.powerState!=="STABLE") show = true;
+    if(!show) return;
+
+    const gens = [...state.buildings.values()].filter(b=>b.type==="generator");
+    if(!gens.length) return;
+
+    const powered = [...state.buildings.values()].filter(b=>b.type!=="generator" && b.online);
+    if(!powered.length) return;
+
+    // Visual intensity by state
+    const a = (state.powerState==="OVERLOAD") ? 0.28 : (state.powerState==="STRAINED") ? 0.18 : 0.12;
+    const wob = (state.powerState==="OVERLOAD") ? 1.5 : (state.powerState==="STRAINED") ? 0.9 : 0.0;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+
+    // Draw one connection per powered building to its nearest generator (reduces clutter)
+    for(const b of powered){
+      let best = gens[0], bestD = 1e9;
+      for(const g of gens){
+        const d = Math.abs(g.x-b.x)+Math.abs(g.y-b.y);
+        if(d < bestD){ bestD = d; best = g; }
+      }
+
+      const gp = tileToScreen(best.x, best.y);
+      const bp = tileToScreen(b.x, b.y);
+      const x1 = origin.x + gp.x;
+      const y1 = origin.y + gp.y - 18;
+      const x2 = origin.x + bp.x;
+      const y2 = origin.y + bp.y - 18;
+
+      // subtle animated variance so lines feel "alive" but not flashy
+      const t = state.anim*0.03 + (b.x*13 + b.y*7)*0.01;
+      const jx = (Math.sin(t)*wob);
+      const jy = (Math.cos(t*1.3)*wob);
+
+      // Under-glow stroke
+      ctx.globalAlpha = a*0.9;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(34,211,238,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2 + jx, y2 + jy);
+      ctx.stroke();
+
+      // Core stroke
+      ctx.globalAlpha = a;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(214,222,230,0.75)";
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2 + jx, y2 + jy);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
 
   function drawTile(x,y,origin){
     const p = tileToScreen(x,y);
@@ -1283,6 +1351,56 @@ function drawBuilding(b,origin){
       ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.fillText(text, x, y+0.5);
       ctx.restore();
+    }
+
+    // === On-map status glyphs (minimal, readable) ===
+    function alertBadge(x,y,txt,color){
+      ctx.save();
+      ctx.globalAlpha = 0.95;
+      // plate
+      ctx.beginPath();
+      ctx.arc(x,y,10,0,Math.PI*2);
+      ctx.fillStyle = "rgba(9,16,22,.96)";
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      // symbol
+      ctx.fillStyle = "rgba(255,255,255,.95)";
+      ctx.font = "12px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(txt, x, y+0.5);
+      ctx.restore();
+    }
+
+    function drawStatusGlyphs(){
+      const alerts = [];
+      // Power/offline
+      if(!b.online) alerts.push({t:"⚡", c:"rgba(255,90,90,0.95)"});
+      // Fuel empty warning (generators + fuel station)
+      if((state.fuel!=null && state.fuel <= 0.01) && (b.type==="generator" || b.type==="fuel")){
+        alerts.push({t:"F", c:"rgba(234,179,8,0.95)"});
+      }
+      // Food/Water shortages (global) - show on relevant chain buildings
+      if(state.foodShortTicks!=null && state.foodShortTicks>0 && (b.type==="food" || b.type==="housing" || b.type==="life")){
+        alerts.push({t:"FO", c:"rgba(34,197,94,0.95)"});
+      }
+      if(state.waterShortTicks!=null && state.waterShortTicks>0 && (b.type==="water" || b.type==="housing" || b.type==="life")){
+        alerts.push({t:"W", c:"rgba(59,130,246,0.95)"});
+      }
+      // Low happiness
+      if(state.happy!=null && state.happy<=25 && (b.type==="housing" || b.type==="life")){
+        alerts.push({t:"!", c:"rgba(245,158,11,0.95)"});
+      }
+      if(!alerts.length) return;
+
+      const y = topY - 16; // above the building
+      const spacing = 22;
+      const startX = cx - ((alerts.length-1)*spacing)/2;
+      for(let i=0;i<alerts.length;i++){
+        const a = alerts[i];
+        alertBadge(startX + i*spacing, y, a.t, a.c);
+      }
     }
 
     const topY = cy-36;
@@ -1624,34 +1742,71 @@ function drawBuilding(b,origin){
       return;
     }
 
-    // === HOUSING: bright neutral block (reads clearly) ===
-    if(b.type==="house"){
+    // === HOUSING: warm modular habitat (visibility-first) ===
+    if(b.type==="house" || b.type==="housing"){
       const _t=vt;
-      const _drift = b.online ? (Math.sin(_t*0.04+6.0)*0.65) : 0;
+      const _drift = b.online ? (Math.sin(_t*0.04+6.0)*0.75) : 0;
       ctx.save();
       ctx.translate(0, _drift);
-      const C="rgba(255,255,255,1)";
-      halo("rgba(255,255,255,1)", 0.16, 0.05);
 
-      ctx.save(); ctx.globalAlpha=0.32; ctx.fillStyle="#000";
-      ctx.beginPath(); ctx.ellipse(cx, cy-6, 22, 10, 0, 0, Math.PI*2); ctx.fill();
+      const H_GLOW = "rgba(255,210,120,1)";     // warm human presence
+      const H_BASE = "rgba(70,55,35,0.98)";     // dark foundation
+      const H_BODY1= "rgba(210,155,70,0.96)";   // main module
+      const H_BODY2= "rgba(240,185,90,0.96)";   // upper module
+      const H_EDGE = "rgba(255,230,170,0.55)";
+      const H_WIN  = "rgba(255,220,140,1)";
+      const H_WIN_OFF="rgba(25,30,36,0.85)";
+
+      halo(H_GLOW, 0.18, 0.045);
+
+      // shadow
+      ctx.save(); ctx.globalAlpha=0.34; ctx.fillStyle="#000";
+      ctx.beginPath(); ctx.ellipse(cx, cy-6, 24, 11, 0, 0, Math.PI*2); ctx.fill();
       ctx.restore();
 
-      ctx.fillStyle="rgba(28,30,33,0.98)";
-      ctx.fillRect(cx-18, cy-14, 36, 16);
-      outlineRect(cx-18, cy-14, 36, 16, "rgba(255,255,255,0.25)");
+      // slab base
+      ctx.fillStyle=H_BASE;
+      ctx.fillRect(cx-19, cy-14, 38, 16);
+      outlineRect(cx-19, cy-14, 38, 16, "rgba(255,220,140,0.22)");
 
-      ctx.fillStyle="rgba(180,185,195,0.92)";
-      ctx.fillRect(cx-14, cy-42, 28, 28);
-      outlineRect(cx-14, cy-42, 28, 28, "rgba(255,255,255,0.45)");
+      // lower module (slightly wider)
+      ctx.fillStyle=H_BODY1;
+      ctx.fillRect(cx-16, cy-44, 32, 30);
+      outlineRect(cx-16, cy-44, 32, 30, H_EDGE);
 
-      // windows
-      ctx.fillStyle="rgba(40,45,55,0.8)";
-      ctx.fillRect(cx-9, cy-34, 6, 6);
-      ctx.fillRect(cx+3, cy-34, 6, 6);
+      // upper module (offset, implies stacked prefab)
+      ctx.fillStyle=H_BODY2;
+      ctx.fillRect(cx-14, cy-66, 28, 22);
+      outlineRect(cx-14, cy-66, 28, 22, "rgba(255,245,200,0.55)");
+
+      // antenna / vent
+      ctx.strokeStyle="rgba(255,230,170,0.55)";
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(cx+10, cy-66);
+      ctx.lineTo(cx+10, cy-78);
+      ctx.stroke();
+
+      // windows (pulse when online)
+      const wPulse = b.online ? (0.70 + 0.30*Math.sin(_t*0.06)) : 0.0;
+      ctx.save();
+      ctx.globalAlpha = b.online ? (0.65 + 0.35*wPulse) : 1.0;
+      ctx.fillStyle = b.online ? H_WIN : H_WIN_OFF;
+
+      // lower module windows
+      ctx.fillRect(cx-11, cy-36, 6, 6);
+      ctx.fillRect(cx-2,  cy-36, 6, 6);
+      ctx.fillRect(cx+7,  cy-36, 6, 6);
+
+      // upper module windows
+      ctx.fillRect(cx-9,  cy-58, 5, 5);
+      ctx.fillRect(cx-1,  cy-58, 5, 5);
+      ctx.fillRect(cx+7,  cy-58, 5, 5);
+
+      ctx.restore();
 
       smallTag("HOME", cx, cy-6);
-      drawTypeBadge("house", cx, topY-18, b.online);
+      drawTypeBadge((b.type==="housing"?"house":b.type), cx, topY-18, b.online);
       ctx.restore();
       return;
     }
@@ -1668,6 +1823,10 @@ function drawBuilding(b,origin){
     ctx.fillStyle="rgba(214,222,230,.70)";
     ctx.font="10px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
     ctx.fillText(b.online?"ONLINE":"OFFLINE", cx, topY+28);
+
+    // Status glyphs (only when something needs attention)
+    drawStatusGlyphs();
+
   }
 
 
