@@ -178,6 +178,26 @@
 
 /* v0.4.14: remove residual ESC hint */
 .mono.escHint{display:none!important;}
+
+/* --- Store category tabs (v0.4.31 UI patch) --- */
+.storeTabs{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.storeTabs button{
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  letter-spacing:.04em;
+}
+.storeTabs button.active{
+  border-color:rgba(34,211,238,.55);
+  color:var(--cyan);
+  box-shadow:0 0 0 2px rgba(34,211,238,.10), 0 0 18px rgba(34,211,238,.10);
+}
+
 </style>
 </head>
 <body>
@@ -239,7 +259,8 @@
 <div class="mono">Available</div>
 <div style="font-size:12px;color:#b9c8d4;">Money: <span class="mono" id="storeMoney">100.00</span></div>
 </div>
-<div id="storeItems"></div>
+<div class="storeTabs" id="storeTabs"></div>
+      <div id="storeContent"></div>
 </div>
 </div>
 <div class="panel">
@@ -405,6 +426,15 @@ function updatePhase(){
     if(state.phaseFlash>0) state.phaseFlash--;
     if(state.celebrate>0) state.celebrate--;
   }
+
+  // Global authorizations (dystopian system-wide upgrades)
+  function mult(base, lvl, step){ return base * (1 + lvl*step); }
+  function powerMult(){ return 1 + (state.upgrades.power * 0.25); }
+  function fuelProdMult(){ return 1 + (state.upgrades.fuel * 0.25); }
+  function foodProdMult(){ return 1 + (state.upgrades.food * 0.25); }
+  function waterProdMult(){ return 1 + (state.upgrades.water * 0.25); }
+  function housingMult(){ return 1 + (state.upgrades.housing * 0.50); } // reserved for capacity later
+
 const FUEL_CAP = 5.0;
   const FUEL_PROD_PER_TICK = 0.06;
   const FUEL_DRAIN_PER_TICK = 0.06;
@@ -438,18 +468,42 @@ const FUEL_CAP = 5.0;
   housing: {type:"housing", name:"Housing Block",  cost:40, oneOnly:false, unlock: s => isSystemOnline(s)}
 };
 
+  // --- Store category tabs (UI-only; does not alter simulation) ---
+  const STORE_TABS = ["BUILD","POWER","FUEL","FOOD","WATER","CIVIC"];
+
+  // Which catalog items appear per tab
+  const TAB_ITEMS = {
+    BUILD: ["tech"],
+    POWER: ["generator","reactor"],
+    FUEL:  ["fuel"],
+    FOOD:  ["food"],
+    WATER: ["water"],
+    CIVIC: ["housing"]
+  };
+
+  // Which global authorization appears per tab (one per tab)
+  const TAB_AUTH_KEY = {
+    POWER: "power",
+    FUEL:  "fuel",
+    FOOD:  "food",
+    WATER: "water",
+    CIVIC: "housing"
+  };
+
   const state = {
     tick:0, running:false, timer:null,
     money:START_MONEY, fuel:START_FUEL, food:6.0, water:6.0,
     pop:0, happy:50,
     foodShortTicks:0, waterShortTicks:0,
     phase:1, phaseHold:0, phaseFlash:0,
+    storeTab:"BUILD",
     directiveIndex:0, onboardingComplete:false,
     celebrate:0,
     powerSupply:0, powerDemand:0, powerState:"RED",
     buildings:new Map(), builtCount:new Map(),
     selectedKey:null, placingToken:null, hoverTile:null,
     inventory:new Map(),
+    upgrades:{power:0,fuel:0,food:0,water:0,housing:0},
     storeOpenedOnce:false, storeNeedsNudge:false, popSeeded:false
   };
 
@@ -492,7 +546,8 @@ const FUEL_CAP = 5.0;
     btnStore: document.querySelector("#btnStore"),
     storeBox: document.querySelector("#storeBox"),
     storeMoney: document.querySelector("#storeMoney"),
-    storeItems: document.querySelector("#storeItems"),
+    storeTabs: document.querySelector("#storeTabs"),
+    storeContent: document.querySelector("#storeContent"),
     invList: document.querySelector("#invList"),
     modeTag: document.querySelector("#modeTag"),
     selCoord: document.querySelector("#selCoord"),
@@ -736,9 +791,9 @@ function drawWorld(origin, r){
     const foodOn = countOnline("food");
     const waterOn = countOnline("water");
 
-    if(fOn>0) state.fuel = Math.min(FUEL_CAP, state.fuel + FUEL_PROD_PER_TICK*fOn);
-    if(foodOn>0) state.food = Math.min(FOOD_CAP, state.food + FOOD_PROD_PER_TICK*foodOn);
-    if(waterOn>0) state.water = Math.min(WATER_CAP, state.water + WATER_PROD_PER_TICK*waterOn);
+    if(fOn>0) state.fuel = Math.min(FUEL_CAP, state.fuel + (FUEL_PROD_PER_TICK*fOn*fuelProdMult()));
+    if(foodOn>0) state.food = Math.min(FOOD_CAP, state.food + (FOOD_PROD_PER_TICK*foodOn*foodProdMult()));
+    if(waterOn>0) state.water = Math.min(WATER_CAP, state.water + (WATER_PROD_PER_TICK*waterOn*waterProdMult()));
 
     
     // Consumption (population drives demand)
@@ -784,7 +839,7 @@ const demandTech = countOnline("tech")  * TECH_DEMAND;
 
 state.powerDemand = (onlineLife * LIFE_DEMAND) + demandFuel + demandFood + demandWater + demandTech;
     // If fuel is empty, generators cannot produce.
-    state.powerSupply = (state.fuel > 0 ? ((onlineGens * GEN_OUTPUT) + (onlineReact * REACTOR_OUTPUT)) : 0);
+    state.powerSupply = (state.fuel > 0 ? (((onlineGens * GEN_OUTPUT) + (onlineReact * REACTOR_OUTPUT)) * powerMult()) : 0);
 
     // Canon badge states (OFFLINE / CRITICAL / STRAINED / STABLE)
     const sup = Number(state.powerSupply||0);
@@ -808,7 +863,7 @@ state.powerDemand = (onlineLife * LIFE_DEMAND) + demandFuel + demandFood + deman
     }
     if(gensOnlineNow.length){
       if(state.fuel > 0){
-        const drain = FUEL_DRAIN_PER_TICK * gensOnlineNow.length;
+        const drain = (FUEL_DRAIN_PER_TICK * gensOnlineNow.length) * (1 + state.upgrades.power*0.10);
         state.fuel = Math.max(0, state.fuel - drain);
       }
       if(state.fuel === 0){
@@ -1091,39 +1146,165 @@ function renderHUD(){
   }
 
   function renderStore(){
-    el.storeItems.innerHTML="";
-    for(const [k,item] of Object.entries(CATALOG)){
-      const locked = !item.unlock(state);
-      const placed = item.oneOnly && isBuilt(state,item.type);
-      const owned = item.oneOnly && isOwned(state,item.type);
-      const canBuy = !locked && !owned && state.money>=item.cost;
+    // Store can be rendered even while closed; keep it safe.
+    if(!el.storeContent || !el.storeTabs) return;
 
-      const div = document.createElement("div");
-      div.className="item";
+    renderStoreTabs();
 
-      const left = document.createElement("div");
-      left.innerHTML = `<div class="itemTitle">${item.name}</div><div class="itemMeta">${storeHint(item.type,locked,placed,owned)}</div>`;
+    const tab = (state.storeTab || "BUILD");
+    el.storeContent.innerHTML = "";
 
-      const right = document.createElement("div");
-      right.className="itemRight";
-
-      const tag = document.createElement("div");
-      tag.className="tag " + (placed ? "built" : locked ? "locked" : owned ? "owned" : "");
-      tag.textContent = placed ? "BUILT" : locked ? "LOCKED" : owned ? "OWNED" : "AVAILABLE";
-
-      const cost = document.createElement("div");
-      cost.className="mono"; cost.style.fontSize="12px";
-      cost.textContent = `Cost: ${item.cost}`;
-
-      const btn = document.createElement("button");
-      btn.textContent = owned ? "Owned" : "Buy";
-      btn.disabled = owned || locked || !canBuy;
-      btn.addEventListener("click", ()=>purchase(item.type));
-
-      right.appendChild(tag); right.appendChild(cost); right.appendChild(btn);
-      div.appendChild(left); div.appendChild(right);
-      el.storeItems.appendChild(div);
+    // Authorization section (one per tab where applicable)
+    const authKey = TAB_AUTH_KEY[tab];
+    if(authKey){
+      const title = document.createElement("div");
+      title.className = "subTitle";
+      title.textContent = "AUTHORIZATIONS";
+      el.storeContent.appendChild(title);
+      renderAuthKey(el.storeContent, authKey);
     }
+
+    // Procurement section (catalog items)
+    const items = TAB_ITEMS[tab] || [];
+    if(items.length){
+      const title2 = document.createElement("div");
+      title2.className = "subTitle";
+      title2.style.marginTop = authKey ? "10px" : "0";
+      title2.textContent = "PROCUREMENT";
+      el.storeContent.appendChild(title2);
+
+      for(const type of items){
+        const item = CATALOG[type];
+        if(!item) continue;
+        renderCatalogItem(el.storeContent, item);
+      }
+    } else if(!authKey){
+      const d = document.createElement("div");
+      d.style.color = "var(--muted)";
+      d.style.fontSize = "12px";
+      d.style.marginTop = "10px";
+      d.textContent = "No items in this category yet.";
+      el.storeContent.appendChild(d);
+    }
+  }
+
+  function renderStoreTabs(){
+    const tab = (state.storeTab || "BUILD");
+    el.storeTabs.innerHTML = "";
+    for(const t of STORE_TABS){
+      const btn = document.createElement("button");
+      btn.className = (t===tab) ? "active" : "";
+      btn.textContent = t;
+      btn.addEventListener("click", ()=>{
+        state.storeTab = t;
+        renderStore();
+      });
+      el.storeTabs.appendChild(btn);
+    }
+  }
+
+  function renderCatalogItem(container, item){
+    const locked = !item.unlock(state);
+    const placed = item.oneOnly && isBuilt(state,item.type);
+    const owned = item.oneOnly && isOwned(state,item.type);
+    const canBuy = !locked && !owned && state.money>=item.cost;
+
+    const div = document.createElement("div");
+    div.className="item";
+
+    const left = document.createElement("div");
+    left.innerHTML = `<div class="itemTitle">${item.name}</div><div class="itemMeta">${storeHint(item.type,locked,placed,owned)}</div>`;
+
+    const right = document.createElement("div");
+    right.className="itemRight";
+
+    const tag = document.createElement("div");
+    tag.className="tag " + (placed ? "built" : locked ? "locked" : owned ? "owned" : "");
+    tag.textContent = placed ? "BUILT" : locked ? "LOCKED" : owned ? "OWNED" : "AVAILABLE";
+
+    const cost = document.createElement("div");
+    cost.className="mono"; cost.style.fontSize="12px";
+    cost.textContent = `Cost: ${item.cost}`;
+
+    const btn = document.createElement("button");
+    btn.textContent = owned ? "Owned" : "Buy";
+    btn.disabled = owned || locked || !canBuy;
+    btn.addEventListener("click", ()=>purchase(item.type));
+
+    right.appendChild(tag); right.appendChild(cost); right.appendChild(btn);
+    div.appendChild(left); div.appendChild(right);
+    container.appendChild(div);
+  }
+
+  function upgradeCost(key){
+    const lvl = state.upgrades[key]||0;
+    const base = {power:120,fuel:100,food:110,water:110,housing:140}[key] || 120;
+    return Math.floor(base * Math.pow(1.65, lvl));
+  }
+  function upgradeLabel(key){
+    const lvl = state.upgrades[key]||0;
+    const eff = key==="housing" ? (1 + lvl*0.50) : (1 + lvl*0.25);
+    const pct = Math.round((eff-1)*100);
+    const name = {power:"GRID OUTPUT", fuel:"FUEL YIELD", food:"NUTRITION PROTOCOL", water:"WATER PROTOCOL", housing:"DENSITY POLICY"}[key] || key.toUpperCase();
+    return {name, lvl, pct};
+  }
+  function upgradeUnlocked(key){
+    if(key==="power") return state.phase>=2;
+    if(key==="fuel") return state.phase>=3;
+    if(key==="food") return state.phase>=4;
+    if(key==="water") return state.phase>=4;
+    if(key==="housing") return state.phase>=4;
+    return false;
+  }
+  function buyUpgrade(key){
+    if(!upgradeUnlocked(key)){ log("Authorization locked by phase."); return; }
+    const cost = upgradeCost(key);
+    if(state.money < cost){ log("Insufficient funds for authorization."); return; }
+    state.money -= cost;
+    state.upgrades[key] = (state.upgrades[key]||0) + 1;
+    log(`Authorization updated: ${key.toUpperCase()} → L${state.upgrades[key]}`);
+    renderAll();
+  }
+  function renderAuth(){
+    // Back-compat: render the currently relevant tab authorization(s) into the content panel.
+    if(!el.storeContent) return;
+    const tab = (state.storeTab || "BUILD");
+    const authKey = TAB_AUTH_KEY[tab];
+    if(authKey){
+      renderAuthKey(el.storeContent, authKey);
+    }
+  }
+
+  function renderAuthKey(container, key){
+    const u = upgradeLabel(key);
+    const locked = !upgradeUnlocked(key);
+    const cost = upgradeCost(key);
+
+    const row = document.createElement("div");
+    row.className="item";
+
+    const left = document.createElement("div");
+    left.innerHTML = `<div class="itemTitle">${u.name}</div><div class="itemMeta">Level ${u.lvl} (+${u.pct}%)</div>`;
+
+    const right = document.createElement("div");
+    right.className="itemRight";
+
+    const tag = document.createElement("div");
+    tag.className="tag " + (locked ? "locked" : "");
+    tag.textContent = locked ? "LOCKED" : "ACTIVE";
+
+    const c = document.createElement("div");
+    c.className="mono"; c.style.fontSize="12px";
+    c.textContent = `Cost: ${cost}`;
+
+    const btn = document.createElement("button");
+    btn.textContent = "Authorize";
+    btn.disabled = locked || state.money < cost;
+    btn.addEventListener("click", ()=>buyUpgrade(key));
+
+    right.appendChild(tag); right.appendChild(c); right.appendChild(btn);
+    row.appendChild(left); row.appendChild(right);
+    container.appendChild(row);
   }
 
   function renderInventory(){
