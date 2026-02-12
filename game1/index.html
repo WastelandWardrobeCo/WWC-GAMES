@@ -334,9 +334,8 @@
     { id:4, name:"INDUSTRIAL PRESSURE", objective:"Hold STABLE power at Pop 50", hold:45,
       ok: () => state.pop>=50 && state.powerState==="STABLE"
     },
-    { id:5, name:"REACTOR TRANSITION", objective:"Reactor online replaces generators", hold:1,
-      ok: () => false // placeholder for next phase build
-    },
+    { id:5, name:"REACTOR TRANSITION", objective:"Bring Reactor ONLINE (replaces generators)", hold:1,
+      ok: () => countOnline("reactor")>0 },
   ];
 
   function phaseSpec(){
@@ -435,6 +434,7 @@ const FUEL_CAP = 5.0;
   food: {type:"food",    name:"Food Processor", cost:35, oneOnly:false,  unlock: s => isBuilt(s,"fuel")},
   water: {type:"water",   name:"Water Pump",     cost:40, oneOnly:false,  unlock: s => isBuilt(s,"food")},
   tech: {type:"tech",    name:"Tech Facility",  cost:60, oneOnly:true,  unlock: s => isBuilt(s,"fuel")},
+  reactor: {type:"reactor", name:"Reactor Core",   cost:220, oneOnly:true,  w:2, h:2, unlock: s => s.phase>=5},
   housing: {type:"housing", name:"Housing Block",  cost:40, oneOnly:false, unlock: s => isSystemOnline(s)}
 };
 
@@ -646,11 +646,34 @@ function drawWorld(origin, r){
     el.log.scrollTop = el.log.scrollHeight;
   }
 
-  function getB(x,y){ return state.buildings.get(keyOf(x,y)) || null; }
+  function getB(x,y){
+    const k=keyOf(x,y);
+    const b=state.buildings.get(k);
+    if(!b) return null;
+    if(b.type==="occupy" && b.anchorKey) return state.buildings.get(b.anchorKey) || null;
+    return b;
+  }
   function setB(b){
     state.buildings.set(keyOf(b.x,b.y), b);
     state.builtCount.set(b.type, (state.builtCount.get(b.type)||0) + 1);
   }
+
+  function setFootprintB(b){
+    const w=b.w||1, h=b.h||1;
+    const anchorKey = keyOf(b.x,b.y);
+    // anchor
+    const anchor = {...b, w, h, anchorKey};
+    state.buildings.set(anchorKey, anchor);
+    // mark occupied tiles
+    for(let oy=0;oy<h;oy++) for(let ox=0;ox<w;ox++){
+      if(ox===0 && oy===0) continue;
+      const k=keyOf(b.x+ox, b.y+oy);
+      state.buildings.set(k, {type:"occupy", x:b.x+ox, y:b.y+oy, anchorKey, anchorType:b.type});
+    }
+    // built count tracks anchors only
+    state.builtCount.set(b.type, (state.builtCount.get(b.type)||0)+1);
+  }
+
   function delB(x,y){
     const b = getB(x,y);
     if(!b) return;
@@ -666,7 +689,13 @@ function drawWorld(origin, r){
   }
   function isGenOnline(){ return !!getB(START_GEN.x,START_GEN.y)?.online; }
   function isLifeOnline(){ return !!getB(START_LIFE.x,START_LIFE.y)?.online; }
-  function isSystemOnline(){ return isGenOnline() && isLifeOnline() && state.powerState!=="RED"; }
+  function isSystemOnline(){
+  // System should be considered ONLINE when Life Support is ONLINE and at least one power source
+  // (Generator OR Reactor) is ONLINE, and the grid is not in a RED (no-power) state.
+  const hasPower = (countOnline("generator") > 0) || (countOnline("reactor") > 0);
+  const hasLife  = countOnline("life") > 0;
+  return hasPower && hasLife && state.powerState !== "RED";
+}
 
   function tileToScreen(x,y){
     return {x:(x-y)*(TILE_W/2), y:(x+y)*(TILE_H/2)};
@@ -735,6 +764,7 @@ function drawWorld(origin, r){
 // - Supply: sum of ONLINE generators (requires fuel)
 // - Demand: Life Support + (Phase 4) online producers/utility buildings that draw power
 const GEN_OUTPUT = 1.6;
+const REACTOR_OUTPUT = 5.2;
 const LIFE_DEMAND = 1.0;
 
 // Phase 4: power coupling (keep it light for early game; tune later)
@@ -744,6 +774,7 @@ const WATER_DEMAND = 0.25;  // water pump draw
 const TECH_DEMAND  = 0.15;  // tech facility draw (if present)
 
 const onlineGens = countOnline("generator");
+const onlineReact = countOnline("reactor");
 const onlineLife = countOnline("life");
 
 const demandFuel = countOnline("fuel")  * FUEL_DEMAND;
@@ -753,7 +784,7 @@ const demandTech = countOnline("tech")  * TECH_DEMAND;
 
 state.powerDemand = (onlineLife * LIFE_DEMAND) + demandFuel + demandFood + demandWater + demandTech;
     // If fuel is empty, generators cannot produce.
-    state.powerSupply = (state.fuel > 0 ? (onlineGens * GEN_OUTPUT) : 0);
+    state.powerSupply = (state.fuel > 0 ? ((onlineGens * GEN_OUTPUT) + (onlineReact * REACTOR_OUTPUT)) : 0);
 
     // Canon badge states (OFFLINE / CRITICAL / STRAINED / STABLE)
     const sup = Number(state.powerSupply||0);
@@ -1177,14 +1208,21 @@ el.btnDelete.disabled=false;
 
     for(let y=0;y<MAP_ROWS;y++) for(let x=0;x<MAP_COLS;x++) drawTile(x,y,origin);
 
-    const arr=[...state.buildings.values()].sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+    const arr=[...state.buildings.values()].filter(b=>b.type!=="occupy").sort((a,b)=>(a.x+a.y)-(b.x+b.y));
     for(const b of arr) drawBuilding(b,origin);
 
     drawConnections(origin);
 
     if(state.placingToken && state.hoverTile){
       const {x,y}=state.hoverTile;
-      if(inBounds(x,y) && !getB(x,y)) drawGhost(x,y,origin);
+      const item = CATALOG[state.placingToken.type];
+      const w=item.w||1, h=item.h||1;
+      let ok=true;
+      for(let oy=0;oy<h;oy++) for(let ox=0;ox<w;ox++){
+        const tx=x+ox, ty=y+oy;
+        if(!inBounds(tx,ty) || state.buildings.get(keyOf(tx,ty))) ok=false;
+      }
+      if(ok) drawGhost(x,y,origin,w,h);
     }
 
     if(state.selectedKey){
@@ -1950,7 +1988,66 @@ function drawBuilding(b,origin){
     }
 
     // === TECH: purple comms node ===
-    if(b.type==="tech"){
+    
+    if(b.type==="reactor"){
+      const _t=vt;
+      const _drift = b.online ? (Math.sin(_t*0.05+1.3)*0.9) : 0;
+      ctx.save();
+      ctx.translate(0,_drift);
+
+      const R_GLOW = "rgba(255,210,90,1)";
+      const R_PLATE= "rgba(210,140,40,0.95)";
+      const R_BODY = "rgba(255,180,60,0.92)";
+      const R_DARK = "rgba(90,55,18,1)";
+      const R_EDGE = "rgba(255,235,170,0.40)";
+
+      // footprint plate (2x2)
+      const p2 = tileToScreen(b.x+1, b.y+1);
+      const fx = origin.x+p2.x, fy = origin.y+p2.y;
+      // halo
+      halo(R_GLOW, 0.18, 0.045);
+
+      // base shadow
+      ctx.save(); ctx.globalAlpha=0.35; ctx.fillStyle="#000";
+      ctx.beginPath(); ctx.ellipse(fx, fy-10, 60, 24, 0, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+
+      // main plate
+      ctx.fillStyle=R_PLATE;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy-54);
+      ctx.lineTo(fx+70, fy-18);
+      ctx.lineTo(fx, fy+18);
+      ctx.lineTo(fx-70, fy-18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle=R_EDGE; ctx.lineWidth=2; ctx.stroke();
+
+      // reactor body
+      ctx.fillStyle=R_BODY;
+      ctx.fillRect(fx-26, fy-46, 52, 48);
+      outlineRect(fx-26, fy-46, 52, 48, "rgba(255,235,170,0.55)");
+
+      // core window
+      ctx.fillStyle=R_DARK;
+      ctx.fillRect(fx-10, fy-34, 20, 26);
+      if(b.online){
+        ctx.save(); ctx.globalAlpha=0.75;
+        ctx.fillStyle="rgba(255,245,210,0.55)";
+        ctx.fillRect(fx-8, fy-32, 16, 22);
+        ctx.restore();
+      }
+
+      // tag
+      smallTag("R", fx, fy-54);
+
+      // alerts
+      if(!b.online) alertBadge(fx+44, fy-40, "OFF", "rgba(255,255,255,0.85)");
+      ctx.restore();
+      return;
+    }
+
+if(b.type==="tech"){
       const _t=vt;
       const _drift = b.online ? (Math.sin(_t*0.045+5.1)*0.7) : 0;
       ctx.save();
@@ -2064,7 +2161,7 @@ function drawBuilding(b,origin){
 
     // Fallback: keep existing card
     const w=64,h=38;
-    roundRect(cx-w/2, topY, w, h, 10, true, true, "rgba(9,16,22,.92)", "rgba(255,255,255,.18)");
+    roundRect(cx-gw/2, topY, gw, gh, 10, true, true, "rgba(9,16,22,.92)", "rgba(255,255,255,.18)");
 
     ctx.fillStyle = b.online ? "rgba(255,255,255,.95)" : "rgba(214,222,230,.90)";
     ctx.font="11px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
@@ -2081,18 +2178,20 @@ function drawBuilding(b,origin){
   }
 
 
-  function drawGhost(x,y,origin){
+  function drawGhost(x,y,origin,w=1,h=1){
     const p=tileToScreen(x,y);
+    // FOOTPRINT OUTLINE
+
     const cx=origin.x+p.x, cy=origin.y+p.y;
-    const w=64,h=38; const topY=cy-36;
+    const gw=64,gh=38; const topY=cy-36;
 
     ctx.save();
     ctx.globalAlpha=0.55;
-    roundRect(cx-w/2, topY, w, h, 10, true, true, "rgba(34,211,238,.10)", "rgba(34,211,238,.55)");
+    roundRect(cx-gw/2, topY, gw, gh, 10, true, true, "rgba(34,211,238,.10)", "rgba(34,211,238,.55)");
     ctx.fillStyle="rgba(34,211,238,.85)";
     ctx.font="10px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, monospace";
     ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("PLACE", cx, topY+h/2);
+    ctx.fillText("PLACE", cx, topY+gh/2);
     ctx.restore();
   }
 
@@ -2157,12 +2256,34 @@ function canvasPoint(e){
     const tx=Math.floor(raw.x+0.5), ty=Math.floor(raw.y+0.5);
     if(!inBounds(tx,ty)) return null;
 
+    // Primary hit test: standard diamond.
     const center=tileToScreen(tx,ty);
     const cx=origin.x+center.x, cy=origin.y+center.y;
     const dx=Math.abs(px-cx)/(TILE_W/2);
     const dy=Math.abs(py-cy)/(TILE_H/2);
-    if(dx+dy<=1.0) return {x:tx,y:ty};
-    return null;
+    if(dx+dy<=1.05) return {x:tx,y:ty};
+
+    // Fallback: if we're near an edge/corner, try the 4 cardinal neighbor tiles
+    // and take the closest diamond. This makes selecting multi-tile buildings
+    // (like the 2x2 reactor) feel much less "pixel perfect".
+    let best=null;
+    const candidates=[
+      {x:tx,y:ty},
+      {x:tx+1,y:ty},
+      {x:tx-1,y:ty},
+      {x:tx,y:ty+1},
+      {x:tx,y:ty-1},
+    ];
+    for(const c of candidates){
+      if(!inBounds(c.x,c.y)) continue;
+      const cc=tileToScreen(c.x,c.y);
+      const ccx=origin.x+cc.x, ccy=origin.y+cc.y;
+      const cdx=Math.abs(px-ccx)/(TILE_W/2);
+      const cdy=Math.abs(py-ccy)/(TILE_H/2);
+      const score=cdx+cdy;
+      if(score<=1.18 && (!best || score<best.score)) best={x:c.x,y:c.y,score};
+    }
+    return best ? {x:best.x,y:best.y} : null;
   }
 
   el.canvas.addEventListener("mousemove",(e)=>{
@@ -2176,20 +2297,44 @@ function canvasPoint(e){
     const pt=canvasPoint(e);
     const tile=pickTile(pt.x,pt.y);
     if(!tile) return;
-    const k=keyOf(tile.x,tile.y);
-    const b=state.buildings.get(k);
+    let k=keyOf(tile.x,tile.y);
+    let b=state.buildings.get(k);
+    if(b && b.type==="occupy" && b.anchorKey){
+      k = b.anchorKey;
+      b = state.buildings.get(k);
+    }
 
     if(state.placingToken){
-      if(b){ log("Tile occupied. Choose an empty tile."); return; }
       const type=state.placingToken.type;
       const item=CATALOG[type];
+      const w=item.w||1, h=item.h||1;
+      // footprint availability check
+      for(let oy=0;oy<h;oy++) for(let ox=0;ox<w;ox++){
+        const tx=tile.x+ox, ty=tile.y+oy;
+        if(!inBounds(tx,ty) || state.buildings.get(keyOf(tx,ty))){ log("Footprint blocked. Choose a clear area."); return; }
+      }
+
       if(item.oneOnly && isBuilt(state,type)){ log(`${item.name} is one-only and already built.`); state.placingToken=null; renderAll(); return; }
 
       const count=state.inventory.get(type)||0;
       if(count<=0){ log(`No ${item.name} tokens to place.`); state.placingToken=null; renderAll(); return; }
       state.inventory.set(type, count-1);
 
-      setB({type, name:item.name, online:false, x:tile.x, y:tile.y});
+      // Reactor canon: placing it replaces existing generators (returned to inventory)
+      if(type==="reactor"){
+        let removed=0;
+        for(const [kk,v] of [...state.buildings.entries()]){
+          if(v.type==="generator"){
+            state.buildings.delete(kk);
+            removed++;
+            state.inventory.set("generator",(state.inventory.get("generator")||0)+1);
+          }
+          if(v.type==="occupy" && v.anchorType==="generator") state.buildings.delete(kk);
+        }
+        if(removed>0) log(`Reactor installed: ${removed} generator(s) returned to inventory.`);
+      }
+
+      setFootprintB({type, name:item.name, online:false, x:tile.x, y:tile.y, w:(item.w||1), h:(item.h||1)});
       log(`Placed: ${item.name} @ ${tile.x},${tile.y} (OFFLINE)`);
 
       state.placingToken=null;
