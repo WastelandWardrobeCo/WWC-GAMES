@@ -497,6 +497,9 @@ const FUEL_CAP = 5.0;
     foodShortTicks:0, waterShortTicks:0,
     phase:1, phaseHold:0, phaseFlash:0,
     storeTab:"BUILD",
+    tabHints:{BUILD:false,POWER:false,FUEL:false,FOOD:false,WATER:false,CIVIC:false},
+    tabHintId:{BUILD:null,POWER:null,FUEL:null,FOOD:null,WATER:null,CIVIC:null},
+    tabHintAck:{BUILD:null,POWER:null,FUEL:null,FOOD:null,WATER:null,CIVIC:null},
     directiveIndex:0, onboardingComplete:false,
     celebrate:0,
     powerSupply:0, powerDemand:0, powerState:"RED",
@@ -1193,15 +1196,75 @@ function renderHUD(){
     el.storeTabs.innerHTML = "";
     for(const t of STORE_TABS){
       const btn = document.createElement("button");
-      btn.className = (t===tab) ? "active" : "";
+      const hintOn = !!(state.tabHints && state.tabHints[t]);
+      // Active tab gets "active"; hint glow is reserved for actionable nudges.
+      btn.className = (t===tab ? "active" : "") + (hintOn ? " glowPulse" : "");
       btn.textContent = t;
       btn.addEventListener("click", ()=>{
         state.storeTab = t;
+        // Acknowledge the current hint for this tab (so it stops glowing).
+        if(state.tabHintId && state.tabHintId[t]){
+          state.tabHintAck[t] = state.tabHintId[t];
+        }
+        if(state.tabHints) state.tabHints[t] = false;
         renderStore();
       });
       el.storeTabs.appendChild(btn);
     }
   }
+
+  function updateTabHints(){
+    // Hints are soft nudges toward the next optimal move.
+    // They do NOT change simulation math; UI signal only.
+    const sysOn = isSystemOnline();
+    const capFood = (typeof FOOD_CAP !== "undefined") ? FOOD_CAP : 10.0;
+    const capWater = (typeof WATER_CAP !== "undefined") ? WATER_CAP : 10.0;
+
+    // Helper: set a hint id for a tab; glow appears only if not yet acknowledged.
+    function setHint(tab, hintId){
+      state.tabHintId[tab] = hintId || null;
+      state.tabHints[tab] = !!(hintId && state.tabHintAck[tab] !== hintId);
+    }
+
+    // Default: clear all hint ids, then re-apply with priority.
+    for(const t of STORE_TABS){
+      state.tabHintId[t] = null;
+      state.tabHints[t] = false;
+    }
+
+    // ===== Priority 1: Newly unlocked authorizations =====
+    // Encourage the player to notice new tools when phases unlock them.
+    if(upgradeUnlocked("power") && (state.upgrades.power||0)===0) setHint("POWER","auth_unlock_power");
+    if(upgradeUnlocked("fuel")  && (state.upgrades.fuel||0)===0)  setHint("FUEL","auth_unlock_fuel");
+    if(upgradeUnlocked("food")  && (state.upgrades.food||0)===0)  setHint("FOOD","auth_unlock_food");
+    if(upgradeUnlocked("water") && (state.upgrades.water||0)===0) setHint("WATER","auth_unlock_water");
+    if(upgradeUnlocked("housing") && (state.upgrades.housing||0)===0) setHint("CIVIC","auth_unlock_civic");
+
+    // ===== Priority 2: Pre-emptive stability nudges (only when system is online) =====
+    if(sysOn){
+      // Power margin approaching strain (avoid panic glow when already critical/offline).
+      if(state.powerDemand > 0.0001 && (state.powerState==="STABLE" || state.powerState==="STRAINED")){
+        const marginRatio = state.powerSupply / Math.max(0.0001, state.powerDemand);
+        if(marginRatio < 1.15) setHint("POWER","near_strain");
+      }
+
+      // Resource margins (nudge before sustained scarcity).
+      if(state.pop > 0){
+        if(state.food < capFood*0.20 && state.foodShortTicks < 3) setHint("FOOD","food_low");
+        if(state.water < capWater*0.20 && state.waterShortTicks < 3) setHint("WATER","water_low");
+      }
+
+      // Civic scaling: if stable + happy, but no housing built yet, nudge CIVIC.
+      const hasHousing = (state.builtCount.get("housing")||0) > 0;
+      const happyGreen = state.happy >= 70;
+      if(happyGreen && !hasHousing && state.pop >= 18) setHint("CIVIC","scale_housing");
+    }
+
+    // Active tab should never glow (avoid self-spotlight).
+    const active = state.storeTab || "BUILD";
+    state.tabHints[active] = false;
+  }
+
 
   function renderCatalogItem(container, item){
     const locked = !item.unlock(state);
@@ -1361,6 +1424,7 @@ el.btnDelete.disabled=false;
 
   function renderAll(){
     updatePhase();
+    updateTabHints();
     renderHUD();
     renderStore();
     renderInventory();
