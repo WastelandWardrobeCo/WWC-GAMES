@@ -19,6 +19,8 @@
     --bad:#ff4c4c;
     --tile: clamp(44px, 6.2vh, 64px);
     --gap: 10px;
+    --cols: 8;
+    --rows: 8;
     --radius:18px;
   }
   *{box-sizing:border-box;}
@@ -199,8 +201,8 @@
   }
   .grid {
     display:grid;
-    grid-template-columns: repeat(8, var(--tile));
-    grid-template-rows: repeat(8, var(--tile));
+    grid-template-columns: repeat(var(--cols), var(--tile));
+    grid-template-rows: repeat(var(--rows), var(--tile));
     gap: var(--gap);
     justify-content:center;
     user-select:none;
@@ -333,7 +335,9 @@
     .center { margin: 0 auto; width: min(720px, 98vw); }
   }
   @media (max-width: 520px) {
-    :root { --tile: clamp(44px, 6.2vh, 64px); --gap: 10px; }
+    :root { --tile: clamp(44px, 6.2vh, 64px); --gap: 10px;
+    --cols: 8;
+    --rows: 8; }
   }
 
 </style>
@@ -451,8 +455,19 @@
   const toast = document.getElementById("toast");
 
   // ===== Game constants =====
-  const W = 8, H = 8;
+  let W = 8, H = 8;
   let TILE_ID = 1;
+
+
+
+  function applyBoardSize() {
+    // Mobile: show only 6 columns across so the board fits iPhone width.
+    const isNarrow = window.matchMedia("(max-width: 520px)").matches;
+    W = isNarrow ? 6 : 8;
+    H = 8;
+    document.documentElement.style.setProperty("--cols", String(W));
+    document.documentElement.style.setProperty("--rows", String(H));
+  }
 
   // animation timing (slower so 4-match doesn't just vanish)
   const T_MATCH_HIGHLIGHT = 180;
@@ -830,23 +845,34 @@
   function hideLevelSplash() { overlay.style.display = "none"; }
 
   function createSpecialFromSwap(a, b, matchGroups){
-  if(!matchGroups || matchGroups.length===0) return {made:false, keepId:null};
+  if(!matchGroups || matchGroups.length===0) return {made:null, keepId:null};
 
   // keys in matches are stored as "x,y" where x=col, y=row
-  const rcKey = (r,c)=>`${c},${r}`;
+  const key = (x,y)=>`${x},${y}`;
+
+  // Normalize groups into { set: Set<string>, dir: 'h'|'v' }
+  const norm = matchGroups.map(g=>{
+    let set;
+    if (g.cells instanceof Set) set = g.cells;
+    else if (Array.isArray(g.cells)) set = new Set(g.cells.map(p => key(p.x, p.y)));
+    else set = new Set();
+    return { set, dir: g.dir || g.direction || "h" };
+  }).filter(g=>g.set.size>0);
+
+  if (norm.length===0) return {made:null, keepId:null};
 
   const ar=a.y, ac=a.x, br=b.y, bc=b.x;
 
-  const inGroup = (g,r,c)=> (g && g.cells && g.cells.has(rcKey(r,c)));
+  const inGroup = (g,r,c)=> g.set.has(key(c,r));
 
   // Prefer a match group that includes one of the swapped cells
-  let involved = matchGroups.filter(g=>inGroup(g,ar,ac) || inGroup(g,br,bc));
-  if(involved.length===0) involved = [matchGroups[0]];
+  let involved = norm.filter(g=>inGroup(g,ar,ac) || inGroup(g,br,bc));
+  if(involved.length===0) involved = [norm[0]];
 
-  // Choose the largest involved group
-  involved.sort((g1,g2)=> (g2.cells.size - g1.cells.size));
+  // Choose the largest involved group (size 5 beats 4 beats 3)
+  involved.sort((g1,g2)=> (g2.set.size - g1.set.size));
   const g = involved[0];
-  const size = g.cells.size;
+  const size = g.set.size;
 
   // Anchor special on the second swap cell if possible (feels most "natural")
   let anchorR = br, anchorC = bc;
@@ -854,22 +880,22 @@
 
   // Fallback: first cell in group
   if(!inGroup(g,anchorR,anchorC)){
-    const [x,y] = [...g.cells][0].split(',').map(Number);
+    const [x,y] = [...g.set][0].split(',').map(Number);
     anchorC = x; anchorR = y;
   }
 
   if(size>=5){
     if(board[anchorR] && board[anchorR][anchorC]) board[anchorR][anchorC].special = "core";
-    return {made:true, keepId: rcKey(anchorR,anchorC)};
+    return {made:"core", keepId: key(anchorC,anchorR)};
   }
 
   if(size===4){
     const dir = g.dir || "h";
     if(board[anchorR] && board[anchorR][anchorC]) board[anchorR][anchorC].special = (dir==="h" ? "h" : "v");
-    return {made:true, keepId: rcKey(anchorR,anchorC)};
+    return {made:(dir==="h" ? "h" : "v"), keepId: key(anchorC,anchorR)};
   }
 
-  return {made:false, keepId:null};
+  return {made:null, keepId:null};
 }
 function bumpObjectivesForTile(tile) {
     if (!tile) return;
@@ -997,6 +1023,39 @@ function bumpObjectivesForTile(tile) {
     for (let y=0;y<H;y++) for (let x=0;x<W;x++) board[y][x] = flat[idx++];
   }
 
+  async function doStripeSwap(a,b) {
+    // Swap includes a STRIPE, then fire its row/column immediately (no match required).
+    swap(a,b);
+    renderBoard();
+    await sleep(90);
+
+    const positions = [a,b];
+    const expanded = new Set();
+
+    for (const p of positions) {
+      const tile = board[p.y][p.x];
+      if (!tile) continue;
+      if (tile.special === "h") {
+        for (let x=0;x<W;x++) expanded.add(`${x},${p.y}`);
+      } else if (tile.special === "v") {
+        for (let y=0;y<H;y++) expanded.add(`${p.x},${y}`);
+      }
+    }
+
+    const list = Array.from(expanded).map(s => {
+      const [x,y] = s.split(",").map(Number);
+      return {x,y};
+    });
+
+    if (list.length) {
+      await highlightPositions(list, true);
+      await sleep(140);
+      await clearPositions(list);
+      await fallAndRefill();
+      await resolveBoard(null);
+    }
+  }
+
   async function doCoreSwap(a,b) {
     // Swap includes a CORE, then discharge by wiping the swapped-with type across the whole board.
     const ta0 = board[a.y][a.x];
@@ -1095,7 +1154,19 @@ function bumpObjectivesForTile(tile) {
       return;
     }
 
-    // Normal swap attempt
+    // STRIPE fire swap (activates without needing a match)
+    if ((board[a.y][a.x] && (board[a.y][a.x].special === "h" || board[a.y][a.x].special === "v")) ||
+        (board[b.y][b.x] && (board[b.y][b.x].special === "h" || board[b.y][b.x].special === "v"))) {
+
+      await doStripeSwap(a,b);
+      movesLeft = Math.max(0, movesLeft - 1);
+      updateUI();
+      await checkEnd();
+      lock = false;
+      return;
+    }
+
+        // Normal swap attempt
     swap(a,b);
     renderBoard();
     await sleep(80);
@@ -1114,9 +1185,9 @@ function bumpObjectivesForTile(tile) {
     }
 
     // Match: create special if needed, then resolve
-    const {made, keepId} = createSpecialFromSwap(a,b);
-    if (made === "core") toast("CORE created");
-    else if (made === "h" || made === "v") toast("STRIPE created");
+    const {made, keepId} = createSpecialFromSwap(a,b, probe.groups);
+    if (made === "core") showToast("CORE created");
+    else if (made === "h" || made === "v") showToast("STRIPE created");
 
     await resolveBoard(keepId);
 
@@ -1169,10 +1240,27 @@ function bumpObjectivesForTile(tile) {
     Promise.all(imgs).then(() => {
       loadUnlocked();
       setUnlocked(unlocked);
+      applyBoardSize();
       buildDOMGrid();
       startLevel(1, true);
     });
   }
+
+
+  // If the user rotates the phone or resizes the window, keep the board fitting the screen.
+  let _lastCols = null;
+  window.addEventListener("resize", () => {
+    const prev = W;
+    applyBoardSize();
+    if (_lastCols === null) _lastCols = prev;
+    if (W !== prev) {
+      buildDOMGrid();
+      startLevel(level, true);
+      showToast(`Board set to ${W}×${H} for this screen`);
+    }
+    _lastCols = W;
+  });
+
 
   boot();
 
