@@ -1290,8 +1290,15 @@ function bumpObjectivesForTile(tile) {
     });
 
     if (list.length) {
-      coreDischargeFX(corePos);
-      await highlightPositions(list, true);
+      // FX: fire from any stripe(s) involved in the swap
+    const stripeOrigins = [];
+    for (const p of positions) {
+      const t = board[p.y][p.x];
+      if (t && (t.special === "h" || t.special === "v")) stripeOrigins.push(p);
+    }
+    if (stripeOrigins.length === 0) stripeOrigins.push(a);
+    for (const o of stripeOrigins) coreDischargeFX(o);
+    await highlightPositions(list, true);
       await sleep(140);
       await clearPositions(list);
       await fallAndRefill();
