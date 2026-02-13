@@ -198,8 +198,62 @@
     background: rgba(0,0,0,.22);
     border:1px solid var(--stroke);
     padding: 14px;
+    position: relative;
+    overflow: hidden;
   }
-  .grid {
+  
+  #fxLayer{
+    position:absolute;
+    inset: 14px; /* match gridWrap padding so it hugs the grid */
+    pointer-events:none;
+    z-index: 50;
+  }
+  .fx-particle{
+    position:absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(76,255,154,.92);
+    box-shadow: 0 0 18px rgba(76,255,154,.55);
+    opacity: .95;
+    will-change: transform, opacity;
+  }
+  .fx-sweep{
+    position:absolute;
+    left:0; right:0;
+    top:0;
+    height: 4px;
+    background: rgba(76,255,154,.85);
+    box-shadow: 0 0 22px rgba(76,255,154,.45);
+    opacity:.9;
+    border-radius: 999px;
+    transform: translateY(-20px);
+    will-change: transform, opacity;
+  }
+  .shake{
+    animation: shake 220ms linear 1;
+  }
+  @keyframes shake{
+    0%{ transform: translate3d(0,0,0) rotate(0deg); }
+    12%{ transform: translate3d(-3px,2px,0) rotate(-0.4deg); }
+    24%{ transform: translate3d(4px,-2px,0) rotate(0.5deg); }
+    36%{ transform: translate3d(-5px,-1px,0) rotate(-0.6deg); }
+    48%{ transform: translate3d(5px,2px,0) rotate(0.6deg); }
+    60%{ transform: translate3d(-4px,1px,0) rotate(-0.5deg); }
+    72%{ transform: translate3d(3px,-2px,0) rotate(0.4deg); }
+    84%{ transform: translate3d(-2px,1px,0) rotate(-0.3deg); }
+    100%{ transform: translate3d(0,0,0) rotate(0deg); }
+  }
+  .core-pop{
+    animation: corePop 260ms ease-out 1;
+  }
+  @keyframes corePop{
+    0%{ transform: scale(1); filter: brightness(1); }
+    35%{ transform: scale(1.18); filter: brightness(1.35); }
+    100%{ transform: scale(1); filter: brightness(1); }
+  }
+
+.grid {
     display:grid;
     grid-template-columns: repeat(var(--cols), var(--tile));
     grid-template-rows: repeat(var(--rows), var(--tile));
@@ -381,7 +435,7 @@
   }
   @media (max-width: 520px) {
     :root { --tile: clamp(44px, 6.2vh, 64px); --gap: 10px;
-    --cols: 8;
+    --cols: 7;
     --rows: 8; }
   }
 
@@ -428,6 +482,7 @@
 
       <div class="gridWrap">
         <div id="grid" class="grid" aria-label="game board"></div>
+        <div id="fxLayer" aria-hidden="true"></div>
         <div class="hint">Match 3 clears. Match 4 creates a STRIPE. Match 5 creates a CORE. Swap a CORE to discharge a type.</div>
       </div>
     </div>
@@ -476,6 +531,7 @@
 
   // ===== UI elements =====
   const elGrid = document.getElementById("grid");
+  const fxLayer = document.getElementById("fxLayer");
   const uiLevel = document.getElementById("uiLevel");
   const uiMoves = document.getElementById("uiMoves");
   const uiScore = document.getElementById("uiScore");
@@ -508,11 +564,141 @@
   function applyBoardSize() {
     // Mobile: show only 6 columns across so the board fits iPhone width.
     const isNarrow = window.matchMedia("(max-width: 520px)").matches;
-    W = isNarrow ? 6 : 8;
+    W = isNarrow ? 7 : 8;
     H = 8;
     document.documentElement.style.setProperty("--cols", String(W));
     document.documentElement.style.setProperty("--rows", String(H));
   }
+
+
+  // ===== FX + Audio (mobile-friendly, instant feedback) =====
+  let audioCtx = null;
+
+  function ensureAudio(){
+    if (audioCtx) return audioCtx;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+    return audioCtx;
+  }
+
+  function playTone(freq=140, dur=0.12, type="sine", gain=0.06){
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(gain, t0+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0+dur+0.02);
+  }
+
+  function playNoise(dur=0.10, gain=0.05){
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i=0;i<bufferSize;i++){
+      // shaped noise: quick attack, quick decay
+      const x = (i/bufferSize);
+      const env = Math.sin(Math.min(1, x)*Math.PI);
+      data[i] = (Math.random()*2-1) * env;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const g = ctx.createGain();
+    g.gain.value = gain;
+    src.connect(g).connect(ctx.destination);
+    src.start();
+    src.stop(ctx.currentTime + dur + 0.02);
+  }
+
+  // Resume audio on first interaction (required by iOS)
+  window.addEventListener("pointerdown", ()=>{ const ctx = ensureAudio(); if(ctx && ctx.state==="suspended") ctx.resume(); }, {once:true});
+
+  function shakeBoard(){
+    if(!elGrid) return;
+    elGrid.classList.remove("shake");
+    // force reflow
+    void elGrid.offsetWidth;
+    elGrid.classList.add("shake");
+    setTimeout(()=>elGrid.classList.remove("shake"), 260);
+  }
+
+  function fxBurstAtCell(x,y, count=18){
+    if(!fxLayer) return;
+    const rect = elGrid.getBoundingClientRect();
+    const cell = cells?.[y]?.[x];
+    if(!cell) return;
+    const cr = cell.getBoundingClientRect();
+    const cx = cr.left - rect.left + cr.width/2;
+    const cy = cr.top  - rect.top  + cr.height/2;
+
+    for(let i=0;i<count;i++){
+      const p = document.createElement("div");
+      p.className = "fx-particle";
+      p.style.left = (cx-5) + "px";
+      p.style.top  = (cy-5) + "px";
+      const ang = Math.random()*Math.PI*2;
+      const dist = 26 + Math.random()*52;
+      const dx = Math.cos(ang)*dist;
+      const dy = Math.sin(ang)*dist;
+      fxLayer.appendChild(p);
+      p.animate([
+        { transform:`translate3d(0,0,0) scale(1)`, opacity:0.95 },
+        { transform:`translate3d(${dx}px,${dy}px,0) scale(0.6)`, opacity:0.0 }
+      ], { duration: 380 + Math.random()*160, easing:"cubic-bezier(.2,.7,.2,1)" })
+      .onfinish = ()=> p.remove();
+    }
+  }
+
+  function fxSweep(){
+    if(!fxLayer) return;
+    const s = document.createElement("div");
+    s.className = "fx-sweep";
+    fxLayer.appendChild(s);
+    const h = fxLayer.getBoundingClientRect().height;
+    s.animate([
+      { transform:`translateY(-20px)`, opacity:0.0 },
+      { transform:`translateY(${h*0.15}px)`, opacity:0.9 },
+      { transform:`translateY(${h*0.95}px)`, opacity:0.0 }
+    ], { duration: 520, easing:"cubic-bezier(.2,.8,.2,1)" }).onfinish = ()=> s.remove();
+  }
+
+  function coreCreateFX(keepId){
+    // sound: short reactor chirp + low hum tick
+    playTone(260, 0.08, "triangle", 0.045);
+    playTone(90, 0.14, "sine", 0.05);
+
+    if(!keepId) return;
+    const [x,y] = keepId.split(",").map(Number);
+    const cell = cells?.[y]?.[x];
+    if(cell){
+      cell.classList.remove("core-pop");
+      void cell.offsetWidth;
+      cell.classList.add("core-pop");
+      setTimeout(()=>cell.classList.remove("core-pop"), 320);
+    }
+    fxBurstAtCell(x,y, 22);
+  }
+
+  function coreDischargeFX(corePos){
+    // sound: sharp zap + hiss
+    playTone(520, 0.06, "square", 0.035);
+    playNoise(0.10, 0.05);
+    playTone(130, 0.12, "sine", 0.04);
+
+    shakeBoard();
+    fxSweep();
+    if(corePos) fxBurstAtCell(corePos.x, corePos.y, 28);
+  }
+
 
   // animation timing (slower so 4-match doesn't just vanish)
   const T_MATCH_HIGHLIGHT = 180;
@@ -1104,6 +1290,7 @@ function bumpObjectivesForTile(tile) {
     });
 
     if (list.length) {
+      coreDischargeFX(corePos);
       await highlightPositions(list, true);
       await sleep(140);
       await clearPositions(list);
@@ -1148,6 +1335,7 @@ function bumpObjectivesForTile(tile) {
       const all = [];
       for (let yy=0; yy<H; yy++) for (let xx=0; xx<W; xx++) if (board[yy][xx]) all.push({x:xx,y:yy});
       if (all.length) {
+        coreDischargeFX(corePos);
         await highlightPositions(all, true);
         await sleep(160);
         await clearPositions(all);
@@ -1263,6 +1451,7 @@ function bumpObjectivesForTile(tile) {
     // Match: create special if needed, then resolve
     const {made, keepId} = createSpecialFromSwap(a,b, probe.groups);
     if (made === "core") showToast("CORE created");
+    if (made === "core") coreCreateFX(keepId);
     else if (made === "h" || made === "v") showToast("STRIPE created");
 
     renderBoard();
