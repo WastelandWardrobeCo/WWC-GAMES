@@ -18,6 +18,12 @@ class HuntScene extends Phaser.Scene {
     this.delilahAttackAnimTimer = 0;
     this.delilahHurtAnimTimer = 0;
     this.currentDelilahTexture = null;
+
+    // Lady sprite animation state.
+    this.ladyWalkFrameTimer = 0;
+    this.ladyAttackAnimTimer = 0;
+    this.ladyHurtAnimTimer = 0;
+    this.currentLadyTexture = null;
   }
 
   preload() {
@@ -33,6 +39,17 @@ class HuntScene extends Phaser.Scene {
       ["delilah_attack_3", "assets/delilah_attack_3.png"],
       ["delilah_hurt", "assets/delilah_hurt.png"],
       ["delilah_dead", "assets/delilah_dead.png"],
+
+      // Optional Lady sprite assets. Missing files fall back to the original
+      // generated placeholder texture named "lady".
+      ["lady_idle", "assets/lady_idle.png"],
+      ["lady_walk_1", "assets/lady_walk_1.png"],
+      ["lady_walk_2", "assets/lady_walk_2.png"],
+      ["lady_attack_1", "assets/lady_attack_1.png"],
+      ["lady_attack_2", "assets/lady_attack_2.png"],
+      ["lady_attack_3", "assets/lady_attack_3.png"],
+      ["lady_hurt", "assets/lady_hurt.png"],
+      ["lady_dead", "assets/lady_dead.png"],
     ].forEach(([key, path]) => {
       this.load.image(key, path);
     });
@@ -165,10 +182,11 @@ class HuntScene extends Phaser.Scene {
     this.applyDelilahSpriteSize();
 
     this.ladyShadow = this.add.image(0, 0, "shadow").setScale(1.22, 0.52).setDepth(2);
-    this.lady = this.physics.add.sprite(this.delilah.x - 80, this.delilah.y + 44, "lady");
+    this.lady = this.physics.add.sprite(this.delilah.x - 80, this.delilah.y + 44, this.getLadyTexture("lady_idle"));
     this.lady.setDepth(5);
     this.lady.setCollideWorldBounds(true);
     this.lady.body.setCircle(35, 5, 5);
+    this.applyLadySpriteSize();
 
     this.physics.add.collider(this.delilah, this.boundaries);
     this.physics.add.collider(this.lady, this.boundaries);
@@ -267,6 +285,7 @@ class HuntScene extends Phaser.Scene {
     }
 
     this.updateDelilahAnimation(delta);
+    this.updateLadyAnimation(delta);
 
     if (this.enemySpawnTimer > 4600 && this.enemies.length < 18 && this.delilahStats.health > 0) {
       this.enemySpawnTimer = 0;
@@ -357,6 +376,67 @@ class HuntScene extends Phaser.Scene {
     }
   }
 
+  getLadyTexture(preferredKey) {
+    return this.textures.exists(preferredKey) ? preferredKey : "lady";
+  }
+
+  applyLadySpriteSize() {
+    if (!this.lady) return;
+
+    // The generated placeholder is a circle. External PNG sprites should read as
+    // Lady: larger than Delilah, long-bodied, and still using the original
+    // collision circle so gameplay remains unchanged.
+    if (this.lady.texture.key === "lady") {
+      this.lady.setScale(1);
+    } else {
+      this.lady.setDisplaySize(138, 86);
+    }
+  }
+
+  setLadyTexture(preferredKey) {
+    const textureKey = this.getLadyTexture(preferredKey);
+    if (this.currentLadyTexture !== textureKey) {
+      this.lady.setTexture(textureKey);
+      this.currentLadyTexture = textureKey;
+      this.applyLadySpriteSize();
+    }
+  }
+
+  updateLadyAnimation(delta) {
+    if (!this.lady) return;
+
+    if (this.delilahStats.health <= 0) {
+      this.setLadyTexture("lady_idle");
+      return;
+    }
+
+    if (this.ladyHurtAnimTimer > 0) {
+      this.ladyHurtAnimTimer = Math.max(0, this.ladyHurtAnimTimer - delta);
+      this.setLadyTexture("lady_hurt");
+      return;
+    }
+
+    if (this.ladyAttackAnimTimer > 0) {
+      this.ladyAttackAnimTimer = Math.max(0, this.ladyAttackAnimTimer - delta);
+      const attackFrames = ["lady_attack_1", "lady_attack_2", "lady_attack_3"];
+      const elapsed = 480 - this.ladyAttackAnimTimer;
+      const frameIndex = Phaser.Math.Clamp(Math.floor(elapsed / 160), 0, attackFrames.length - 1);
+      this.setLadyTexture(attackFrames[frameIndex]);
+      return;
+    }
+
+    const speed = this.lady.body ? this.lady.body.velocity.length() : 0;
+    if (speed > 5) {
+      this.ladyWalkFrameTimer += delta;
+      const walkFrames = ["lady_walk_1", "lady_walk_2"];
+      const frameIndex = Math.floor(this.ladyWalkFrameTimer / 100) % walkFrames.length;
+      this.setLadyTexture(walkFrames[frameIndex]);
+    } else {
+      this.ladyWalkFrameTimer = 0;
+      this.setLadyTexture("lady_idle");
+    }
+  }
+
   updateLady(delta) {
     const targetEnemy = this.findNearestEnemy(this.lady.x, this.lady.y, 250);
     const followDistance = Phaser.Math.Distance.Between(this.lady.x, this.lady.y, this.delilah.x, this.delilah.y);
@@ -441,12 +521,24 @@ class HuntScene extends Phaser.Scene {
       return;
     }
     this.ladyAttackCooldown = 620;
+    this.ladyAttackAnimTimer = 480;
+    this.tweens.add({
+      targets: this.lady,
+      scaleX: this.lady.scaleX * 1.08,
+      scaleY: this.lady.scaleY * 1.08,
+      yoyo: true,
+      duration: 120,
+    });
     this.damageEnemy(enemy, 22 + this.delilahStats.level * 3, "lady");
     this.cameras.main.shake(70, 0.002);
   }
 
   damageEnemy(enemy, amount, source) {
     if (!enemy.active) return;
+
+    if (source === "lady") {
+      this.ladyHurtAnimTimer = 200;
+    }
 
     enemy.health -= amount;
     enemy.setTint(source === "lady" ? 0xd9d2bf : 0xede1a6);
