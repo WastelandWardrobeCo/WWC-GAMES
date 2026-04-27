@@ -18,12 +18,6 @@ class HuntScene extends Phaser.Scene {
     this.delilahAttackAnimTimer = 0;
     this.delilahHurtAnimTimer = 0;
     this.currentDelilahTexture = null;
-
-    // Lady sprite animation state.
-    this.ladyWalkFrameTimer = 0;
-    this.ladyAttackAnimTimer = 0;
-    this.ladyHurtAnimTimer = 0;
-    this.currentLadyTexture = null;
   }
 
   preload() {
@@ -39,17 +33,6 @@ class HuntScene extends Phaser.Scene {
       ["delilah_attack_3", "assets/delilah_attack_3.png"],
       ["delilah_hurt", "assets/delilah_hurt.png"],
       ["delilah_dead", "assets/delilah_dead.png"],
-
-      // Optional Lady sprite assets. Missing files fall back to the original
-      // generated placeholder texture named "lady".
-      ["lady_idle", "assets/lady_idle.png"],
-      ["lady_walk_1", "assets/lady_walk_1.png"],
-      ["lady_walk_2", "assets/lady_walk_2.png"],
-      ["lady_attack_1", "assets/lady_attack_1.png"],
-      ["lady_attack_2", "assets/lady_attack_2.png"],
-      ["lady_attack_3", "assets/lady_attack_3.png"],
-      ["lady_hurt", "assets/lady_hurt.png"],
-      ["lady_dead", "assets/lady_dead.png"],
     ].forEach(([key, path]) => {
       this.load.image(key, path);
     });
@@ -67,6 +50,7 @@ class HuntScene extends Phaser.Scene {
     this.physics.world.setBounds(40, 40, WORLD_WIDTH - 80, WORLD_HEIGHT - 80);
 
     this.spawnEnemyWave(10);
+    this.createMobileControls();
   }
 
   createTextures() {
@@ -182,16 +166,140 @@ class HuntScene extends Phaser.Scene {
     this.applyDelilahSpriteSize();
 
     this.ladyShadow = this.add.image(0, 0, "shadow").setScale(1.22, 0.52).setDepth(2);
-    this.lady = this.physics.add.sprite(this.delilah.x - 80, this.delilah.y + 44, this.getLadyTexture("lady_idle"));
+    this.lady = this.physics.add.sprite(this.delilah.x - 80, this.delilah.y + 44, "lady");
     this.lady.setDepth(5);
     this.lady.setCollideWorldBounds(true);
     this.lady.body.setCircle(35, 5, 5);
-    this.applyLadySpriteSize();
 
     this.physics.add.collider(this.delilah, this.boundaries);
     this.physics.add.collider(this.lady, this.boundaries);
     this.physics.add.collider(this.delilah, this.lady);
   }
+
+
+  createMobileControls() {
+    this.isMobile = this.sys.game.device.os.android || this.sys.game.device.os.iOS || this.scale.width < 900;
+
+    if (!this.isMobile) return;
+
+    // Prevent mobile page gestures from stealing game input.
+    this.input.addPointer(2);
+    this.game.canvas.style.touchAction = "none";
+    document.body.style.touchAction = "none";
+    document.body.style.overflow = "hidden";
+
+    this.joyBaseX = 120;
+    this.joyBaseY = GAME_HEIGHT - 120;
+    this.joyRadius = 60;
+
+    this.joyBase = this.add.circle(this.joyBaseX, this.joyBaseY, this.joyRadius, 0x000000, 0.32)
+      .setScrollFactor(0)
+      .setDepth(100);
+
+    this.joyThumb = this.add.circle(this.joyBaseX, this.joyBaseY, 30, 0xffffff, 0.45)
+      .setScrollFactor(0)
+      .setDepth(101);
+
+    this.joyActive = false;
+    this.joyPointerId = null;
+    this.joyVector = new Phaser.Math.Vector2(0, 0);
+
+    this.attackButton = this.add.circle(GAME_WIDTH - 120, GAME_HEIGHT - 120, 55, 0x7a1e1e, 0.58)
+      .setScrollFactor(0)
+      .setDepth(100)
+      .setInteractive();
+
+    this.attackButtonRing = this.add.circle(GAME_WIDTH - 120, GAME_HEIGHT - 120, 68, 0x000000, 0)
+      .setStrokeStyle(3, 0xd8c59d, 0.55)
+      .setScrollFactor(0)
+      .setDepth(99);
+
+    this.attackButtonLabel = this.add.text(GAME_WIDTH - 120, GAME_HEIGHT - 120, "ATTACK", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#efe1bd",
+      stroke: "#000000",
+      strokeThickness: 4,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(102);
+
+    this.attackButton.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault?.();
+      if (this.attackCooldown > 0 || this.delilahStats.health <= 0) return;
+
+      const nearest = this.findNearestEnemy(this.delilah.x, this.delilah.y, 520);
+      if (nearest) {
+        this.performSpearAttack(nearest.x, nearest.y);
+      } else {
+        const facingDirection = this.delilah.flipX ? -1 : 1;
+        this.performSpearAttack(this.delilah.x + facingDirection * 120, this.delilah.y);
+      }
+    });
+
+    this.input.on("pointerdown", (pointer) => {
+      pointer.event?.preventDefault?.();
+      if (pointer.x < GAME_WIDTH / 2 && this.joyPointerId === null) {
+        this.joyActive = true;
+        this.joyPointerId = pointer.id;
+        this.updateJoystick(pointer);
+      }
+    });
+
+    this.input.on("pointermove", (pointer) => {
+      pointer.event?.preventDefault?.();
+      if (this.joyActive && pointer.id === this.joyPointerId) {
+        this.updateJoystick(pointer);
+      }
+    });
+
+    this.input.on("pointerup", (pointer) => {
+      pointer.event?.preventDefault?.();
+      if (pointer.id === this.joyPointerId) {
+        this.resetJoystick();
+      }
+    });
+
+    this.input.on("pointerupoutside", (pointer) => {
+      if (pointer.id === this.joyPointerId) {
+        this.resetJoystick();
+      }
+    });
+  }
+
+  updateJoystick(pointer) {
+    if (!this.joyBase || !this.joyThumb) return;
+
+    const dx = pointer.x - this.joyBaseX;
+    const dy = pointer.y - this.joyBaseY;
+    const rawDistance = Math.sqrt(dx * dx + dy * dy);
+
+    if (rawDistance < 8) {
+      this.joyThumb.setPosition(this.joyBaseX, this.joyBaseY);
+      this.joyVector.set(0, 0);
+      return;
+    }
+
+    const distance = Math.min(this.joyRadius, rawDistance);
+    const angle = Math.atan2(dy, dx);
+
+    this.joyThumb.setPosition(
+      this.joyBaseX + Math.cos(angle) * distance,
+      this.joyBaseY + Math.sin(angle) * distance
+    );
+
+    this.joyVector.set(Math.cos(angle), Math.sin(angle)).scale(distance / this.joyRadius);
+  }
+
+  resetJoystick() {
+    this.joyActive = false;
+    this.joyPointerId = null;
+    if (this.joyThumb) {
+      this.joyThumb.setPosition(this.joyBaseX, this.joyBaseY);
+    }
+    if (this.joyVector) {
+      this.joyVector.set(0, 0);
+    }
+  }
+
 
   createInput() {
     this.keys = this.input.keyboard.addKeys({
@@ -285,7 +393,6 @@ class HuntScene extends Phaser.Scene {
     }
 
     this.updateDelilahAnimation(delta);
-    this.updateLadyAnimation(delta);
 
     if (this.enemySpawnTimer > 4600 && this.enemies.length < 18 && this.delilahStats.health > 0) {
       this.enemySpawnTimer = 0;
@@ -298,16 +405,26 @@ class HuntScene extends Phaser.Scene {
 
   updateDelilah() {
     const velocity = new Phaser.Math.Vector2(0, 0);
-    if (this.keys.left.isDown) velocity.x -= 1;
-    if (this.keys.right.isDown) velocity.x += 1;
-    if (this.keys.up.isDown) velocity.y -= 1;
-    if (this.keys.down.isDown) velocity.y += 1;
 
-    velocity.normalize().scale(220 + this.delilahStats.level * 6);
+    if (this.isMobile && this.joyActive && this.joyVector) {
+      velocity.copy(this.joyVector);
+    } else {
+      if (this.keys.left.isDown) velocity.x -= 1;
+      if (this.keys.right.isDown) velocity.x += 1;
+      if (this.keys.up.isDown) velocity.y -= 1;
+      if (this.keys.down.isDown) velocity.y += 1;
+    }
+
+    if (velocity.lengthSq() > 1) {
+      velocity.normalize();
+    }
+    velocity.scale(220 + this.delilahStats.level * 6);
     this.delilah.setVelocity(velocity.x, velocity.y);
 
     const pointer = this.input.activePointer;
-    if (pointer) {
+    if (this.isMobile && velocity.x !== 0) {
+      this.delilah.setFlipX(velocity.x < 0);
+    } else if (pointer) {
       const world = pointer.positionToCamera(this.cameras.main);
       this.delilah.setFlipX(world.x < this.delilah.x);
     } else if (velocity.x !== 0) {
@@ -373,67 +490,6 @@ class HuntScene extends Phaser.Scene {
     } else {
       this.delilahWalkFrameTimer = 0;
       this.setDelilahTexture("delilah_idle");
-    }
-  }
-
-  getLadyTexture(preferredKey) {
-    return this.textures.exists(preferredKey) ? preferredKey : "lady";
-  }
-
-  applyLadySpriteSize() {
-    if (!this.lady) return;
-
-    // The generated placeholder is a circle. External PNG sprites should read as
-    // Lady: larger than Delilah, long-bodied, and still using the original
-    // collision circle so gameplay remains unchanged.
-    if (this.lady.texture.key === "lady") {
-      this.lady.setScale(1);
-    } else {
-      this.lady.setDisplaySize(138, 86);
-    }
-  }
-
-  setLadyTexture(preferredKey) {
-    const textureKey = this.getLadyTexture(preferredKey);
-    if (this.currentLadyTexture !== textureKey) {
-      this.lady.setTexture(textureKey);
-      this.currentLadyTexture = textureKey;
-      this.applyLadySpriteSize();
-    }
-  }
-
-  updateLadyAnimation(delta) {
-    if (!this.lady) return;
-
-    if (this.delilahStats.health <= 0) {
-      this.setLadyTexture("lady_idle");
-      return;
-    }
-
-    if (this.ladyHurtAnimTimer > 0) {
-      this.ladyHurtAnimTimer = Math.max(0, this.ladyHurtAnimTimer - delta);
-      this.setLadyTexture("lady_hurt");
-      return;
-    }
-
-    if (this.ladyAttackAnimTimer > 0) {
-      this.ladyAttackAnimTimer = Math.max(0, this.ladyAttackAnimTimer - delta);
-      const attackFrames = ["lady_attack_1", "lady_attack_2", "lady_attack_3"];
-      const elapsed = 360 - this.ladyAttackAnimTimer;
-      const frameIndex = Phaser.Math.Clamp(Math.floor(elapsed / 120), 0, attackFrames.length - 1);
-      this.setLadyTexture(attackFrames[frameIndex]);
-      return;
-    }
-
-    const speed = this.lady.body ? this.lady.body.velocity.length() : 0;
-    if (speed > 5) {
-      this.ladyWalkFrameTimer += delta;
-      const walkFrames = ["lady_walk_1", "lady_walk_2"];
-      const frameIndex = Math.floor(this.ladyWalkFrameTimer / 160) % walkFrames.length;
-      this.setLadyTexture(walkFrames[frameIndex]);
-    } else {
-      this.ladyWalkFrameTimer = 0;
-      this.setLadyTexture("lady_idle");
     }
   }
 
@@ -521,7 +577,6 @@ class HuntScene extends Phaser.Scene {
       return;
     }
     this.ladyAttackCooldown = 620;
-    this.ladyAttackAnimTimer = 360;
     this.damageEnemy(enemy, 22 + this.delilahStats.level * 3, "lady");
     this.cameras.main.shake(70, 0.002);
   }
