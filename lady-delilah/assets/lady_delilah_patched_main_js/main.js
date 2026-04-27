@@ -419,8 +419,8 @@ class HuntScene extends Phaser.Scene {
     if (this.ladyAttackAnimTimer > 0) {
       this.ladyAttackAnimTimer = Math.max(0, this.ladyAttackAnimTimer - delta);
       const attackFrames = ["lady_attack_1", "lady_attack_2", "lady_attack_3"];
-      const elapsed = 480 - this.ladyAttackAnimTimer;
-      const frameIndex = Phaser.Math.Clamp(Math.floor(elapsed / 160), 0, attackFrames.length - 1);
+      const elapsed = 360 - this.ladyAttackAnimTimer;
+      const frameIndex = Phaser.Math.Clamp(Math.floor(elapsed / 120), 0, attackFrames.length - 1);
       this.setLadyTexture(attackFrames[frameIndex]);
       return;
     }
@@ -429,7 +429,7 @@ class HuntScene extends Phaser.Scene {
     if (speed > 5) {
       this.ladyWalkFrameTimer += delta;
       const walkFrames = ["lady_walk_1", "lady_walk_2"];
-      const frameIndex = Math.floor(this.ladyWalkFrameTimer / 100) % walkFrames.length;
+      const frameIndex = Math.floor(this.ladyWalkFrameTimer / 160) % walkFrames.length;
       this.setLadyTexture(walkFrames[frameIndex]);
     } else {
       this.ladyWalkFrameTimer = 0;
@@ -521,24 +521,13 @@ class HuntScene extends Phaser.Scene {
       return;
     }
     this.ladyAttackCooldown = 620;
-    this.ladyAttackAnimTimer = 480;
-    this.tweens.add({
-      targets: this.lady,
-      scaleX: this.lady.scaleX * 1.08,
-      scaleY: this.lady.scaleY * 1.08,
-      yoyo: true,
-      duration: 120,
-    });
+    this.ladyAttackAnimTimer = 360;
     this.damageEnemy(enemy, 22 + this.delilahStats.level * 3, "lady");
     this.cameras.main.shake(70, 0.002);
   }
 
   damageEnemy(enemy, amount, source) {
     if (!enemy.active) return;
-
-    if (source === "lady") {
-      this.ladyHurtAnimTimer = 200;
-    }
 
     enemy.health -= amount;
     enemy.setTint(source === "lady" ? 0xd9d2bf : 0xede1a6);
