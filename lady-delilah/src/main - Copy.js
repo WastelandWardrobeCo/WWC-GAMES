@@ -147,6 +147,12 @@ class HuntScene extends Phaser.Scene {
     this.lady.setCollideWorldBounds(true);
     this.lady.body.setCircle(35, 5, 5);
 
+    this.delilah = this.physics.add.sprite(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, "delilah");
+this.delilah.setScale(1.0); // 👈 ADD THIS LINE
+this.delilah.setDepth(6);
+this.delilah.setCollideWorldBounds(true);
+this.delilah.body.setSize(28, 36).setOffset(6, 22);
+
     this.physics.add.collider(this.delilah, this.boundaries);
     this.physics.add.collider(this.lady, this.boundaries);
     this.physics.add.collider(this.delilah, this.lady);
