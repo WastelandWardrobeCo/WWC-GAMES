@@ -94,10 +94,13 @@
   }
   @keyframes drift {
     0% { transform: translateY(0); opacity:.55; }
-    
-  @keyframes bubbles{0%{transform:translateY(18px);opacity:.15}35%{opacity:.55}100%{transform:translateY(-22px);opacity:.15}}
-50% { opacity:.9; }
+    50% { opacity:.9; }
     100% { transform: translateY(40px); opacity:.55; }
+  }
+  @keyframes bubbles {
+    0% { transform: translateY(18px); opacity:.15; }
+    35% { opacity:.55; }
+    100% { transform: translateY(-22px); opacity:.15; }
   }
 
   .center {
@@ -355,6 +358,13 @@
   .tile.clearing {
     animation: fade .18s ease-out forwards;
   }
+  .tile.hintPulse {
+    animation: hintPulse .82s ease-in-out 2;
+  }
+  @keyframes hintPulse {
+    0%,100% { transform: scale(1); box-shadow: inset 0 0 0 1px rgba(0,0,0,.35); }
+    45% { transform: scale(1.08); box-shadow: 0 0 0 3px rgba(255,184,76,.4), 0 16px 30px rgba(0,0,0,.45); }
+  }
   @keyframes fade {
     0% { opacity:1; transform: scale(1); }
     100% { opacity:0; transform: scale(.7); }
@@ -452,6 +462,7 @@
           <div class="chip">LEVEL <strong id="uiLevel">1</strong></div>
           <div class="chip">MOVES <strong id="uiMoves">0</strong></div>
           <div class="chip">SCORE <strong id="uiScore">0</strong></div>
+          <div class="chip">CHARGE <strong id="uiCharge">0%</strong></div>
           <div class="chip">UNLOCKED <strong id="uiUnlocked">1</strong></div>
           <div class="chip">DAILY BEST <strong id="uiBest">0</strong></div>
         </div>
@@ -483,7 +494,7 @@
       <div class="gridWrap">
         <div id="grid" class="grid" aria-label="game board"></div>
         <div id="fxLayer" aria-hidden="true"></div>
-        <div class="hint">Match 3 clears. Match 4 creates a STRIPE. Match 5 creates a CORE. Swap a CORE to discharge a type.</div>
+        <div class="hint">Match 3 clears. Match 4 creates a STRIPE. Match 5 creates a CORE. Big cascades fill CHARGE for a free CORE and bonus move.</div>
       </div>
     </div>
 
@@ -535,6 +546,7 @@
   const uiLevel = document.getElementById("uiLevel");
   const uiMoves = document.getElementById("uiMoves");
   const uiScore = document.getElementById("uiScore");
+  const uiCharge = document.getElementById("uiCharge");
   const uiUnlocked = document.getElementById("uiUnlocked");
   const uiBest = document.getElementById("uiBest");
 
@@ -715,6 +727,8 @@
   let unlocked = 1;
   let movesLeft = 0;
   let score = 0;
+  let charge = 0;
+  let cascadeStep = 0;
 
   // objectives
   let goalA = null; // {type:int, need:int, got:int}
@@ -737,6 +751,37 @@
     toast.textContent = msg;
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 1400);
+  }
+
+  function addCharge(amount) {
+    charge = Math.min(100, charge + Math.max(0, amount));
+    updateUI();
+  }
+
+  function randomFilledCell(rng=Math.random) {
+    const filled = [];
+    for (let y=0; y<H; y++) {
+      for (let x=0; x<W; x++) {
+        const tile = board[y][x];
+        if (tile && tile.special !== "core") filled.push({x,y});
+      }
+    }
+    if (!filled.length) return null;
+    return filled[Math.floor(rng() * filled.length)];
+  }
+
+  function dropBonusCore() {
+    const rng = mulberry32(5150 + level*41 + score + movesLeft);
+    const pos = randomFilledCell(rng);
+    if (!pos) return false;
+    board[pos.y][pos.x].special = "core";
+    charge = 0;
+    movesLeft += 1;
+    renderBoard();
+    coreCreateFX(`${pos.x},${pos.y}`);
+    showToast("CHARGE bonus: free CORE and +1 move");
+    updateUI();
+    return true;
   }
 
   // ===== Deterministic PRNG per level =====
@@ -947,7 +992,7 @@
     return {toClear, groups};
   }
 
-  function findAnyMove() {
+  function findFirstMove() {
     for (let y=0; y<H; y++) {
       for (let x=0; x<W; x++) {
         const a = {x,y};
@@ -957,17 +1002,35 @@
           swap(a,b);
           const m = findMatches().toClear.size>0;
           swap(a,b);
-          if (m) return true;
+          if (m) return {a,b};
         }
       }
     }
-    return false;
+    return null;
+  }
+
+  function findAnyMove() {
+    return !!findFirstMove();
+  }
+
+  function pulsePossibleMove() {
+    const move = findFirstMove();
+    if (!move) return;
+    for (const p of [move.a, move.b]) {
+      const cell = cells?.[p.y]?.[p.x];
+      if (!cell) continue;
+      cell.classList.remove("hintPulse");
+      void cell.offsetWidth;
+      cell.classList.add("hintPulse");
+      setTimeout(()=>cell.classList.remove("hintPulse"), 1700);
+    }
   }
 
   function updateUI() {
     uiLevel.textContent = String(level);
     uiMoves.textContent = String(movesLeft);
     uiScore.textContent = String(score);
+    uiCharge.textContent = `${Math.round(charge)}%`;
     uiUnlocked.textContent = String(unlocked);
     uiBest.textContent = String(getDailyBest());
 
@@ -1028,6 +1091,8 @@
   function setObjectivesFromSpec(spec) {
     movesLeft = spec.moves;
     score = 0;
+    charge = 0;
+    cascadeStep = 0;
     goalA = { type: spec.goalA.type, need: spec.goalA.need, got: 0 };
     goalB = { type: spec.goalB.type, need: spec.goalB.need, got: 0 };
     goalScore = { need: spec.scoreNeed, got: 0 };
@@ -1147,6 +1212,7 @@ function bumpObjectivesForTile(tile) {
   async function clearPositions(list) {
       // Defensive: ignore out-of-bounds positions (can happen with special expansions)
       list = (list||[]).filter(p => p && p.x>=0 && p.x<W && p.y>=0 && p.y<H);
+    const clearCount = list.length;
     for (const p of list) {
       const tile = board[p.y][p.x];
       if (!tile) continue;
@@ -1160,12 +1226,15 @@ function bumpObjectivesForTile(tile) {
       board[p.y][p.x] = null;
       cells[p.y][p.x].classList.remove("clearing");
     }
-    const gained = list.length * 10;
+    const multiplier = 1 + Math.min(4, cascadeStep) * 0.5;
+    const gained = Math.round(clearCount * 10 * multiplier);
     score += gained;
     goalScore.got = score;
+    addCharge(clearCount * 3 + Math.max(0, cascadeStep - 1) * 8);
     if (score > getDailyBest()) setDailyBest(score);
     renderBoard();
     updateUI();
+    if (charge >= 100) dropBonusCore();
   }
 
   async function fallAndRefill() {
@@ -1194,15 +1263,17 @@ function bumpObjectivesForTile(tile) {
     await sleep(T_FALL);
   }
 
-    async function resolveBoard(keepId=null, seedClear=null) {
+  async function resolveBoard(keepId=null, seedClear=null) {
     // Clears all matches, applies specials, collapses, refills, and repeats until stable.
     // keepId is used only for the *first* clear pass to preserve the special-creation tile.
     let keepOnce = keepId;
+    cascadeStep = 0;
 
     while (true) {
       const toClear = seedClear ? new Set(seedClear) : findMatches().toClear;
       seedClear = null;
       if (toClear.size === 0) break;
+      cascadeStep++;
 
       // Never clear CORE tiles as part of normal match resolution.
       // (They should only be removed when they discharge.)
@@ -1250,11 +1321,13 @@ function bumpObjectivesForTile(tile) {
 
       keepOnce = null;
     }
+    cascadeStep = 0;
+    if (movesLeft > 0) await ensurePlayableBoard();
   }
 
 
   function shuffleBoard() {
-    const rng = mulberry32(777 + level*333);
+    const rng = mulberry32(Date.now() % 100000 + level*333 + score);
     const flat = [];
     for (let y=0;y<H;y++) for (let x=0;x<W;x++) flat.push(board[y][x]);
     for (let i=flat.length-1;i>0;i--) {
@@ -1263,6 +1336,22 @@ function bumpObjectivesForTile(tile) {
     }
     let idx=0;
     for (let y=0;y<H;y++) for (let x=0;x<W;x++) board[y][x] = flat[idx++];
+  }
+
+  async function ensurePlayableBoard() {
+    if (findAnyMove()) return;
+    showToast("No moves. Board reshuffled.");
+    for (let tries=0; tries<12 && !findAnyMove(); tries++) {
+      shuffleBoard();
+    }
+    renderBoard();
+    shakeBoard();
+    await sleep(180);
+    if (!findAnyMove()) {
+      const spec = levelSpec(level);
+      generateBoard(spec.typeCount, 4242 + level*17 + score + movesLeft);
+      renderBoard();
+    }
   }
 
   async function doStripeSwap(a,b) {
@@ -1300,7 +1389,9 @@ function bumpObjectivesForTile(tile) {
     for (const o of stripeOrigins) coreDischargeFX(o);
     await highlightPositions(list, true);
       await sleep(140);
+      cascadeStep = 1;
       await clearPositions(list);
+      cascadeStep = 0;
       await fallAndRefill();
       await resolveBoard(null);
     }
@@ -1345,7 +1436,9 @@ function bumpObjectivesForTile(tile) {
         coreDischargeFX(corePos);
         await highlightPositions(all, true);
         await sleep(160);
+        cascadeStep = 1;
         await clearPositions(all);
+        cascadeStep = 0;
         await fallAndRefill();
         await resolveBoard(null);
       }
@@ -1369,7 +1462,9 @@ function bumpObjectivesForTile(tile) {
     if (list.length) {
       await highlightPositions(list, true);
       await sleep(180);
+      cascadeStep = 1;
       await clearPositions(list);
+      cascadeStep = 0;
       await fallAndRefill();
       await resolveBoard(null);
     }
@@ -1448,9 +1543,9 @@ function bumpObjectivesForTile(tile) {
       swap(a,b);
       renderBoard();
       await sleep(60);
-      movesLeft = Math.max(0, movesLeft - 1);
+      showToast("Try a matching swap.");
+      pulsePossibleMove();
       updateUI();
-      await checkEnd();
       lock = false;
       return;
     }
@@ -1530,7 +1625,7 @@ function bumpObjectivesForTile(tile) {
     if (W !== prev) {
       buildDOMGrid();
       startLevel(level, true);
-      showToast(`Board set to ${W}×${H} for this screen`);
+      showToast(`Board set to ${W}x${H} for this screen`);
     }
     _lastCols = W;
   });
