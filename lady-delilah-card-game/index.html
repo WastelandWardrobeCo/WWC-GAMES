@@ -1,536 +1,289 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Lady & Delilah: a dark fantasy hunt-record from Systema Obscura. A hunter. A dire wolf. Five arrows. One knife. No wasted motion." />
-  <title>Lady & Delilah | The Hunt Record</title>
-  <style>
-    :root {
-      --bg: #020202;
-      --bg-2: #090604;
-      --panel: rgba(255,255,255,0.045);
-      --panel-2: rgba(255,255,255,0.027);
-      --line: rgba(255,255,255,0.12);
-      --soft-line: rgba(255,255,255,0.065);
-      --text: #eee7de;
-      --muted: #b5aa9d;
-      --dim: #776f66;
-      --accent: #d26a33;
-      --accent-2: #9f2f1e;
-      --danger: #6f1710;
-      --shadow: 0 24px 90px rgba(0,0,0,.72);
-      --radius: 28px;
-      --radius-lg: 42px;
-      --max: 1140px;
-      --serif: Georgia, "Times New Roman", serif;
-      --sans: Arial, Helvetica, sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-
-    body {
-      margin: 0;
-      color: var(--text);
-      font-family: var(--serif);
-      line-height: 1.6;
-      background:
-        radial-gradient(circle at 16% 0%, rgba(111,23,16,0.36), transparent 24%),
-        radial-gradient(circle at 80% 16%, rgba(210,106,51,0.095), transparent 22%),
-        radial-gradient(circle at 50% 54%, rgba(0,0,0,0.96), transparent 42%),
-        linear-gradient(180deg, #050302 0%, #020202 66%, #000 100%);
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      opacity: .075;
-      background-image:
-        linear-gradient(rgba(255,255,255,.32) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
-      background-size: 72px 72px;
-      mask-image: radial-gradient(circle at 50% 6%, black, transparent 72%);
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      opacity: .12;
-      background:
-        linear-gradient(180deg, transparent, rgba(0,0,0,.56)),
-        repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0, rgba(255,255,255,.035) 1px, transparent 1px, transparent 5px);
-      mix-blend-mode: soft-light;
-    }
-
-    img { display: block; max-width: 100%; -webkit-user-drag: none; user-select: none; }
-    a { color: inherit; text-decoration: none; }
-
-    .wrap { position: relative; z-index: 1; width: min(calc(100% - 32px), var(--max)); margin: 0 auto; }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(16px);
-      background: rgba(2,2,2,0.84);
-      border-bottom: 1px solid var(--soft-line);
-    }
-
-    .topbar-inner {
-      width: min(calc(100% - 32px), var(--max));
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-      padding: 15px 0;
-    }
-
-    .brand {
-      font-family: var(--sans);
-      font-size: .88rem;
-      letter-spacing: .34em;
-      text-transform: uppercase;
-      color: #f6eee4;
-      white-space: nowrap;
-    }
-
-    .nav { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end; font-family: var(--sans); font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: #bbb2a7; }
-    .nav a { padding: 9px 10px; border-radius: 999px; }
-    .nav a:hover, .nav a:focus-visible, .return-link:hover, .return-link:focus-visible { color: #fff; }
-    .nav .book-link { padding: 10px 15px; border: 1px solid rgba(210,106,51,.36); background: linear-gradient(180deg, rgba(210,106,51,.20), rgba(111,23,16,.12)); color: #f7f2ea; box-shadow: 0 0 28px rgba(210,106,51,.12); }
-
-    .hero { min-height: calc(100vh - 72px); display: grid; align-items: center; padding: 44px 0 34px; }
-    .hero-grid { display: grid; grid-template-columns: minmax(260px, 410px) 1fr; gap: 46px; align-items: center; }
-
-    .hero-frame {
-      position: relative;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: var(--shadow), 0 0 80px rgba(111,23,16,.18);
-      background: #f7f4ee;
-      isolation: isolate;
-      aspect-ratio: 1 / 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 22px;
-      transform: rotate(-.35deg);
-    }
-
-    .hero-frame::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 18%, rgba(210,106,51,.12), transparent 30%); z-index: 2; pointer-events: none; mix-blend-mode: multiply; }
-    .hero-frame::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.05), inset 0 0 62px rgba(0,0,0,.16); z-index: 3; pointer-events: none; }
-    .hero-frame img { width: 100%; height: 100%; object-fit: contain; filter: contrast(1.08) saturate(.95); position: relative; z-index: 1; }
-
-    .eyebrow, .section-label, .card-kicker { margin: 0 0 12px; font-family: var(--sans); font-size: .74rem; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); }
-    h1 { margin: 0 0 14px; font-size: clamp(2.8rem, 6.2vw, 6.8rem); line-height: .88; font-weight: 500; color: #f8f0e6; letter-spacing: -.045em; }
-    .dek { margin: 0 0 18px; max-width: 46ch; color: #ded1c3; font-size: clamp(1.08rem, 1.45vw, 1.35rem); }
-    .quote { margin: 0 0 18px; padding-left: 18px; border-left: 1px solid rgba(210,106,51,.44); color: #f6eadc; max-width: 46ch; font-size: 1.08rem; }
-    .whisper { margin: 0 0 24px; color: #a99d91; font-family: var(--sans); font-size: .78rem; letter-spacing: .13em; text-transform: uppercase; }
-    .hero-note { margin: 0 0 24px; color: #f0e3d3; font-size: .9rem; font-family: var(--sans); letter-spacing: .12em; text-transform: uppercase; }
-
-    .button-row { display: flex; gap: 14px; flex-wrap: wrap; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 20px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.035); color: #f7f2ea; font-family: var(--sans); font-size: .78rem; letter-spacing: .17em; text-transform: uppercase; transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
-    .btn:hover, .btn:focus-visible { transform: translateY(-2px); border-color: rgba(255,255,255,0.30); background: rgba(255,255,255,0.07); box-shadow: 0 16px 34px rgba(0,0,0,.36); }
-    .btn.primary { background: linear-gradient(180deg, rgba(210,106,51,.24), rgba(111,23,16,.14)); border-color: rgba(210,106,51,.42); box-shadow: 0 0 34px rgba(210,106,51,.13); }
-
-    .sigils { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 28px; max-width: 640px; }
-    .sigil { border: 1px solid var(--soft-line); border-radius: 18px; padding: 14px 14px 13px; background: rgba(255,255,255,.025); }
-    .sigil strong { display: block; font-family: var(--sans); font-size: .68rem; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
-    .sigil span { display: block; color: #f6eee4; font-size: 1rem; }
-
-    .section { padding: 26px 0; }
-    .panel { position: relative; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(180deg, rgba(255,255,255,.042), rgba(255,255,255,.012)); box-shadow: var(--shadow); overflow: hidden; isolation: isolate; }
-    .panel::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 26% 0%, rgba(210,106,51,.08), transparent 25%), linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.32)); z-index: 0; pointer-events: none; }
-    .panel::after { content: ""; position: absolute; inset: 0; border-radius: inherit; border: 1px solid rgba(255,255,255,.035); pointer-events: none; z-index: 3; }
-    .panel-inner { position: relative; z-index: 2; padding: 36px 30px 32px; }
-    .section-head { text-align: center; margin-bottom: 34px; }
-    .section-title { margin: 0 0 8px; font-size: clamp(1.7rem, 2.5vw, 2.7rem); line-height: 1.02; font-weight: 500; color: #f7f2ea; }
-    .section-copy, .card-copy { margin: 0; color: #d4cbc0; max-width: 70ch; }
-    .section-head .section-copy { margin: 0 auto; max-width: 66ch; }
-
-    .field-board { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .fragment { position: relative; min-height: 142px; padding: 20px 20px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.11); border-left: 2px solid rgba(210,106,51,.55); background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(0,0,0,.24)); box-shadow: 0 18px 46px rgba(0,0,0,.38); }
-    .fragment::before { content: attr(data-file); display: block; margin-bottom: 14px; font-family: var(--sans); font-size: .64rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dim); }
-    .fragment p { margin: 0; font-size: clamp(1.05rem, 1.55vw, 1.28rem); line-height: 1.35; color: #f3eadf; }
-    .fragment p + p { margin-top: 6px; color: #bdb0a3; }
-
-    .lore-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-    .lore-card { border: 1px solid var(--soft-line); border-radius: 22px; padding: 22px; background: var(--panel-2); }
-    .lore-card h3 { margin: 0 0 10px; color: #f5eee4; font-size: 1.25rem; line-height: 1.1; font-weight: 500; }
-    .lore-card p { margin: 0; color: #cfc4b7; }
-
-    .book-grid { display: grid; grid-template-columns: repeat(3, minmax(210px, 1fr)); gap: 26px; align-items: start; }
-    .book-card { text-align: center; }
-    .book-card a.cover-link, .book-card .cover-static { display: block; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.13); box-shadow: 0 22px 64px rgba(0,0,0,0.66); background: #090909; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
-    .book-card a.cover-link:hover, .book-card a.cover-link:focus-visible { transform: translateY(-4px); border-color: rgba(210,106,51,.50); box-shadow: 0 26px 78px rgba(0,0,0,0.72), 0 0 38px rgba(210,106,51,.12); }
-    .book-card img { width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; }
-    .book-title { margin: 16px 0 5px; font-size: 1.35rem; line-height: 1.06; font-weight: 600; color: #f7f2ea; }
-    .book-meta { margin: 0 0 8px; font-family: var(--sans); font-size: .70rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
-    .book-blurb { margin: 0 auto 14px; max-width: 31ch; color: #cfc6ba; font-size: .96rem; }
-
-    .signal-strip { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; align-items: stretch; }
-    .signal-card { border-radius: 24px; border: 1px solid var(--soft-line); background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.24)); padding: 26px; }
-    .signal-card h3 { margin: 0 0 8px; font-size: 1.6rem; line-height: 1.05; font-weight: 500; }
-    .signal-card p { margin: 0 0 20px; color: #cabfb2; }
-
-    .footer { padding: 34px 0 60px; color: #9f978c; text-align: center; font-size: .95rem; }
-    .return-link { display: inline-flex; align-items: center; gap: 10px; font-family: var(--sans); font-size: .76rem; letter-spacing: .18em; text-transform: uppercase; color: #f2ece3; margin-top: 14px; }
-
-    .ku-banner {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0 0 18px;
-      padding: 10px 15px;
-      border-radius: 999px;
-      border: 1px solid rgba(210,106,51,.46);
-      background: linear-gradient(180deg, rgba(210,106,51,.18), rgba(111,23,16,.10));
-      color: #ffd3b8;
-      font-family: var(--sans);
-      font-size: .74rem;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      box-shadow: 0 0 28px rgba(210,106,51,.10);
-    }
-
-    .entry-card {
-      margin-top: 24px;
-      padding: 20px;
-      border: 1px solid rgba(210,106,51,.24);
-      border-radius: var(--radius);
-      background:
-        radial-gradient(circle at 12% 0%, rgba(210,106,51,.13), transparent 32%),
-        linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.18));
-    }
-
-    .entry-card h3 {
-      margin: 0 0 8px;
-      font-size: 1.35rem;
-      line-height: 1.05;
-      color: #f7f2ea;
-    }
-
-    .entry-card p {
-      margin: 0 0 16px;
-      color: #d4cbc0;
-    }
-
-    .entry-grid {
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 26px;
-      align-items: center;
-    }
-
-    .entry-aside {
-      padding: 18px;
-      border-left: 1px solid rgba(210,106,51,.28);
-      color: #d6cabe;
-      font-size: .98rem;
-    }
-
-    .entry-aside strong {
-      display: block;
-      color: #f7f2ea;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-
-    @media (max-width: 980px) {
-      .hero { min-height: auto; }
-      .hero-grid, .signal-strip, .entry-grid { grid-template-columns: 1fr; }
-      .hero-frame { max-width: 430px; margin: 0 auto; }
-      .book-grid, .lore-grid { grid-template-columns: 1fr; }
-      .book-card { max-width: 340px; margin: 0 auto; }
-    }
-
-
-
-    .btn.primary {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn.primary::after {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      border: 1px solid rgba(210,106,51,.38);
-      opacity: .45;
-      animation: signalPulse 3.2s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    @keyframes signalPulse {
-      0%, 100% { opacity: .22; box-shadow: 0 0 0 rgba(210,106,51,0); }
-      50% { opacity: .75; box-shadow: 0 0 28px rgba(210,106,51,.20); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      html { scroll-behavior: auto; }
-      .btn, .book-card a.cover-link { transition: none; }
-      .btn.primary::after { animation: none; }
-    }
-
-    @media (max-width: 720px) {
-      .field-board, .sigils { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 640px) {
-      .topbar-inner { flex-direction: column; align-items: flex-start; }
-      .nav { justify-content: flex-start; gap: 8px; }
-      .hero { padding-top: 24px; }
-      .panel-inner { padding: 25px 20px 27px; }
-      .button-row { flex-direction: column; }
-      .btn { width: 100%; }
-      .brand { letter-spacing: .26em; }
-    }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lady & Delilah: Hunt Board</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="index.html">Lady &amp; Delilah</a>
-      <nav class="nav" aria-label="Primary navigation">
-        <a href="#field-notes">Field Notes</a>
-        <a href="chapter1.html">Get a Taste</a>
-        <a href="#books" class="book-link">Books</a>
-        <a href="https://www.tiktok.com/@ladyanddelilah" target="_blank" rel="noopener noreferrer">TikTok</a>
-        <a href="https://systemaobscura.co" target="_blank" rel="noopener noreferrer">Systema Obscura</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <section class="hero" id="top">
-      <div class="hero-grid">
-        <div class="hero-frame" aria-label="Lady and Delilah series mark">
-          <img src="./assets/lady-logo.png" alt="Lady and Delilah logo" />
-        </div>
-
-        <div class="hero-copy">
-          <p class="eyebrow">Recovered Hunt Record / Active Signal</p>
-          <h1>Lady &amp;<br />Delilah</h1>
-          <p class="dek">
-            You were not supposed to find this road. Now that you have, keep your hands visible and do not mistake the wolf for the warning.
-          </p>
-          <p class="quote">
-            A hunter. A dire wolf. Five arrows. One knife. No wasted motion.
-          </p>
-          <div class="ku-banner">Included with Kindle Unlimited</div>
-          <p class="whisper">She is already aware of you.</p>
-
-          <div class="button-row">
-            <a class="btn primary" href="https://www.amazon.com/dp/B0GXL5Q392" target="_blank" rel="noopener noreferrer">Start the Hunt</a>
-            <a class="btn" href="chapter1.html">Get a Taste</a>
-            <a class="btn" href="#field-notes">Read the Fragments</a>
-            <a class="btn" href="https://www.tiktok.com/@ladyanddelilah" target="_blank" rel="noopener noreferrer">Watch the Signal</a>
-          </div>
-
-          <div class="sigils" aria-label="Series identity markers">
-            <div class="sigil"><strong>Distance</strong><span>The Bow</span></div>
-            <div class="sigil"><strong>Control</strong><span>The Spear</span></div>
-            <div class="sigil"><strong>Final Room</strong><span>The Knife</span></div>
-          </div>
-        </div>
+  <main class="game-shell">
+    <header class="topbar">
+      <div>
+        <p class="kicker" id="screenKicker">Choose Your Hunt</p>
+        <h1 id="screenTitle">Hunt Board</h1>
+        <button id="allCardsBtn" class="plain-btn title-action" type="button">All Cards</button>
+        <button id="profilesBtn" class="plain-btn title-action" type="button">Profiles</button>
       </div>
+      <div class="resource-strip">
+        <div><span>Hunter Rank</span><b id="rankText">VI</b></div>
+        <div><span>Hunter Marks</span><b id="marksText">1,250</b></div>
+        <div><span>Scrap</span><b id="scrapText">340</b></div>
+        <div><span>Reputation</span><b id="repText">Renowned</b></div>
+      </div>
+    </header>
+
+    <section id="splashScreen" class="screen splash-screen" hidden>
+      <section class="splash-panel panel">
+        <p class="kicker">Lady & Delilah</p>
+        <h2>Hunt What Others Fear.</h2>
+        <p class="small-copy">A local tactical hunt begins with one hunter profile and one deck laid out on the table.</p>
+        <button id="splashBeginBtn" class="blood-btn" type="button">Begin</button>
+      </section>
     </section>
 
-
-    <section class="section" id="free-entry">
-      <div class="panel">
-        <div class="panel-inner">
-          <div class="entry-grid">
-            <div>
-              <p class="section-label">Recovered Entry</p>
-              <h2 class="section-title">Get a Taste</h2>
-              <p class="section-copy">
-                Before the white forest. Before the larger record. There was a road, a wrong fire, and the first moment the hunt became visible.
-              </p>
-
-              <div class="entry-card">
-                <h3>Chapter One: Five Is Enough</h3>
-                <p>
-                  A short recovered sample from the first encounter: five arrows, no waste, no excuses.
-                </p>
-                <div class="button-row">
-                  <a class="btn primary" href="chapter1.html">Get a Taste</a>
-                  <a class="btn" href="https://www.amazon.com/dp/B0GXL5Q392" target="_blank" rel="noopener noreferrer">Continue on Amazon</a>
-                </div>
-              </div>
-            </div>
-
-            <aside class="entry-aside">
-              <strong>Kindle Unlimited Notice</strong>
-              Book One is included with Kindle Unlimited. Members can continue the full hunt on Amazon at no additional cost.
-            </aside>
+    <section id="profileScreen" class="screen profile-screen" hidden>
+      <section class="profile-panel panel">
+        <div>
+          <p class="kicker">Local Hunter Save</p>
+          <h2>Create Hunter Profile</h2>
+          <p class="small-copy">Each hunter keeps their own deck, marks, scrap, relics, completed hunts, and progression on this browser.</p>
+          <label class="profile-label" for="hunterNameInput">Hunter Name</label>
+          <div class="profile-create-row">
+            <input id="hunterNameInput" class="profile-input" type="text" maxlength="32" placeholder="Delilah" autocomplete="off" />
+            <button id="createProfileBtn" class="blood-btn" type="button">Create Profile</button>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section class="section" id="field-notes">
-      <div class="panel">
-        <div class="panel-inner">
-          <div class="section-head">
-            <p class="section-label">Recovered Fragments</p>
-            <h2 class="section-title">Field Notes From the Road</h2>
-            <p class="section-copy">
-              Not all encounters are survived. Some are only recorded after the fire goes out.
-            </p>
-          </div>
-
-          <div class="field-board">
-            <article class="fragment" data-file="Entry 01 / Motion">
-              <p>She does not move fast.</p>
-              <p>She removes everything that is not the movement.</p>
-            </article>
-
-            <article class="fragment" data-file="Entry 02 / Ammunition">
-              <p>Five arrows make a person honest.</p>
-              <p>Anything more is an excuse.</p>
-            </article>
-
-            <article class="fragment" data-file="Entry 03 / Distances">
-              <p>The bow is discipline.</p>
-              <p>The spear is control. The knife is the last room in the house.</p>
-            </article>
-
-            <article class="fragment" data-file="Entry 04 / Lady">
-              <p>The wolf does not wait for command.</p>
-              <p>She reads the ending first.</p>
-            </article>
-
-            <article class="fragment" data-file="Entry 05 / Measurement">
-              <p>Some men believe they are being hunted.</p>
-              <p>They are being measured.</p>
-            </article>
-
-            <article class="fragment" data-file="Entry 06 / Exit">
-              <p>C'mon, Lady.</p>
-              <p>We're done here.</p>
-            </article>
+        <div>
+          <div class="panel-title">Profiles</div>
+          <div id="profileList" class="profile-list"></div>
+          <div class="profile-actions">
+            <button id="newProfileBtn" class="plain-btn" type="button">New Profile</button>
+            <button id="deleteProfileBtn" class="plain-btn danger-btn" type="button">Delete Profile</button>
+            <button id="exportProfileBtn" class="plain-btn" type="button">Export Save</button>
+            <button id="importProfileBtn" class="plain-btn" type="button">Import Save</button>
+            <input id="importProfileFile" type="file" accept="application/json" hidden />
           </div>
         </div>
-      </div>
+      </section>
     </section>
 
-    <section class="section">
-      <div class="panel">
-        <div class="panel-inner">
-          <div class="section-head">
-            <p class="section-label">The Shape of the Series</p>
-            <h2 class="section-title">This Is Not a Hero's Road</h2>
-            <p class="section-copy">
-              Delilah does not arrive to save the world. Lady does not ask permission to enter it. Together, they walk into places where cruelty has become organized and leave those places with fewer rooms.
-            </p>
-          </div>
+    <section id="firstRevealScreen" class="screen reveal-screen" hidden>
+      <section class="reveal-copy panel">
+        <p class="kicker">First Hunt Deck</p>
+        <h2>A new hunt begins.</h2>
+        <p>Would you like to reveal your cards one at a time, or all at once?</p>
+        <div class="reveal-actions">
+          <button id="drawOneBtn" class="blood-btn" type="button">Draw One At A Time</button>
+          <button id="revealAllBtn" class="plain-btn" type="button">Reveal All</button>
+          <button id="finishRevealBtn" class="plain-btn" type="button" hidden>Continue To Hunt Board</button>
+        </div>
+        <p id="revealHint" class="recommend-line">Delilah lays the first tools on the table.</p>
+      </section>
+      <section class="reveal-table panel">
+        <button id="revealDeckStack" class="reveal-deck-stack" type="button" aria-label="Reveal next card"></button>
+        <div id="revealedCards" class="revealed-cards"></div>
+      </section>
+    </section>
 
-          <div class="lore-grid">
-            <article class="lore-card">
-              <p class="card-kicker">The Hunter</p>
-              <h3>Precision over rage.</h3>
-              <p>Delilah is not reckless. She is exact. Every step is a decision. Every weapon has a distance. Every mistake belongs to someone else.</p>
-            </article>
+    <section id="boardScreen" class="screen board-screen">
+      <aside class="contract-list panel">
+        <div class="panel-title">Available Contracts</div>
+        <div id="contractList"></div>
+        <button id="completedBtn" class="plain-btn" type="button">View Completed Hunts</button>
+      </aside>
 
-            <article class="lore-card">
-              <p class="card-kicker">The Wolf</p>
-              <h3>Partner, not pet.</h3>
-              <p>Lady does not follow. Lady understands. When she moves, the room changes shape around her.</p>
-            </article>
+      <section class="map-panel panel" aria-label="Hunt map">
+        <div class="map-art">
+          <div class="compass">N</div>
+          <div class="region north">The North Wilds</div>
+          <div class="region marsh">The Dead Marshes</div>
+          <button class="map-node red active" data-contract="black-veil" style="left:21%;top:38%">Black Veil Camp</button>
+          <button class="map-node blue" data-contract="frozen" style="left:48%;top:16%">Frozen Crossing</button>
+          <button class="map-node orange" data-contract="bone" style="left:54%;top:58%">Bone Pit Tunnels</button>
+          <button class="map-node violet" data-contract="hollow" style="left:76%;top:47%">Whispering Hollow</button>
+          <button class="map-node green" data-contract="sawmill" style="left:66%;top:32%">The Old Sawmill</button>
+          <svg class="route-lines" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M235 275 C330 330 290 455 430 495 C560 535 645 468 760 365" />
+            <path d="M500 110 C535 190 625 195 660 250" />
+            <path d="M235 275 C390 225 470 290 540 380" />
+          </svg>
+        </div>
+      </section>
 
-            <article class="lore-card">
-              <p class="card-kicker">The Rule</p>
-              <h3>Five is enough.</h3>
-              <p>Five arrows. No waste. No excuses. If the quiver empties, the story has gotten close enough to use the knife.</p>
-            </article>
+      <aside class="contract-detail panel">
+        <div class="poster" id="poster"></div>
+        <h2 id="detailName">Black Veil Camp</h2>
+        <p class="red-text" id="detailType">Cult Activity</p>
+        <p id="detailDescription"></p>
+        <div class="detail-box">
+          <span>Threat Level</span>
+          <b id="detailThreat">Dangerous</b>
+          <div id="skulls" class="skulls"></div>
+        </div>
+        <div class="detail-box">
+          <span>Environment</span>
+          <div id="detailEnv" class="tags"></div>
+        </div>
+        <div class="detail-box">
+          <span>Potential Rewards</span>
+          <div class="reward-icons">
+            <div>?<small>Rare Card</small></div>
+            <div>✥<small>Marks</small></div>
+            <div>▣<small>Scrap</small></div>
+            <div>?</div>
           </div>
         </div>
-      </div>
+        <button id="acceptBtn" class="blood-btn" type="button">Accept Contract</button>
+      </aside>
+
+      <footer class="bottom-dock">
+        <div class="bond-card">
+          <b>Delilah & Lady</b>
+          <span>Bond Level <i id="bondText">I</i></span>
+        </div>
+        <button class="dock-btn" id="deckBtn" type="button">Your Deck</button>
+        <button class="dock-btn" id="prepBtn" type="button">Preparation</button>
+        <button class="dock-btn" id="archiveBtn" type="button">Archive</button>
+        <button class="dock-btn" id="journalBtn" type="button">Journal</button>
+        <div class="lady-note" id="ladyNote">Lady senses weakness at Black Veil Camp.</div>
+      </footer>
     </section>
 
-    <section class="section" id="books">
-      <div class="panel">
-        <div class="panel-inner">
-          <div class="section-head">
-            <p class="section-label">Series Archive</p>
-            <h2 class="section-title">Enter the Books</h2>
-            <p class="section-copy">
-              Begin with the first hunt. Continue into the white forest. The next signal is already forming.
-            </p>
+    <section id="prepScreen" class="screen prep-screen" hidden>
+      <section class="panel archive-panel">
+        <div class="panel-title">Archive Collection</div>
+        <div class="deck-count"><b id="deckCount">Deck: 20 / 20</b><span id="deckWarning">Ready</span></div>
+        <div class="collection-count"><b id="collectionCount">Collection: 20 cards</b><span id="deckRatingText">Rating hidden</span></div>
+        <div id="archiveGrid" class="archive-grid"></div>
+      </section>
+      <aside class="panel prep-right">
+        <div class="panel-title">Relics</div>
+        <div class="deck-stack" aria-hidden="true"></div>
+        <button id="recommendBtn" class="plain-btn recommend-btn" type="button">Delilah Recommends</button>
+        <p id="recommendLine" class="recommend-line">Bring traps.</p>
+        <div id="relicShelf" class="relic-shelf"></div>
+        <button id="startHuntBtn" class="blood-btn" type="button">Begin The Hunt</button>
+        <button id="saveBtn" class="plain-btn" type="button">Save Game</button>
+        <button id="backBoardBtn" class="plain-btn" type="button">Back To Board</button>
+      </aside>
+    </section>
+
+    <section id="combatScreen" class="screen combat-screen" hidden>
+      <aside class="panel combat-left">
+        <div class="objective">
+          <span>Objective</span>
+          <b id="objectiveText">Kill the Ritual Leader</b>
+        </div>
+        <div class="conditions">
+          <span>Hunt Conditions</span>
+          <ul id="conditionList"></ul>
+        </div>
+        <div class="hero-box">
+          <h3>Delilah</h3>
+          <div class="bar"><i id="delilahHp"></i></div>
+          <small id="delilahText">38/38 HP</small>
+          <div id="delilahStatus" class="hero-status empty">No status</div>
+          <h3>Lady</h3>
+          <div class="bar blue"><i id="ladyHp"></i></div>
+          <small id="ladyText">32/32 HP</small>
+          <div id="ladyStatus" class="hero-status empty">No status</div>
+          <div class="action-readout">
+            <span>Actions This Turn</span>
+            <b id="actionText">3 / 3</b>
           </div>
-
-          <div class="book-grid">
-            <article class="book-card">
-              <a class="cover-link" href="https://www.amazon.com/dp/B0GXL5Q392" target="_blank" rel="noopener noreferrer" aria-label="Read Lady and Delilah Book One on Amazon">
-                <img src="./assets/lady-book-cover.png" alt="Lady and Delilah Book One cover" />
-              </a>
-              <p class="book-meta">Book One</p>
-              <h3 class="book-title">Lady &amp; Delilah</h3>
-              <p class="book-blurb">The first path opens. A hunter. A wolf. Five arrows.</p>
-              <a class="btn primary" href="https://www.amazon.com/dp/B0GXL5Q392" target="_blank" rel="noopener noreferrer">Start Here</a>
-            </article>
-
-            <article class="book-card">
-              <a class="cover-link" href="https://www.amazon.com/dp/B0GX2SS328" target="_blank" rel="noopener noreferrer" aria-label="Read Lady and Delilah The White Tree on Amazon">
-                <img src="./assets/lady-book-2-cover.jpg" alt="Lady and Delilah The White Tree cover" />
-              </a>
-              <p class="book-meta">Book Two</p>
-              <h3 class="book-title">The White Tree</h3>
-              <p class="book-blurb">The road darkens. Something ancient waits in the white forest.</p>
-              <a class="btn" href="https://www.amazon.com/dp/B0GX2SS328" target="_blank" rel="noopener noreferrer">Continue</a>
-            </article>
-
-            <article class="book-card">
-              <div class="cover-static">
-                <img src="./assets/lady-book-3-cover.png" alt="Lady and Delilah Book Three cover" />
-              </div>
-              <p class="book-meta">Book Three</p>
-              <h3 class="book-title">The Hunter's Measure</h3>
-              <p class="book-blurb">Signal incoming. The next hunt has not asked for permission.</p>
-              <span class="btn" style="opacity:.68; cursor:default; border-style:dashed;">Coming Soon</span>
-            </article>
+          <div class="focus-row" id="focusRow"></div>
+          <div class="target-readout">
+            <span>Current Target</span>
+            <b id="targetText">None</b>
           </div>
         </div>
-      </div>
+      </aside>
+
+      <section class="battlefield panel">
+        <div class="turn-track" id="turnTrack"></div>
+        <div id="battleScene" class="battle-scene">
+          <div class="delilah-figure"></div>
+          <div class="lady-figure"></div>
+          <div id="enemyActionBanner" class="enemy-action-banner" hidden></div>
+          <div id="enemyLine" class="enemy-line"></div>
+        </div>
+        <div class="hand-row" id="hand"></div>
+      </section>
+
+      <aside class="panel combat-right">
+        <div class="enemy-intent">
+          <div class="panel-title">Enemy Intent</div>
+          <div id="intentList"></div>
+        </div>
+        <div class="combat-log">
+          <div class="panel-title">Combat Log</div>
+          <div id="combatLog"></div>
+        </div>
+        <button id="endTurnBtn" class="blood-btn" type="button">End Turn</button>
+      </aside>
+
+      <footer class="combat-dock">
+        <button id="mapReturnBtn" class="dock-btn" type="button">Hunt Map</button>
+        <button id="campBtn" class="dock-btn" type="button">Camp</button>
+        <button id="cardsBtn" class="dock-btn" type="button">Your Deck</button>
+        <div class="marks-card"><span>Hunter Marks</span><b id="combatMarks">230</b></div>
+      </footer>
     </section>
-
-    <section class="section">
-      <div class="signal-strip">
-        <article class="signal-card">
-          <p class="section-label">Live Signal</p>
-          <h3>Follow the road between chapters.</h3>
-          <p>Short transmissions, images, fragments, and field signals from the Lady &amp; Delilah world.</p>
-          <a class="btn primary" href="https://www.tiktok.com/@ladyanddelilah" target="_blank" rel="noopener noreferrer">Open TikTok</a>
-        </article>
-
-        <article class="signal-card">
-          <p class="section-label">Origin System</p>
-          <h3>Systema Obscura</h3>
-          <p>Return to the larger archive of strange transmissions, dark fiction, and other recorded impossibilities.</p>
-          <a class="btn" href="https://systemaobscura.co" target="_blank" rel="noopener noreferrer">Main Archive</a>
-        </article>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <div>Lady &amp; Delilah / A Systema Obscura Signal</div>
-      <a class="return-link" href="#top">Return to the Road</a>
-    </footer>
   </main>
+
+  <dialog id="rewardDialog" class="modal">
+    <form method="dialog">
+      <p class="kicker">Reward Cache</p>
+      <h2 id="rewardTitle">The camp yields something useful.</h2>
+      <div id="rewardChoices" class="reward-choices"></div>
+    </form>
+  </dialog>
+
+  <dialog id="routeDialog" class="modal">
+    <form method="dialog">
+      <p class="kicker">Hunt Choice</p>
+      <h2 id="routeTitle">The camp goes quiet.</h2>
+      <p id="routeText">Return to the hunt map or push deeper into the same camp. Continuing restores Delilah and Lady to full health.</p>
+      <div class="route-actions">
+        <button id="returnMapBtn" class="plain-btn" type="button">Return To Hunt Map</button>
+        <button id="continueCampBtn" class="blood-btn" type="button">Attack Same Camp</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="defeatDialog" class="modal">
+    <form method="dialog">
+      <p class="kicker">Hunt Failed</p>
+      <h2 id="defeatTitle">Delilah and Lady fall back.</h2>
+      <p id="defeatText">The camp holds for now. Return to the map, rebuild your deck, or retry this hunt at full health.</p>
+      <div class="route-actions three-actions">
+        <button id="defeatMapBtn" class="plain-btn" type="button">Return To Map</button>
+        <button id="defeatDeckBtn" class="plain-btn" type="button">Rebuild Deck</button>
+        <button id="defeatRetryBtn" class="blood-btn" type="button">Retry Hunt</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="tutorialDialog" class="modal tutorial-modal">
+    <form method="dialog">
+      <p class="kicker" id="tutorialKicker">Delilah</p>
+      <h2 id="tutorialTitle">Choose a contract.</h2>
+      <p id="tutorialText">Start with Black Veil Camp. It is rated 1 / 5 and built for a first hunt.</p>
+      <div id="tutorialActions" class="route-actions"></div>
+    </form>
+  </dialog>
+
+  <dialog id="journalDialog" class="modal">
+    <form method="dialog">
+      <p class="kicker">Journal</p>
+      <h2>The Culted</h2>
+      <p>Ritual enemies pressure you with poison, fear, traps, and reinforcement calls. Lady improves intent clarity. Delilah turns exposed targets into clean kills.</p>
+      <button class="blood-btn" value="ok">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="allCardsDialog" class="modal card-browser-modal">
+    <form method="dialog">
+      <p class="kicker">Collection</p>
+      <h2>All Cards</h2>
+      <div id="allCardsGrid" class="all-cards-grid"></div>
+      <button class="blood-btn" value="ok">Close</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+
+  <script src="game.js"></script>
 </body>
 </html>
