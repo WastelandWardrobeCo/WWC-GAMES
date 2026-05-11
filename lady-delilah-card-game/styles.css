@@ -1255,6 +1255,38 @@ h1 {
   z-index: 4;
 }
 
+.battlefield-status {
+  position: absolute;
+  left: 49%;
+  right: 4%;
+  bottom: 42%;
+  z-index: 6;
+  display: grid;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.battlefield-status span {
+  justify-self: center;
+  max-width: min(520px, 100%);
+  padding: 7px 10px;
+  border: 1px solid rgba(226,195,118,.42);
+  color: #f4e6cf;
+  background: rgba(9,7,5,.78);
+  box-shadow: 0 12px 28px rgba(0,0,0,.4), inset 0 0 16px rgba(226,195,118,.08);
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.battlefield-status .trap-active {
+  border-color: rgba(224,67,49,.6);
+  color: #ffe0cf;
+}
+
 .enemy {
   position: relative;
   width: clamp(96px, 10vw, 145px);
@@ -1294,6 +1326,10 @@ h1 {
   filter: drop-shadow(0 20px 18px rgba(0,0,0,.78));
   transform: scaleX(-1);
   transform-origin: center bottom;
+}
+
+.enemy-sprite-cultist .enemy-body {
+  transform: none;
 }
 
 .enemy-sprite-frost-wolf .enemy-body {
@@ -1587,6 +1623,15 @@ h1 {
   transform: translateY(0);
 }
 
+.pulse-attention {
+  animation: pulseAttention 1.05s ease-in-out infinite;
+}
+
+@keyframes pulseAttention {
+  0%, 100% { box-shadow: 0 0 0 rgba(226,195,118,0), inset 0 0 0 rgba(226,195,118,0); filter: brightness(1); }
+  50% { box-shadow: 0 0 22px rgba(226,195,118,.48), inset 0 0 18px rgba(226,195,118,.12); filter: brightness(1.18); }
+}
+
 .reward-choices {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1659,6 +1704,23 @@ h1 {
   flex-direction: column;
   justify-content: space-between;
   box-shadow: 0 18px 38px rgba(0,0,0,.5);
+}
+
+.reward-card-preview.reward-card-back {
+  background:
+    linear-gradient(rgba(0,0,0,.05), rgba(0,0,0,.18)),
+    url("assets/card-back-premium.png") center / cover;
+  border-color: rgba(226,195,118,.62);
+}
+
+.reveal-cache-card {
+  animation: cacheCardReveal 1.8s ease both;
+}
+
+@keyframes cacheCardReveal {
+  0% { opacity: 0; transform: translateY(28px) rotateY(0deg) scale(.9); filter: brightness(.55); }
+  35% { opacity: 1; transform: translateY(0) rotateY(0deg) scale(1); filter: brightness(1); }
+  100% { opacity: 1; transform: translateY(0) rotateY(8deg) scale(1.02); filter: brightness(1.16); }
 }
 
 .reward-card-preview h3 {
