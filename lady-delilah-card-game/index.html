@@ -195,6 +195,7 @@
         <div id="battleScene" class="battle-scene">
           <div class="delilah-figure"></div>
           <div class="lady-figure"></div>
+          <div id="battlefieldStatus" class="battlefield-status" hidden></div>
           <div id="enemyActionBanner" class="enemy-action-banner" hidden></div>
           <div id="enemyLine" class="enemy-line"></div>
         </div>
@@ -227,6 +228,17 @@
       <p class="kicker">Reward Cache</p>
       <h2 id="rewardTitle">The camp yields something useful.</h2>
       <div id="rewardChoices" class="reward-choices"></div>
+    </form>
+  </dialog>
+
+  <dialog id="victoryDialog" class="modal">
+    <form method="dialog">
+      <p class="kicker">Hunt Won</p>
+      <h2 id="victoryTitle">The camp goes quiet.</h2>
+      <p id="victoryText">Congratulations. You won the battle. Proceed to the winner's cache and claim what the hunt left behind.</p>
+      <div class="route-actions">
+        <button id="victoryCacheBtn" class="blood-btn" type="button">Proceed To Winner's Cache</button>
+      </div>
     </form>
   </dialog>
 
