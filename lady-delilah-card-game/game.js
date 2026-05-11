@@ -663,14 +663,18 @@ function maybeShowBoardTutorial() {
   if (!tutorialEligible() || state.settings.tutorialBoardSeen) return;
   state.settings.tutorialBoardSeen = true;
   saveProgress();
-  setTimeout(() => showTutorial({
-    title: 'Choose a contract.',
-    text: 'Start with Black Veil Camp. It is rated 1 / 5 and built for a first hunt. Higher tiers bite hard until your archive grows.',
-    actions: [
-      { label: 'Select Black Veil Camp', primary: true, run: () => { selectContract('black-veil'); showContractTutorial(); } },
-      { label: 'I Know The Road', run: () => { state.settings.tutorialDismissed = true; saveProgress(); } }
-    ]
-  }), 350);
+  setTimeout(() => {
+    if ($('boardScreen').hidden) return;
+    showTutorial({
+      title: 'Need a trail marker?',
+      text: 'Start with Black Veil Camp when you are ready. It is rated 1 / 5 and built for a first hunt. You can inspect the map first, then open your deck before the fight.',
+      actions: [
+        { label: 'Select Black Veil', primary: true, run: () => { selectContract('black-veil'); showToast('Black Veil Camp selected. Open your deck when ready.'); } },
+        { label: 'Go To Deck', run: () => { selectContract('black-veil'); showPrep(); } },
+        { label: 'Keep Exploring', run: () => { showToast('Choose any contract when you are ready.'); } }
+      ]
+    });
+  }, 25000);
 }
 
 function showContractTutorial() {
@@ -788,10 +792,13 @@ function selectContract(id) {
 }
 
 function maybeShowContractTutorialAfterSelection() {
-  if (!tutorialEligible() || state.settings.tutorialContractSeen || selectedContract.id !== 'black-veil') return;
+  if (!tutorialEligible() || state.settings.tutorialContractSeen || state.settings.tutorialBoardSeen || selectedContract.id !== 'black-veil') return;
   state.settings.tutorialContractSeen = true;
   saveProgress();
-  setTimeout(showContractTutorial, 250);
+  setTimeout(() => {
+    if ($('boardScreen').hidden) return;
+    showContractTutorial();
+  }, 25000);
 }
 
 function renderPrep() {
