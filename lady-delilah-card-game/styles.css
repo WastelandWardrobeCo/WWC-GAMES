@@ -1297,27 +1297,31 @@ h1 {
 }
 
 .enemy-sprite-frost-wolf .enemy-body {
-  width: clamp(112px, 11vw, 165px);
-  height: clamp(150px, 17vw, 235px);
+  width: clamp(170px, 17vw, 260px);
+  height: clamp(165px, 18vw, 255px);
   background-image: url("assets/enemy-frost-wolf.png");
+  background-size: auto 100%;
 }
 
 .enemy-sprite-ice-stalker .enemy-body {
-  width: clamp(96px, 10vw, 150px);
-  height: clamp(205px, 24vw, 320px);
+  width: clamp(132px, 13vw, 205px);
+  height: clamp(230px, 27vw, 360px);
   background-image: url("assets/enemy-ice-stalker.png");
+  background-size: auto 100%;
 }
 
 .enemy-sprite-bone-brute .enemy-body {
-  width: clamp(102px, 10.5vw, 158px);
-  height: clamp(205px, 24vw, 320px);
+  width: clamp(140px, 14vw, 220px);
+  height: clamp(235px, 27vw, 365px);
   background-image: url("assets/enemy-bone-brute.png");
+  background-size: auto 100%;
 }
 
 .enemy-sprite-hollow-lantern .enemy-body {
-  width: clamp(96px, 10vw, 150px);
-  height: clamp(205px, 24vw, 320px);
+  width: clamp(138px, 14vw, 218px);
+  height: clamp(240px, 28vw, 375px);
   background-image: url("assets/enemy-hollow-lantern.png");
+  background-size: auto 100%;
 }
 
 .enemy-frozen .enemy-body { filter: hue-rotate(175deg) saturate(.68) brightness(1.18) drop-shadow(0 20px 18px rgba(0,0,0,.78)); }
