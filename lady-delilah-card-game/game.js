@@ -148,6 +148,7 @@ let profileIndex = [];
 let activeProfileId = null;
 let pendingRevealCards = [];
 let revealIndex = 0;
+let pendingVictoryFinal = false;
 
 function freshState() {
   return {
@@ -193,32 +194,13 @@ function writeProfileIndex() {
 }
 
 function migrateLegacySaveIfNeeded() {
-  const existing = readProfileIndex();
-  if (existing.length || localStorage.getItem(LEGACY_MIGRATED_KEY)) return existing;
-  try {
-    const legacy = JSON.parse(localStorage.getItem(LEGACY_SAVE_KEY) || 'null');
-    if (!legacy || typeof legacy !== 'object') return existing;
-    const id = 'legacy_hunter';
-    const migrated = {
-      ...legacy,
-      profileId: id,
-      hunterName: legacy.hunterName || 'Legacy Hunter',
-      firstDeckRevealed: true
-    };
-    localStorage.setItem(profileKey(id), JSON.stringify(migrated));
-    const summary = {
-      id,
-      hunterName: migrated.hunterName,
-      rank: migrated.rank || migrated.hunterRank || 1,
-      battlesWon: migrated.battlesWon || 0,
-      updatedAt: new Date().toISOString()
-    };
-    localStorage.setItem(PROFILE_INDEX_KEY, JSON.stringify([summary]));
-    localStorage.setItem(LEGACY_MIGRATED_KEY, 'true');
-    return [summary];
-  } catch {
-    return existing;
-  }
+  const existing = readProfileIndex().filter(p => p.id !== 'legacy_hunter');
+  localStorage.removeItem(profileKey('legacy_hunter'));
+  localStorage.removeItem(LEGACY_SAVE_KEY);
+  localStorage.removeItem(LEGACY_MIGRATED_KEY);
+  if (localStorage.getItem(ACTIVE_PROFILE_KEY) === 'legacy_hunter') localStorage.removeItem(ACTIVE_PROFILE_KEY);
+  localStorage.setItem(PROFILE_INDEX_KEY, JSON.stringify(existing));
+  return existing;
 }
 
 function profileSummaryFromState() {
@@ -383,6 +365,10 @@ function bind() {
     restoreHunters();
     startEncounter();
     showCombat();
+  });
+  $('victoryCacheBtn').addEventListener('click', () => {
+    $('victoryDialog').close();
+    reward(pendingVictoryFinal, true);
   });
   $('defeatMapBtn').addEventListener('click', () => {
     $('defeatDialog').close();
@@ -582,6 +568,7 @@ function revealNextCard() {
   if (revealIndex >= pendingRevealCards.length) {
     $('revealDeckStack').hidden = true;
     $('finishRevealBtn').hidden = false;
+    pulseElement('finishRevealBtn', 5000);
     if (!isBestRevealCard(c)) $('revealHint').textContent = `${bestRevealCard().name} is the prize here. Good pick.`;
   }
 }
@@ -592,6 +579,7 @@ function revealAllFirstDeck() {
   $('revealDeckStack').hidden = true;
   $('revealedCards').innerHTML = pendingRevealCards.map((c, i) => revealCardHtml(c, i + 1, true)).join('');
   $('finishRevealBtn').hidden = false;
+  pulseElement('finishRevealBtn', 5000);
   const best = bestRevealCard();
   $('revealHint').textContent = `${best.name} is your best pull. That one earns its place.`;
   playSoundCue('reveal-all');
@@ -634,6 +622,13 @@ function playSoundCue(name) {
   document.dispatchEvent(new CustomEvent('ladyDelilahSoundCue', { detail: { name } }));
 }
 
+function pulseElement(id, duration = 4500) {
+  const el = $(id);
+  if (!el) return;
+  el.classList.add('pulse-attention');
+  setTimeout(() => el.classList.remove('pulse-attention'), duration);
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch]);
 }
@@ -674,7 +669,7 @@ function maybeShowBoardTutorial() {
         { label: 'Keep Exploring', run: () => { showToast('Choose any contract when you are ready.'); } }
       ]
     });
-  }, 25000);
+  }, 20000);
 }
 
 function showContractTutorial() {
@@ -696,10 +691,32 @@ function maybeShowPrepTutorial() {
     title: 'Delilah can build this run.',
     text: 'Take a look first. If you want, Delilah can put together a strong 20-card deck from what you own for this hunt. You can still change anything afterward.',
     actions: [
-      { label: "Delilah's Build", primary: true, run: () => { autoBuildDeck(); recommendationsOn = true; renderPrep(); showToast('Delilah marked a first hunt build. Press Begin The Hunt.'); } },
-      { label: 'I Will Choose', run: () => { state.activeDeck = []; saveProgress(); renderPrep(); showToast('Choose 20 cards, then begin the hunt.'); } }
+      { label: "Delilah's Build", primary: true, run: () => { autoBuildDeck(); recommendationsOn = true; renderPrep(); cueDeckReady('Delilah chose 20 / 20 cards for this hunt.'); scheduleDeckEditingHint(); } },
+      { label: 'I Will Choose', run: () => { saveProgress(); renderPrep(); cueDeckReady('Your deck is already 20 / 20. Swap cards if you want a different build.'); scheduleDeckEditingHint(); } }
     ]
   }), 2000);
+}
+
+function cueDeckReady(message) {
+  showToast(message);
+  pulseElement('deckCount', 5200);
+  pulseElement('startHuntBtn', 5200);
+}
+
+function scheduleDeckEditingHint() {
+  if (state.settings.deckEditHintSeen) return;
+  state.settings.deckEditHintSeen = true;
+  saveProgress();
+  setTimeout(() => {
+    if ($('prepScreen').hidden || $('tutorialDialog').open) return;
+    showTutorial({
+      title: 'Tuning your deck.',
+      text: 'You have 20 / 20 cards selected. To swap a card, click its - button first, then add another card with its + button. When the build feels right, click Begin The Hunt.',
+      actions: [
+        { label: 'Got It', primary: true, run: () => pulseElement('startHuntBtn', 4200) }
+      ]
+    });
+  }, 3500);
 }
 
 function maybeShowCombatTutorial() {
@@ -967,6 +984,7 @@ function renderCombat() {
   $('focusRow').innerHTML = Array.from({ length: state.maxActions }, (_, i) => `<i class="${i >= state.actions ? 'empty' : ''}"></i>`).join('');
   $('turnTrack').innerHTML = Array.from({ length: MAX_TURNS }, (_, i) => `<div class="turn-dot ${i + 1 === state.turn ? 'active' : ''}"><span>${i + 1}</span></div>`).join('');
   $('targetText').textContent = target()?.name || 'None';
+  renderBattlefieldStatus();
   renderEnemyActionBanner();
   $('enemyLine').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => enemyHtml(e)).join('');
   $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card"><b>${e.name}</b><br>${intentText(e)}</div>`).join('');
@@ -975,6 +993,17 @@ function renderCombat() {
   $('combatLog').innerHTML = state.log.slice(0, 8).map(l => `<div class="log-line">${l}</div>`).join('');
   document.querySelectorAll('.enemy').forEach(el => el.addEventListener('click', () => { state.targetId = el.dataset.id; renderCombat(); }));
   document.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => playCard(Number(el.dataset.index))));
+}
+
+function renderBattlefieldStatus() {
+  const el = $('battlefieldStatus');
+  if (!el) return;
+  const notes = [];
+  if (state.traps) notes.push(`<span class="trap-active">Trap active: ${state.traps} snare${state.traps === 1 ? '' : 's'} armed. Moving enemies take 7 damage and Root next enemy turn.</span>`);
+  if (state.funnel) notes.push(`<span>Funnel path: moving enemies become Exposed.</span>`);
+  if (state.killLane) notes.push(`<span>Kill lane: moving enemies become Exposed 3.</span>`);
+  el.hidden = !notes.length;
+  el.innerHTML = notes.join('');
 }
 
 function renderHeroStatuses() {
@@ -1253,6 +1282,7 @@ function enemiesAct() {
       state.traps -= 1;
       e.hp = Math.max(0, e.hp - 7);
       addStatus(e, 'root', 1);
+      announceEnemy(e, 'triggers Delilah\'s snare', '7 damage and Root', 'enemy-trap');
       log(`${e.name} triggers a snare for 7.`);
       if (state.funnel) addStatus(e, 'exposed', 2);
       return;
@@ -1359,11 +1389,11 @@ function winEncounter() {
     state.completed.push(selectedContract.id);
     syncProgression();
     log('<b>Elite hunt complete.</b> The Black Veil breaks.');
-    reward(true);
+    showVictoryCachePrompt(true);
     return;
   }
   state.encounter += 1;
-  reward(false);
+  showVictoryCachePrompt(false);
 }
 
 function loseHunt(reason = 'Return to the board and rebuild.') {
@@ -1386,12 +1416,37 @@ function showDefeatDialog(reason) {
   }, 250);
 }
 
-function reward(final) {
+function showVictoryCachePrompt(final) {
+  pendingVictoryFinal = final;
+  const title = final ? `${selectedContract.name} is broken.` : 'The battle is won.';
+  const text = final
+    ? `Congratulations. You completed the hunt. Proceed to the winner's cache and claim the card the camp left behind.`
+    : `Congratulations. You won the battle. Proceed to the winner's cache and reveal the card you earned.`;
+  $('victoryTitle').textContent = title;
+  $('victoryText').textContent = text;
+  setTimeout(() => {
+    if (!$('rewardDialog').open && !$('victoryDialog').open) $('victoryDialog').showModal();
+  }, 450);
+}
+
+function reward(final, revealFromBack = false) {
   renderResources();
   state.pendingFinal = final;
   state.pendingRewardCard = randomRewardCard();
-  renderCardReward();
+  if (revealFromBack) renderRewardCardBack();
+  else renderCardReward();
   $('rewardDialog').showModal();
+  if (revealFromBack) setTimeout(renderCardReward, 1800);
+}
+
+function renderRewardCardBack() {
+  $('rewardTitle').textContent = 'The winner\'s cache opens...';
+  $('rewardChoices').innerHTML = `
+    <div class="reward-odds">${formatRewardOdds()}</div>
+    <div class="reward-card-wrap">
+      <article class="reward-card-preview reward-card-back reveal-cache-card" aria-label="Face-down reward card"></article>
+    </div>
+  `;
 }
 
 function renderCardReward() {
