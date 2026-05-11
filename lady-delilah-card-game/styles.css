@@ -1257,9 +1257,9 @@ h1 {
 
 .battlefield-status {
   position: absolute;
-  left: 49%;
-  right: 4%;
-  bottom: 42%;
+  left: 30%;
+  right: 14%;
+  bottom: 4%;
   z-index: 6;
   display: grid;
   gap: 6px;
