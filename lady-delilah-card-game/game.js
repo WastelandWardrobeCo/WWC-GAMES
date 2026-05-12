@@ -188,6 +188,19 @@ const behaviorPools = {
   ]
 };
 
+const statusHelp = {
+  bleed: { label: 'Bleed', text: 'Takes that much damage at the end of each round.' },
+  exposed: { label: 'Exposed', text: 'Takes +2 damage from Delilah and Lady attacks.' },
+  flanked: { label: 'Flanked', text: 'Counts as an execution setup and powers some Lady/Synchronized cards.' },
+  root: { label: 'Root', text: 'Enemy loses its next movement/action and can trigger trap plans.' },
+  terrified: { label: 'Terrified', text: 'Unlocks fear payoffs and can enable bonus actions or executions.' },
+  weakened: { label: 'Weakened', text: 'Deals 3 less damage on its next attack.' },
+  dodge: { label: 'Dodge', text: 'Cancels the next incoming hit.' },
+  guard: { label: 'Guard', text: 'Lady absorbs part of the next hit for Delilah.' },
+  instinct: { label: 'Instinct', text: 'Adds damage to Lady attacks and improves her tactical pressure.' },
+  trap: { label: 'Trap', text: 'Moving enemies take 7 damage and Root when the trap triggers.' }
+};
+
 let state;
 let selectedContract = contracts[0];
 let recommendationsOn = false;
@@ -639,7 +652,7 @@ function revealCardHtml(c, order, all = false) {
     <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
     <span class="card-type">${c.type} • ${displayRarity(c)}</span>
     <span class="card-scope">${cardScope(c)}</span>
-    <p>${c.text}</p>
+    <p>${enrichCardText(c.text)}</p>
     <small>${displayRarity(c)} Cache Card</small>
   </article>`;
 }
@@ -678,6 +691,15 @@ function pulseElement(id, duration = 4500) {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch]);
+}
+
+function enrichCardText(text) {
+  const labels = Object.entries(statusHelp).map(([key, help]) => ({ key, label: help.label, text: help.text }));
+  const pattern = new RegExp(`\\b(${labels.map(x => x.label).join('|')})\\b`, 'gi');
+  return escapeHtml(text).replace(pattern, match => {
+    const found = labels.find(x => x.label.toLowerCase() === match.toLowerCase());
+    return found ? `<span class="keyword keyword-${found.key}" title="${escapeHtml(found.text)}">${match}</span>` : match;
+  });
 }
 
 function tutorialEligible() {
@@ -886,7 +908,7 @@ function renderPrep() {
       <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
       <span>${c.type} · ${displayRarity(c)} · Owned ${owned}</span>
       <span class="card-scope">${cardScope(c)}</span>
-      <p>${c.text}</p>
+      <p>${enrichCardText(c.text)}</p>
       <div class="deck-edit-row">
         <div class="owned-count"><b>Owned</b><span>${owned}</span></div>
         <div class="owned-count"><b>In Deck</b><span>${used}</span></div>
@@ -938,7 +960,7 @@ function showAllCards() {
     return `<article class="collection-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? '' : 'missing'}" style="${cardArtStyle(c)}">
       <div class="card-top"><b>${c.name}</b><span class="cost">${c.cost}</span></div>
       <span>${displayRarity(c)} · ${c.type} · ${cardScope(c)}</span>
-      <p>${c.text}</p>
+      <p>${enrichCardText(c.text)}</p>
       <small>${owned ? `Owned ${owned}` : 'Missing'}</small>
     </article>`;
   }).join('');
@@ -1037,6 +1059,7 @@ function renderCombat() {
   $('turnTrack').innerHTML = Array.from({ length: MAX_TURNS }, (_, i) => `<div class="turn-dot ${i + 1 === state.turn ? 'active' : ''}"><span>${i + 1}</span></div>`).join('');
   $('targetText').textContent = target()?.name || 'None';
   renderBattlefieldStatus();
+  renderStatusGlossary();
   renderEnemyActionBanner();
   $('enemyLine').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => enemyHtml(e)).join('');
   $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card intent-${e.archetype || 'aggressive'}"><b>${e.name}</b><span>${archetypeLabel(e)}</span><br>${intentText(e)}</div>`).join('');
@@ -1059,6 +1082,21 @@ function renderBattlefieldStatus() {
   el.innerHTML = notes.join('');
 }
 
+function renderStatusGlossary() {
+  const el = $('statusGlossary');
+  if (!el) return;
+  const active = new Set(['bleed', 'exposed', 'flanked', 'root', 'terrified']);
+  state.enemies.forEach(e => Object.entries(e.status || {}).forEach(([k, v]) => { if (v > 0) active.add(k); }));
+  if (state.traps) active.add('trap');
+  if (state.dodge) active.add('dodge');
+  if (state.guard) active.add('guard');
+  if (state.ladyInstinct) active.add('instinct');
+  el.innerHTML = [...active].filter(k => statusHelp[k]).map(k => {
+    const h = statusHelp[k];
+    return `<span title="${escapeHtml(h.text)}"><b>${h.label}</b>: ${h.text}</span>`;
+  }).join('');
+}
+
 function renderHeroStatuses() {
   const delilah = [];
   const lady = [];
@@ -1079,7 +1117,7 @@ function renderStatusLine(id, statuses) {
   const el = $(id);
   if (!el) return;
   el.classList.toggle('empty', !statuses.length);
-  el.innerHTML = statuses.length ? statuses.map(s => `<span class="${s.kind}">${s.label}</span>`).join('') : '<span>No status</span>';
+  el.innerHTML = statuses.length ? statuses.map(s => `<span class="${s.kind}" title="${escapeHtml(statusHelp[s.kind]?.text || s.label)}">${s.label}</span>`).join('') : '<span>No status</span>';
 }
 
 function renderEnemyActionBanner() {
@@ -1111,9 +1149,13 @@ function renderBalanceDebug() {
 
 function enemyHtml(e) {
   const chosen = target()?.id === e.id;
+  const statusLabels = Object.entries(e.status).filter(([,v]) => v > 0).map(([k,v]) => {
+    const help = statusHelp[k];
+    return `<span title="${escapeHtml(help?.text || k)}">${help?.label || k} ${v}</span>`;
+  }).join('');
   const statuses = Object.entries(e.status).filter(([,v]) => v > 0).map(([k,v]) => `${k} ${v}`).join(' · ');
   return `<button class="enemy enemy-${enemyFamily(e.key)} enemy-sprite-${enemySprite(e.key)} ${e.elite ? 'elite' : ''} ${chosen ? 'selected' : ''}" data-id="${e.id}" type="button" aria-label="Target ${e.name}">
-    <div class="enemy-nameplate"><b>${e.name}</b><span>${e.hp}/${e.max}</span><div class="hpbar"><i style="width:${100 * e.hp / e.max}%"></i></div><div class="status-line">${statuses}</div></div>
+    <div class="enemy-nameplate"><b>${e.name}</b><span>${e.hp}/${e.max}</span><div class="hpbar"><i style="width:${100 * e.hp / e.max}%"></i></div><div class="status-line">${statusLabels}</div></div>
     <div class="enemy-body"></div>
   </button>`;
 }
@@ -1146,7 +1188,7 @@ function cardHtml(c, i, fresh = false) {
     <div class="card-top"><span class="cost">${playCost}</span><h3>${c.name}</h3></div>
     <span class="card-type">${c.type} · ${displayRarity(c)}</span>
     <span class="card-scope">${cardScope(c)}</span>
-    <p>${c.text}</p>
+    <p>${enrichCardText(c.text)}</p>
   </button>`;
 }
 
@@ -1706,7 +1748,7 @@ function rewardCardHtml(c) {
       <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
       <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
       <span class="card-scope">${cardScope(c)}</span>
-      <p>${c.text}</p>
+      <p>${enrichCardText(c.text)}</p>
       <small>Owned: ${state.owned[c.id] || 0}</small>
     </article>
   </div>`;
