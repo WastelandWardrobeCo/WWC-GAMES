@@ -141,6 +141,53 @@ const enemyBook = {
   'foreman-red': { name: 'Foreman Red', max: 62, intent: ['Start the Mill', 'Cull the Weak', 'Call Workers'], dmg: 12 }
 };
 
+const enemyArchetypes = {
+  cultist: 'aggressive',
+  trapper: 'control',
+  acolyte: 'escalation',
+  leader: 'escalation',
+  'frost-wolf': 'aggressive',
+  'ice-stalker': 'control',
+  'white-maw': 'aggressive',
+  'winter-alpha': 'escalation',
+  'bone-picker': 'aggressive',
+  'scrap-thrower': 'control',
+  'pit-brute': 'aggressive',
+  'bone-king': 'escalation',
+  'hollow-wisp': 'control',
+  'veil-touched': 'control',
+  'fear-eater': 'escalation',
+  'hollow-saint': 'escalation',
+  'mill-hand': 'aggressive',
+  'hook-carver': 'control',
+  'saw-priest': 'control',
+  'foreman-red': 'escalation'
+};
+
+const behaviorPools = {
+  aggressive: [
+    { id: 'quick-strike', label: 'Quick Strike', telegraph: 'Fast pressure', weight: 38, kind: 'damage', dmg: 0, moving: true },
+    { id: 'heavy-strike', label: 'Heavy Strike', telegraph: 'Heavy attack incoming', weight: 22, kind: 'damage', dmg: 3, moving: true },
+    { id: 'dodge-punish', label: 'Cut Off Escape', telegraph: 'Punishes dodge', weight: 18, kind: 'punishDodge', dmg: 1, moving: true },
+    { id: 'blood-combo', label: 'Blood Combo', telegraph: 'Aggressive combo', weight: 14, kind: 'combo', dmg: 1, moving: true },
+    { id: 'pressure', label: 'Press The Line', telegraph: 'Tempo pressure', weight: 8, kind: 'pressure' }
+  ],
+  control: [
+    { id: 'cleanse', label: 'Cleanse Wounds', telegraph: 'Cleansing debuffs', weight: 26, kind: 'cleanse' },
+    { id: 'disrupt-setup', label: 'Disrupt Setup', telegraph: 'Interrupts setup', weight: 24, kind: 'disrupt' },
+    { id: 'snare-break', label: 'Sweep The Ground', telegraph: 'Counters traps', weight: 20, kind: 'breakTrap' },
+    { id: 'control-hit', label: 'Measured Cut', telegraph: 'Controlled strike', weight: 18, kind: 'damage', dmg: -1 },
+    { id: 'blind-angle', label: 'Blind Angle', telegraph: 'Reduces next action', weight: 12, kind: 'actionTax' }
+  ],
+  escalation: [
+    { id: 'build-rite', label: 'Build Rite', telegraph: 'Danger escalates', weight: 30, kind: 'escalate' },
+    { id: 'ritual-pulse', label: 'Ritual Pulse', telegraph: 'Ritual damage coming', weight: 22, kind: 'ritual' },
+    { id: 'defensive-rite', label: 'Defensive Rite', telegraph: 'Defensive stance', weight: 18, kind: 'defend' },
+    { id: 'summon-pressure', label: 'Call The Dark', telegraph: 'Reinforcements possible', weight: 16, kind: 'summon' },
+    { id: 'execution-mark', label: 'Execution Mark', telegraph: 'Marks a hunter', weight: 14, kind: 'mark' }
+  ]
+};
+
 let state;
 let selectedContract = contracts[0];
 let recommendationsOn = false;
@@ -162,7 +209,7 @@ function freshState() {
     encounter: 0, turn: 1, actions: 3, maxActions: 3, deck: [], discard: [], hand: [],
     delilah: { hp: 38, max: 38 }, lady: { hp: 32, max: 32 },
     enemies: [], targetId: null, log: [],
-    enemyActionEvents: [],
+    enemyActionEvents: [], debugEvents: [],
     guard: 0, dodge: 0, traps: 0, ladyInstinct: 0, intentClear: false, funnel: false, nextBleed: 0, nextTurnBonus: 0, nextTerror: 0, bleed: 0, freeTrapUsed: false,
     reinforcements: 0, huntLost: false, pendingRewardCard: null, pendingFinal: false
   };
@@ -918,6 +965,7 @@ function startEncounter() {
   state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.freeTrapUsed = false;
   state.enemyActionText = ''; state.enemyActionPulse = ''; state.nextActionPenalty = 0; state.retaliate = 0; state.guardAll = false; state.fiveCount = false; state.killLane = false; state.silenceReinforcements = false; state.nextAttackCharges = 0; state.nextAttackChargeBonus = 0; state.syncDiscount = false;
   state.enemyActionEvents = [];
+  state.debugEvents = [];
   state.reinforcements = 0;
   state.huntLost = false;
   state.defeatShown = false;
@@ -926,6 +974,7 @@ function startEncounter() {
   if (relic('Ritual Bone')) state.enemies.forEach(e => addStatus(e, 'terrified', 1));
   draw(5);
   log(`Encounter ${state.encounter + 1}: ${state.enemies.map(e => e.name).join(', ')}.`);
+  debugEvent(`Encounter starts: ${selectedContract.name}, threat ${selectedContract.threat}, deck rating ${state.deckRating}.`);
   renderCombat();
 }
 
@@ -942,8 +991,11 @@ function makeEnemy(key, i, elite = false, summoned = false) {
   const hpScale = Math.floor(ratingPressure / 10) + (risk - 1) * 3;
   const dmgScale = Math.floor(ratingPressure / 18) + Math.floor((risk - 1) / 2);
   const max = summoned ? 10 + state.encounter * 2 + Math.floor(hpScale / 2) : base.max + state.encounter * 2 + hpScale + (elite ? 8 + risk * 2 : 0);
-  const intent = summoned ? 'Stab' : base.intent[i % base.intent.length];
-  return { id: `${key}-${Date.now()}-${i}`, key, name: base.name, max, hp: max, dmg: base.dmg + Math.floor(state.encounter / 2) + dmgScale + (elite ? 1 : 0), intent, status: {}, acted: false, elite, summoned };
+  const archetype = enemyArchetypes[key] || 'aggressive';
+  const enemy = { id: `${key}-${Date.now()}-${i}`, key, name: base.name, max, hp: max, dmg: base.dmg + Math.floor(state.encounter / 2) + dmgScale + (elite ? 1 : 0), intent: '', behavior: null, archetype, escalation: 0, status: {}, acted: false, elite, summoned };
+  enemy.behavior = chooseEnemyBehavior(enemy);
+  enemy.intent = enemy.behavior.label;
+  return enemy;
 }
 
 function currentEncounters() {
@@ -987,10 +1039,11 @@ function renderCombat() {
   renderBattlefieldStatus();
   renderEnemyActionBanner();
   $('enemyLine').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => enemyHtml(e)).join('');
-  $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card"><b>${e.name}</b><br>${intentText(e)}</div>`).join('');
+  $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card intent-${e.archetype || 'aggressive'}"><b>${e.name}</b><span>${archetypeLabel(e)}</span><br>${intentText(e)}</div>`).join('');
   $('hand').innerHTML = state.hand.map((entry, i) => cardHtml(card(handCardId(entry)), i, Boolean(entry && entry.fresh))).join('');
   state.hand.forEach(entry => { if (entry && typeof entry === 'object') entry.fresh = false; });
   $('combatLog').innerHTML = state.log.slice(0, 8).map(l => `<div class="log-line">${l}</div>`).join('');
+  renderBalanceDebug();
   document.querySelectorAll('.enemy').forEach(el => el.addEventListener('click', () => { state.targetId = el.dataset.id; renderCombat(); }));
   document.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => playCard(Number(el.dataset.index))));
 }
@@ -1038,6 +1091,22 @@ function renderEnemyActionBanner() {
   banner.hidden = !events.length;
   banner.innerHTML = events.map(e => `<div class="enemy-action-line ${e.pulse || ''}">${e.text}</div>`).join('');
   banner.className = `enemy-action-banner ${state.enemyActionPulse || ''}`;
+}
+
+function renderBalanceDebug() {
+  const el = $('balanceDebug');
+  if (!el) return;
+  const enemies = state.enemies.filter(e => e.hp > 0);
+  const enemyHp = enemies.reduce((sum, e) => sum + e.hp, 0);
+  const playerHp = state.delilah.hp + state.lady.hp;
+  const lines = [
+    `Round ${state.turn}/${MAX_TURNS} | Encounter ${state.encounter + 1}`,
+    `Player HP ${playerHp}/${state.delilah.max + state.lady.max} | Enemy HP ${enemyHp}`,
+    `Hand ${state.hand.length} | Draw ${state.deck.length} | Discard ${state.discard.length}`,
+    ...enemies.map(e => `${e.name}: ${e.archetype || 'aggressive'} -> ${e.intent}${e.escalation ? ` (+${e.escalation})` : ''}`),
+    ...(state.debugEvents || []).slice(0, 4)
+  ];
+  el.innerHTML = lines.map(line => `<div>${line}</div>`).join('');
 }
 
 function enemyHtml(e) {
@@ -1278,7 +1347,7 @@ function enemiesAct() {
   state.enemyActionEvents = [];
   state.enemies.filter(e => e.hp > 0).forEach(e => {
     if (e.status.root) { log(`${e.name} is rooted and loses position.`); return; }
-    if (state.traps && movingIntent(e.intent)) {
+    if (state.traps && movingIntent(e)) {
       state.traps -= 1;
       e.hp = Math.max(0, e.hp - 7);
       addStatus(e, 'root', 1);
@@ -1287,7 +1356,7 @@ function enemiesAct() {
       if (state.funnel) addStatus(e, 'exposed', 2);
       return;
     }
-    resolveIntent(e);
+    resolveEnemyBehavior(e);
     e.acted = true;
   });
   state.guardAll = false;
@@ -1330,6 +1399,149 @@ function resolveIntent(e) {
     log(`${e.name} takes ${state.retaliate} from Spear Wall.`);
   }
   log(`${e.name} hits ${target === 'lady' ? 'Lady' : 'Delilah'} for ${dmg}.`);
+}
+
+function resolveEnemyBehavior(e) {
+  const behavior = e.behavior;
+  if (!behavior) {
+    resolveIntent(e);
+    return;
+  }
+  debugEvent(`${e.name} executes ${behavior.label}.`);
+  if (behavior.kind === 'damage') {
+    enemyStrike(e, Math.max(1, e.dmg + (behavior.dmg || 0) + (e.escalation || 0)), behavior.label);
+    return;
+  }
+  if (behavior.kind === 'punishDodge') {
+    if (state.dodge) {
+      state.dodge = 0;
+      enemyStrike(e, Math.max(1, e.dmg + 1 + (e.escalation || 0)), behavior.label);
+      log(`${e.name} cuts off Delilah's dodge.`);
+    } else {
+      enemyStrike(e, Math.max(1, e.dmg - 1 + (e.escalation || 0)), behavior.label);
+    }
+    return;
+  }
+  if (behavior.kind === 'combo') {
+    const marked = state.enemies.some(enemy => enemy.hp > 0 && (enemy.status.bleed || enemy.status.flanked || enemy.status.exposed));
+    enemyStrike(e, Math.max(1, e.dmg + (marked ? 3 : 0) + (e.escalation || 0)), behavior.label);
+    if (marked) log(`${e.name} exploits the broken line.`);
+    return;
+  }
+  if (behavior.kind === 'pressure') {
+    state.nextActionPenalty = Math.max(state.nextActionPenalty || 0, 1);
+    announceEnemy(e, behavior.label, '-1 Action next round', 'enemy-block');
+    log(`${e.name} presses Delilah's tempo. Next round starts down 1 Action.`);
+    return;
+  }
+  if (behavior.kind === 'cleanse') {
+    const removed = cleanseEnemyStatuses(e);
+    e.hp = Math.min(e.max, e.hp + 2);
+    announceEnemy(e, behavior.label, removed ? 'cleansed debuffs' : '+2 HP', 'enemy-heal');
+    log(`${e.name} cleanses the worst of the hunt.`);
+    return;
+  }
+  if (behavior.kind === 'disrupt') {
+    const hitSetup = state.nextBleed || state.nextTurnBonus || state.nextTerror || state.nextAttackCharges || state.syncDiscount;
+    state.nextBleed = 0;
+    state.nextTurnBonus = Math.max(0, state.nextTurnBonus - 3);
+    state.nextTerror = 0;
+    state.nextAttackCharges = Math.max(0, (state.nextAttackCharges || 0) - 1);
+    state.syncDiscount = false;
+    state.ladyInstinct = Math.max(0, state.ladyInstinct - 1);
+    announceEnemy(e, behavior.label, hitSetup ? 'setup disrupted' : 'Lady instinct -1', 'enemy-block');
+    log(`${e.name} disrupts Delilah's setup.`);
+    return;
+  }
+  if (behavior.kind === 'breakTrap') {
+    if (state.traps) {
+      const broken = Math.min(state.traps, 1 + (selectedContract.threat >= 4 ? 1 : 0));
+      state.traps -= broken;
+      announceEnemy(e, behavior.label, `${broken} trap${broken === 1 ? '' : 's'} cleared`, 'enemy-trap');
+      log(`${e.name} sweeps the ground and clears ${broken} trap${broken === 1 ? '' : 's'}.`);
+    } else {
+      enemyStrike(e, Math.max(1, e.dmg - 2), behavior.label);
+    }
+    return;
+  }
+  if (behavior.kind === 'actionTax') {
+    state.nextActionPenalty = Math.max(state.nextActionPenalty || 0, 1);
+    enemyStrike(e, Math.max(1, e.dmg - 2), behavior.label);
+    log(`${e.name} forces a bad angle. Next round starts down 1 Action.`);
+    return;
+  }
+  if (behavior.kind === 'escalate') {
+    e.escalation = Math.min(5, (e.escalation || 0) + 1);
+    addStatus(e, 'terrified', 0);
+    announceEnemy(e, behavior.label, `threat +${e.escalation}`, 'enemy-summon');
+    log(`${e.name}'s danger escalates.`);
+    return;
+  }
+  if (behavior.kind === 'ritual') {
+    const amount = Math.max(2, 2 + (e.escalation || 0) + Math.floor((selectedContract.threat || 1) / 2));
+    applyDamage('delilah', amount, e, behavior.label);
+    applyDamage('lady', Math.max(1, amount - 1), e, behavior.label);
+    log(`${e.name}'s ritual pressures both hunters.`);
+    return;
+  }
+  if (behavior.kind === 'defend') {
+    e.hp = Math.min(e.max, e.hp + 4 + (e.escalation || 0));
+    addStatus(e, 'weakened', 0);
+    announceEnemy(e, behavior.label, `+${4 + (e.escalation || 0)} HP`, 'enemy-heal');
+    log(`${e.name} takes a defensive stance.`);
+    return;
+  }
+  if (behavior.kind === 'summon') {
+    summonEnemy(e, behavior.label);
+    return;
+  }
+  if (behavior.kind === 'mark') {
+    state.bleed += 1;
+    enemyStrike(e, Math.max(1, e.dmg - 1 + (e.escalation || 0)), behavior.label);
+    log(`${e.name} marks Delilah. Bleed increases.`);
+    return;
+  }
+  resolveIntent(e);
+}
+
+function enemyStrike(e, dmg, action) {
+  const amount = Math.max(0, dmg - (e.status.weakened ? 3 : 0));
+  if (state.guardAll) { announceEnemy(e, action, 'Blocked', 'enemy-block'); log(`Wolf Saint blocks ${e.name}.`); return; }
+  if (state.dodge) { state.dodge -= 1; announceEnemy(e, action, 'Dodged', 'enemy-block'); log(`Delilah dodges ${e.name}.`); return; }
+  if (state.guard) { state.guard -= 1; applyDamage('lady', Math.ceil(amount / 2), e, action); log(`Lady absorbs the strike for ${Math.ceil(amount / 2)}.`); return; }
+  const target = enemyDamageTarget(e);
+  applyDamage(target, amount, e, action);
+  if (state.retaliate) {
+    e.hp = Math.max(0, e.hp - state.retaliate);
+    log(`${e.name} takes ${state.retaliate} from Spear Wall.`);
+  }
+  log(`${e.name} hits ${target === 'lady' ? 'Lady' : 'Delilah'} for ${amount}.`);
+}
+
+function summonEnemy(e, action) {
+  if (state.silenceReinforcements) {
+    announceEnemy(e, action, 'Silenced', 'enemy-block');
+    log(`${e.name} calls out, but Grave Silence smothers the sound.`);
+    return;
+  }
+  const living = state.enemies.filter(enemy => enemy.hp > 0).length;
+  if (state.reinforcements >= MAX_REINFORCEMENTS || living >= MAX_ENEMIES) {
+    announceEnemy(e, action, 'No answer', 'enemy-block');
+    log(`${e.name} calls into the trees. No one else answers.`);
+    return;
+  }
+  state.reinforcements += 1;
+  const called = makeEnemy(reinforcementKey(), state.enemies.length, false, true);
+  state.enemies.push(called);
+  announceEnemy(e, action, `+1 ${called.name}`, 'enemy-summon');
+  log(`${e.name} calls another enemy from the dark.`);
+}
+
+function cleanseEnemyStatuses(e) {
+  const keys = ['bleed', 'exposed', 'flanked', 'terrified', 'root', 'weakened'];
+  const active = keys.filter(k => e.status[k] > 0);
+  active.slice(0, 2).forEach(k => e.status[k] = 0);
+  return active.length;
 }
 
 function enemyDamageTarget(e) {
@@ -1378,6 +1590,7 @@ function encounterCleared() {
 }
 
 function winEncounter() {
+  debugEvent(`Victory in ${state.turn} rounds. Delilah ${state.delilah.hp}/${state.delilah.max}, Lady ${state.lady.hp}/${state.lady.max}.`);
   state.battlesWon += 1;
   state.hunterXP += 80 + (selectedContract.threat || 1) * 25 + state.encounter * 15;
   state.scrap += 10 + state.encounter * 5;
@@ -1397,6 +1610,7 @@ function winEncounter() {
 }
 
 function loseHunt(reason = 'Return to the board and rebuild.') {
+  debugEvent(`Defeat on round ${state.turn}. Reason: ${reason}`);
   log(`<b>The hunt fails.</b> ${reason}`);
   state.actions = 0;
   state.huntLost = true;
@@ -1593,18 +1807,63 @@ function camp() {
 }
 
 function nextIntent(e) {
-  if (e.summoned) return Math.random() < .7 ? 'Stab' : 'Poison Throw';
-  const list = enemyBook[e.key].intent;
-  return list[(list.indexOf(e.intent) + 1 + Math.floor(Math.random() * list.length)) % list.length];
+  e.behavior = chooseEnemyBehavior(e);
+  debugEvent(`${e.name} selected ${e.behavior.label} (${e.archetype}).`);
+  return e.behavior.label;
 }
 
 function intentText(e) {
-  if (!state.intentClear && !e.status.bleed && !relic('Blood Lantern')) return `${e.name}: ${e.intent.includes('Ritual') ? 'Ritual signs' : 'Hostile movement'}`;
-  return `${e.name}: ${e.intent}`;
+  const behavior = e.behavior || { label: e.intent, telegraph: e.intent };
+  if (!state.intentClear && !e.status.bleed && !relic('Blood Lantern')) return `${e.name}: ${behavior.telegraph || 'Hostile movement'}`;
+  return `${e.name}: ${behavior.label} - ${behavior.telegraph || 'Hostile movement'}`;
 }
 
-function movingIntent(intent) {
-  return /Rush|Retreat|Stab|Cull/.test(intent);
+function movingIntent(enemyOrIntent) {
+  const behavior = typeof enemyOrIntent === 'object' ? enemyOrIntent.behavior : null;
+  const intent = typeof enemyOrIntent === 'string' ? enemyOrIntent : enemyOrIntent.intent;
+  return Boolean(behavior && behavior.moving) || /Rush|Retreat|Stab|Cull|Strike|Escape|Combo|Cut/.test(intent);
+}
+
+function chooseEnemyBehavior(e) {
+  if (e.summoned) {
+    const quick = behaviorPools.aggressive.find(b => b.id === 'quick-strike');
+    const poison = { id: 'summoned-poison', label: 'Poison Throw', telegraph: 'Poison pressure', weight: 1, kind: 'mark', moving: false };
+    return Math.random() < .72 ? quick : poison;
+  }
+  const pool = behaviorPools[e.archetype] || behaviorPools.aggressive;
+  const weighted = pool.map(b => ({ ...b, score: behaviorWeight(e, b) })).filter(b => b.score > 0);
+  const total = weighted.reduce((sum, b) => sum + b.score, 0);
+  let roll = Math.random() * total;
+  for (const b of weighted) {
+    roll -= b.score;
+    if (roll <= 0) return b;
+  }
+  return weighted[0] || pool[0];
+}
+
+function behaviorWeight(e, behavior) {
+  let weight = behavior.weight || 10;
+  const statusPressure = Object.values(e.status || {}).some(v => v > 0);
+  const setupPressure = state.nextBleed || state.nextTurnBonus || state.nextTerror || state.nextAttackCharges || state.syncDiscount || state.ladyInstinct > 2;
+  if (behavior.kind === 'cleanse') weight += statusPressure ? 38 : -16;
+  if (behavior.kind === 'breakTrap') weight += state.traps ? 38 : -10;
+  if (behavior.kind === 'disrupt') weight += setupPressure ? 30 : -5;
+  if (behavior.kind === 'punishDodge') weight += state.dodge ? 34 : -8;
+  if (behavior.kind === 'combo') weight += state.enemies.some(enemy => enemy.hp > 0 && (enemy.status.bleed || enemy.status.flanked || enemy.status.exposed)) ? 20 : -4;
+  if (behavior.kind === 'escalate') weight += Math.max(0, state.turn - 1) * 8;
+  if (behavior.kind === 'ritual') weight += (e.escalation || 0) * 9 + state.turn * 2;
+  if (behavior.kind === 'summon') weight += state.reinforcements || state.enemies.filter(enemy => enemy.hp > 0).length >= MAX_ENEMIES ? -30 : 12;
+  if (behavior.id === 'heavy-strike') weight += state.turn >= 4 ? 10 : 0;
+  if (e.elite) weight += ['escalate', 'ritual', 'heavy-strike', 'disrupt'].includes(behavior.kind) ? 8 : 0;
+  return Math.max(1, weight);
+}
+
+function archetypeLabel(e) {
+  return ({ aggressive: 'Aggressive', control: 'Control', escalation: 'Escalation' })[e.archetype] || 'Aggressive';
+}
+
+function debugEvent(message) {
+  state.debugEvents = [`[T${state.turn}] ${message}`, ...(state.debugEvents || [])].slice(0, 12);
 }
 
 function card(id) { return cards.find(c => c.id === id); }
