@@ -30,7 +30,7 @@ const cards = [
   { id: 'funnel', name: 'Funnel Path', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Enemies with Moving intent become Exposed when they move.', effect: () => { state.funnel = true; log('The only clean path is the one Delilah chose.'); } },
   { id: 'poison', name: 'Poison Coating', type: 'Preparation', cost: 1, rarity: 'Sharp', text: 'Next attack applies Bleed 4.', effect: () => { state.nextBleed += 4; log('The spear darkens with poison.'); } },
   { id: 'silent', name: 'Silent Advance', type: 'Preparation', cost: 1, rarity: 'Blackmark', text: 'First attack next turn deals +4.', effect: () => { state.nextTurnBonus += 4; log('Delilah and Lady disappear into the rain.'); } },
-  { id: 'bandage', name: 'Bandage', type: 'Survival', cost: 1, rarity: 'Roadworn', text: 'Recover 6 Health. Remove Bleed.', effect: () => { heal('delilah', 6); state.bleed = 0; log('Bandages, teeth, breath. Still alive.'); } },
+  { id: 'bandage', name: 'Bandage', type: 'Survival', cost: 1, rarity: 'Roadworn', text: 'Choose Delilah or Lady. Recover 6 Health. If Delilah is chosen, remove Bleed.', effect: g => { const ally = g?.ally === 'lady' ? 'lady' : 'delilah'; heal(ally, 6); if (ally === 'delilah') state.bleed = 0; log(ally === 'lady' ? 'Lady settles under clean bandages.' : 'Bandages, teeth, breath. Still alive.'); } },
   { id: 'sync', name: 'Synchronized Kill', type: 'Synchronized', cost: 2, rarity: 'Rare', text: 'Deal 10. Execute below 25% if Bleeding or Flanked.', effect: g => { attack(g, 10 + (relic('Wolf Fang Charm') ? 2 : 0), {}, 'Delilah and Lady'); if ((g.target.status.bleed || g.target.status.flanked) && g.target.hp <= g.target.max * .25) { g.target.hp = 0; log('Synchronized execution. The hunt is already over.'); } } },
   { id: 'bloodmark', name: 'Blood Mark', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Apply Exposed 3. Draw 1.', effect: g => { addStatus(g.target, 'exposed', 3); draw(1); log(`${g.target.name} is marked in blood.`); } },
   { id: 'wolf-feint', name: 'Wolf Feint', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Apply Flanked. Gain 1 Dodge.', effect: g => { addStatus(g.target, 'flanked', 2); state.dodge += 1; log('Lady pulls the enemy off balance.'); } },
@@ -211,6 +211,7 @@ let activeProfileId = null;
 let pendingRevealCards = [];
 let revealIndex = 0;
 let pendingVictoryFinal = false;
+let pendingBandagePlay = null;
 
 function freshState() {
   return {
@@ -418,6 +419,9 @@ function bind() {
   $('campBtn').addEventListener('click', camp);
   $('cardsBtn').addEventListener('click', () => showPrep());
   $('journalBtn').addEventListener('click', () => $('journalDialog').showModal());
+  $('statusLegendBtn').addEventListener('click', () => $('statusLegendDialog').showModal());
+  $('bandageDelilahBtn').addEventListener('click', () => resolveBandageChoice('delilah'));
+  $('bandageLadyBtn').addEventListener('click', () => resolveBandageChoice('lady'));
   $('returnMapBtn').addEventListener('click', () => {
     $('routeDialog').close();
     showBoard();
@@ -1218,11 +1222,28 @@ function playCard(index) {
   const c = card(id);
   const playCost = c ? effectiveCost(c) : 0;
   if (!c || playCost > state.actions || state.huntLost) return;
+  if (c.id === 'bandage') {
+    pendingBandagePlay = { index, c, playCost };
+    $('bandageDialog').showModal();
+    return;
+  }
+  resolveCardPlay(index, c, playCost, { target: target() });
+}
+
+function resolveBandageChoice(ally) {
+  if (!pendingBandagePlay) return;
+  const { index, c, playCost } = pendingBandagePlay;
+  pendingBandagePlay = null;
+  $('bandageDialog').close();
+  resolveCardPlay(index, c, playCost, { target: target(), ally });
+}
+
+function resolveCardPlay(index, c, playCost, payload) {
   state.actions -= playCost;
   state.hand.splice(index, 1);
-  state.discard.push(id);
+  state.discard.push(c.id);
   const before = target();
-  c.effect({ target: before });
+  c.effect({ ...payload, target: payload?.target || before });
   cleanupDead();
   const after = target();
   if (before && before.hp <= 0 && after && before.id !== after.id && cardScope(c) === 'Target') {
@@ -1256,7 +1277,8 @@ function target() {
 function cardScope(c) {
   if (['rain-bolts', 'black-rain', 'shatter-rite', 'moon-hunt'].includes(c.id)) return 'All Enemies';
   if (['snare', 'tripwire', 'funnel', 'trapline-map', 'spear-wall', 'kill-lane', 'grave-silence'].includes(c.id)) return 'Battlefield';
-  if (['scent', 'lunge', 'step', 'poison', 'silent', 'bandage', 'last-breath', 'low-guard', 'field-dressing', 'wolf-glance', 'ash-breath', 'quick-cache', 'hard-pivot', 'five-count', 'bone-whistle', 'red-door', 'wolf-saint', 'black-road-myth'].includes(c.id)) return 'No Target';
+  if (c.id === 'bandage') return 'Choose Ally';
+  if (['scent', 'lunge', 'step', 'poison', 'silent', 'last-breath', 'low-guard', 'field-dressing', 'wolf-glance', 'ash-breath', 'quick-cache', 'hard-pivot', 'five-count', 'bone-whistle', 'red-door', 'wolf-saint', 'black-road-myth'].includes(c.id)) return 'No Target';
   return 'Target';
 }
 
