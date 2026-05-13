@@ -630,7 +630,7 @@ function revealNextCard() {
   const c = pendingRevealCards[revealIndex++];
   $('revealedCards').insertAdjacentHTML('beforeend', revealCardHtml(c, revealIndex));
   if (isBestRevealCard(c)) $('revealHint').textContent = `${c.name}. Good pull. Delilah would keep that close.`;
-  playSoundCue('card-flip');
+  playSoundCue(displayRarity(c) === 'Legendary' ? 'legendary' : 'card-flip');
   if (revealIndex >= pendingRevealCards.length) {
     $('revealDeckStack').hidden = true;
     $('finishRevealBtn').hidden = false;
@@ -648,7 +648,7 @@ function revealAllFirstDeck() {
   pulseElement('finishRevealBtn', 5000);
   const best = bestRevealCard();
   $('revealHint').textContent = `${best.name} is your best pull. That one earns its place.`;
-  playSoundCue('reveal-all');
+  playSoundCue(displayRarity(best) === 'Legendary' ? 'legendary' : 'reveal-all');
 }
 
 function revealCardHtml(c, order, all = false) {
@@ -684,8 +684,83 @@ function finishFirstDeckReveal() {
   showBoard();
 }
 
+const soundEngine = (() => {
+  let ctx;
+  let enabled = true;
+  const ensure = () => {
+    if (!enabled) return null;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!ctx) ctx = new AudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    if (!ctx.ladyDelilahMaster) {
+      const gain = ctx.createGain();
+      gain.gain.value = 0.055;
+      gain.connect(ctx.destination);
+      ctx.ladyDelilahMaster = gain;
+    }
+    return ctx;
+  };
+  const master = () => ctx?.ladyDelilahMaster || null;
+  const tone = (freq, start, duration, type = 'sine', gainValue = 0.12) => {
+    const audio = ensure();
+    const dest = master();
+    if (!audio || !dest) return;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audio.currentTime + start);
+    gain.gain.setValueAtTime(0.0001, audio.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(gainValue, audio.currentTime + start + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + start + duration);
+    osc.connect(gain).connect(dest);
+    osc.start(audio.currentTime + start);
+    osc.stop(audio.currentTime + start + duration + 0.04);
+  };
+  const noise = (start, duration, gainValue = 0.08, filterFreq = 1200) => {
+    const audio = ensure();
+    const dest = master();
+    if (!audio || !dest) return;
+    const buffer = audio.createBuffer(1, Math.max(1, audio.sampleRate * duration), audio.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const src = audio.createBufferSource();
+    const filter = audio.createBiquadFilter();
+    const gain = audio.createGain();
+    filter.type = 'bandpass';
+    filter.frequency.value = filterFreq;
+    gain.gain.setValueAtTime(gainValue, audio.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + start + duration);
+    src.buffer = buffer;
+    src.connect(filter).connect(gain).connect(dest);
+    src.start(audio.currentTime + start);
+  };
+  const play = name => {
+    if (!ensure()) return;
+    if (name === 'card-flip') { noise(0, .09, .05, 1800); tone(540, .02, .12, 'triangle', .08); return; }
+    if (name === 'reveal-all') { [260, 390, 520, 780].forEach((f, i) => tone(f, i * .055, .22, 'triangle', .075)); noise(.02, .18, .04, 2200); return; }
+    if (name === 'play-card') { tone(220, 0, .08, 'triangle', .08); tone(330, .045, .11, 'triangle', .07); return; }
+    if (name === 'tactic') { noise(0, .13, .055, 760); tone(180, .02, .16, 'sawtooth', .045); return; }
+    if (name === 'synchronized') { tone(196, 0, .18, 'triangle', .075); tone(392, .04, .2, 'triangle', .08); tone(588, .08, .22, 'sine', .06); return; }
+    if (name === 'attack') { noise(0, .08, .075, 950); tone(130, .01, .08, 'sawtooth', .055); return; }
+    if (name === 'lady-attack') { tone(160, 0, .08, 'sawtooth', .055); tone(260, .035, .12, 'triangle', .05); noise(.02, .11, .045, 1400); return; }
+    if (name === 'delilah-hit') { noise(0, .12, .07, 740); tone(110, .02, .14, 'sawtooth', .055); return; }
+    if (name === 'lady-hit') { noise(0, .12, .06, 980); tone(150, .02, .12, 'triangle', .045); return; }
+    if (name === 'heal') { tone(420, 0, .14, 'sine', .055); tone(630, .07, .18, 'sine', .045); return; }
+    if (name === 'victory') { [196, 294, 392, 588].forEach((f, i) => tone(f, i * .09, .42, 'triangle', .07)); noise(.08, .38, .035, 2600); return; }
+    if (name === 'reward') { tone(330, 0, .12, 'triangle', .06); tone(495, .08, .2, 'sine', .045); return; }
+    if (name === 'epic') { [220, 330, 495, 660].forEach((f, i) => tone(f, i * .07, .3, 'triangle', .065)); noise(.04, .32, .04, 1800); return; }
+    if (name === 'legendary' || name === 'legendary-claim') { [196, 294, 392, 588, 784, 1176].forEach((f, i) => tone(f, i * .07, .52, i % 2 ? 'sine' : 'triangle', .075)); noise(.02, .55, .045, 3200); return; }
+    if (name === 'claim') { tone(520, 0, .12, 'triangle', .06); tone(780, .07, .18, 'sine', .05); return; }
+    if (name === 'scrap') { noise(0, .16, .075, 620); tone(95, .03, .13, 'sawtooth', .05); return; }
+    if (name === 'gamble') { noise(0, .18, .05, 1500); tone(260, .04, .1, 'triangle', .05); tone(390, .12, .1, 'triangle', .05); }
+  };
+  return { play };
+})();
+
 function playSoundCue(name) {
   document.dispatchEvent(new CustomEvent('ladyDelilahSoundCue', { detail: { name } }));
+  soundEngine.play(name);
 }
 
 function pulseElement(id, duration = 4500) {
@@ -1239,6 +1314,7 @@ function resolveBandageChoice(ally) {
 }
 
 function resolveCardPlay(index, c, playCost, payload) {
+  playSoundCue(c.type === 'Synchronized' ? 'synchronized' : c.type === 'Tactic' ? 'tactic' : 'play-card');
   state.actions -= playCost;
   state.hand.splice(index, 1);
   state.discard.push(c.id);
@@ -1268,6 +1344,7 @@ function attack(g, base, status = {}, source = 'Delilah') {
   e.hp = Math.max(0, e.hp - dmg);
   Object.entries(status).forEach(([k, v]) => addStatus(e, k, v));
   log(`<b>${source}</b> hits ${e.name} for ${dmg}.`);
+  playSoundCue(source === 'Lady' ? 'lady-attack' : 'attack');
 }
 
 function target() {
@@ -1388,6 +1465,7 @@ function gainActions(n, why) {
 function heal(who, n) {
   const h = state[who];
   h.hp = Math.min(h.max, h.hp + n);
+  playSoundCue('heal');
 }
 
 function endTurn() {
@@ -1643,6 +1721,7 @@ function applyDamage(who, amount, enemy, action) {
   state[who].hp = Math.max(0, state[who].hp - amount);
   const name = who === 'lady' ? 'Lady' : 'Delilah';
   announceEnemy(enemy, action, `${amount} damage to ${name}`, who === 'lady' ? 'enemy-hit-lady' : 'enemy-hit-delilah');
+  playSoundCue(who === 'lady' ? 'lady-hit' : 'delilah-hit');
 }
 
 function announceEnemy(enemy, action, result, pulse = '') {
@@ -1725,6 +1804,7 @@ function showVictoryCachePrompt(final) {
     : `${selectedContract.name} goes quiet. Proceed to the winner's cache and reveal the card you earned.`;
   $('victoryTitle').textContent = title;
   $('victoryText').textContent = text;
+  playSoundCue('victory');
   setTimeout(() => {
     if (!$('rewardDialog').open && !$('victoryDialog').open) $('victoryDialog').showModal();
   }, 450);
@@ -1752,6 +1832,9 @@ function renderRewardCardBack() {
 
 function renderCardReward() {
   const c = state.pendingRewardCard;
+  const rarity = displayRarity(c);
+  $('rewardDialog').dataset.rewardRarity = rarity.toLowerCase();
+  playSoundCue(rarity === 'Legendary' ? 'legendary' : rarity === 'Epic' ? 'epic' : 'reward');
   $('rewardTitle').textContent = state.pendingFinal ? 'The Ritual Leader falls. Claim your card.' : 'You won a new card.';
   $('rewardChoices').innerHTML = `
     <div class="reward-odds">${formatRewardOdds()}</div>
@@ -1767,6 +1850,7 @@ function renderCardReward() {
 
 function renderGambleReward() {
   const picks = Array.from({ length: 3 }, randomRewardCard);
+  playSoundCue('gamble');
   $('rewardTitle').textContent = 'Choose one unknown card.';
   $('rewardChoices').innerHTML = `<div class="reward-odds">${formatRewardOdds()}</div>${picks.map((_, i) => `<button class="reward-choice face-down" data-pick="${i}" type="button"><b>?</b></button>`).join('')}`;
   document.querySelectorAll('[data-pick]').forEach(btn => {
@@ -1776,6 +1860,9 @@ function renderGambleReward() {
 
 function renderGambleResult(c) {
   state.pendingRewardCard = c;
+  const rarity = displayRarity(c);
+  $('rewardDialog').dataset.rewardRarity = rarity.toLowerCase();
+  playSoundCue(rarity === 'Legendary' ? 'legendary' : rarity === 'Epic' ? 'epic' : 'reward');
   $('rewardTitle').textContent = `You revealed ${c.name}.`;
   $('rewardChoices').innerHTML = `
     <div class="reward-odds">${formatRewardOdds()}</div>
@@ -1788,7 +1875,7 @@ function renderGambleResult(c) {
 }
 
 function rewardCardHtml(c) {
-  return `<div class="reward-card-wrap">
+  return `<div class="reward-card-wrap rarity-beam rarity-${rarityKey(c)}">
     <article class="reward-card-preview rarity-${rarityKey(c)} ${cardArtClass(c)}" style="${cardArtStyle(c)}">
       <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
       <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
@@ -1802,6 +1889,7 @@ function rewardCardHtml(c) {
 function claimRewardCard(c) {
   state.owned[c.id] = (state.owned[c.id] || 0) + 1;
   log(`${c.name} added to the permanent archive.`);
+  playSoundCue(displayRarity(c) === 'Legendary' ? 'legendary-claim' : 'claim');
   finishReward();
 }
 
@@ -1809,6 +1897,7 @@ function scrapRewardCard(c) {
   const marks = scrapValue(c);
   state.marks += marks;
   log(`${c.name} scrapped for ${marks} Hunter Marks.`);
+  playSoundCue('scrap');
   finishReward();
 }
 
