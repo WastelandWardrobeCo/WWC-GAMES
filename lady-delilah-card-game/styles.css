@@ -705,11 +705,17 @@ body[data-screen="boardScreen"] .board-screen {
   box-shadow: 10px 8px 0 rgba(48,36,22,.92), 20px 16px 0 rgba(16,12,8,.96), 0 32px 70px rgba(0,0,0,.72);
   transform: rotate(4deg);
   z-index: 6;
+  animation: deckBreath 3.8s ease-in-out infinite;
 }
 
 .reveal-deck-stack:hover {
   border-color: #e7c57b;
   transform: rotate(4deg) translateY(-4px);
+}
+
+@keyframes deckBreath {
+  0%, 100% { filter: brightness(1); box-shadow: 10px 8px 0 rgba(48,36,22,.92), 20px 16px 0 rgba(16,12,8,.96), 0 32px 70px rgba(0,0,0,.72); }
+  50% { filter: brightness(1.08); box-shadow: 10px 8px 0 rgba(48,36,22,.92), 20px 16px 0 rgba(16,12,8,.96), 0 32px 80px rgba(226,195,118,.16); }
 }
 
 .revealed-cards {
@@ -734,6 +740,10 @@ body[data-screen="boardScreen"] .board-screen {
 .reveal-card.best-pull {
   outline: 2px solid rgba(236, 137, 35, .95);
   box-shadow: 0 0 34px rgba(236,137,35,.28), 0 20px 42px rgba(0,0,0,.52);
+  animation-name: revealCard, bestPullPulse;
+  animation-duration: 1.05s, 2.4s;
+  animation-delay: calc((var(--reveal-order) - 1) * .08s), 1.05s;
+  animation-iteration-count: 1, infinite;
 }
 
 .best-pull-badge {
@@ -763,6 +773,11 @@ body[data-screen="boardScreen"] .board-screen {
 @keyframes revealFan {
   0% { opacity: 0; transform: translateY(120px) rotateY(76deg) scale(.7); }
   100% { opacity: 1; transform: translateY(0) rotateY(0deg) rotate(calc((var(--reveal-order) - 3) * 4deg)); }
+}
+
+@keyframes bestPullPulse {
+  0%, 100% { box-shadow: 0 0 34px rgba(236,137,35,.24), 0 20px 42px rgba(0,0,0,.52); }
+  50% { box-shadow: 0 0 48px rgba(236,137,35,.44), 0 22px 52px rgba(0,0,0,.62); }
 }
 
 .deck-count {
@@ -1068,9 +1083,39 @@ body[data-screen="boardScreen"] .board-screen {
   animation: legendaryFoil 5.2s ease-in-out infinite;
 }
 
+.rarity-epic {
+  position: relative;
+}
+
+.rarity-legendary {
+  position: relative;
+}
+
+.rarity-legendary:not(.fresh-draw)::after {
+  background:
+    linear-gradient(115deg, transparent 0 22%, rgba(255,255,255,.18) 28%, rgba(135,220,255,.14) 33%, rgba(255,116,232,.16) 38%, transparent 46% 100%);
+  background-size: 260% 100%;
+  mix-blend-mode: screen;
+  animation: holoSweep 3.8s linear infinite;
+}
+
+.rarity-legendary .cost {
+  box-shadow:
+    inset 0 0 0 2px rgba(0,0,0,.42),
+    0 0 0 2px rgba(248,190,94,.98),
+    0 0 20px rgba(255,222,134,.34),
+    0 10px 18px rgba(0,0,0,.38);
+}
+
 @keyframes legendaryFoil {
   0%, 100% { filter: saturate(1) brightness(1); }
   50% { filter: saturate(1.22) brightness(1.1); }
+}
+
+@keyframes holoSweep {
+  0% { background-position: 180% 0; opacity: .2; }
+  45% { opacity: .65; }
+  100% { background-position: -120% 0; opacity: .2; }
 }
 
 .cost {
@@ -1730,6 +1775,10 @@ body[data-screen="boardScreen"] .board-screen {
 .card:hover { transform: translateY(-10px); border-color: var(--gold); filter: brightness(1.12); }
 .card.disabled { opacity: .48; cursor: not-allowed; filter: grayscale(.5); }
 
+.card:not(.disabled):active {
+  transform: translateY(-6px) scale(.985);
+}
+
 .card-top {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
@@ -2103,9 +2152,45 @@ body[data-screen="boardScreen"] .board-screen {
   display: grid;
   place-items: center;
   padding: 4px 0 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.reward-card-wrap.rarity-beam::before {
+  content: "";
+  position: absolute;
+  inset: -20% 18%;
+  z-index: 0;
+  opacity: .34;
+  filter: blur(22px);
+  transform: translateY(14px);
+  animation: rewardBeam 2.8s ease-in-out infinite;
+}
+
+.reward-card-wrap.rarity-common::before { background: radial-gradient(ellipse, rgba(210,194,164,.4), transparent 66%); }
+.reward-card-wrap.rarity-uncommon::before { background: radial-gradient(ellipse, rgba(74,178,105,.5), transparent 66%); }
+.reward-card-wrap.rarity-rare::before { background: radial-gradient(ellipse, rgba(67,135,224,.56), transparent 66%); }
+.reward-card-wrap.rarity-epic::before { background: radial-gradient(ellipse, rgba(162,84,220,.64), transparent 66%); }
+.reward-card-wrap.rarity-legendary::before {
+  opacity: .72;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(255,221,121,.72), transparent 44%),
+    conic-gradient(from 20deg, rgba(255,90,90,.32), rgba(85,194,255,.36), rgba(255,242,111,.42), rgba(211,101,255,.36), rgba(255,90,90,.32));
+  animation: legendaryBeam 3.4s linear infinite;
+}
+
+@keyframes rewardBeam {
+  0%, 100% { transform: translateY(14px) scale(.96); opacity: .28; }
+  50% { transform: translateY(0) scale(1.05); opacity: .5; }
+}
+
+@keyframes legendaryBeam {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(360deg) scale(1); }
 }
 
 .reward-card-preview {
+  z-index: 1;
   width: min(270px, 78vw);
   aspect-ratio: 2 / 3;
   padding: 14px;
