@@ -835,12 +835,18 @@ body[data-screen="boardScreen"] .board-screen {
 .archive-card {
   min-height: 286px;
   padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  grid-template-rows: 50px 1fr auto auto 92px auto;
+  gap: 6px;
   position: relative;
   overflow: hidden;
-  background: var(--rarity-frame, url("assets/rarity-frame-common.png")) center / 100% 100% no-repeat;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(15,13,11,.98), rgba(4,4,4,.98)),
+    radial-gradient(circle at 50% 5%, var(--rarity-glow, rgba(170,150,118,.18)), transparent 32%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.04),
+    inset 0 0 0 3px rgba(0,0,0,.42);
 }
 
 .deck-card {
@@ -855,10 +861,12 @@ body[data-screen="boardScreen"] .board-screen {
 
 .deck-card h3 {
   margin: 0;
+  max-width: 100%;
   color: #f5ead8;
-  font-size: clamp(.95rem, 1.15vw, 1.15rem);
-  line-height: .92;
+  font-size: clamp(.86rem, 1vw, 1.05rem);
+  line-height: .94;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .deck-card > span {
@@ -871,13 +879,23 @@ body[data-screen="boardScreen"] .board-screen {
   text-transform: uppercase;
 }
 
+.deck-card > span:first-of-type {
+  min-height: 22px;
+  padding: 4px 8px;
+  border: 1px solid rgba(226,195,118,.22);
+  border-radius: 999px;
+  color: #f4e3c7;
+  background: rgba(9,8,7,.94);
+  line-height: 1.1;
+}
+
 .deck-card .card-scope {
   color: #f0d9bf;
 }
 
 .deck-card p {
   margin: auto 0 8px;
-  padding: 9px;
+  padding: 10px 11px;
   border: 1px solid rgba(177,139,86,.22);
   color: #3a2417;
   background: rgba(235, 220, 197, .86);
@@ -911,9 +929,9 @@ body[data-screen="boardScreen"] .board-screen {
   z-index: 1;
   left: 7%;
   right: 7%;
-  top: 16%;
-  height: 39%;
-  border-radius: 10px;
+  top: 18%;
+  height: 34%;
+  border-radius: 12px;
   background:
     linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.36)),
     var(--card-art, url("assets/card-reference.png")) center / cover;
@@ -1016,30 +1034,35 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .rarity-common {
-  --rarity-frame: url("assets/rarity-frame-common.png");
+  --rarity-glow: rgba(170,150,118,.22);
+  --rarity-ring: rgba(190,171,139,.72);
   border-color: rgba(170,150,118,.45) !important;
 }
 
 .rarity-uncommon {
-  --rarity-frame: url("assets/rarity-frame-uncommon.png");
+  --rarity-glow: rgba(74,178,105,.2);
+  --rarity-ring: rgba(104,199,130,.92);
   border-color: rgba(74, 178, 105, .82) !important;
   box-shadow: inset 0 0 16px rgba(74,178,105,.08);
 }
 
 .rarity-rare {
-  --rarity-frame: url("assets/rarity-frame-rare.png");
+  --rarity-glow: rgba(67,135,224,.2);
+  --rarity-ring: rgba(108,166,236,.96);
   border-color: rgba(67, 135, 224, .9) !important;
   box-shadow: inset 0 0 18px rgba(67,135,224,.1);
 }
 
 .rarity-epic {
-  --rarity-frame: url("assets/rarity-frame-epic.png");
+  --rarity-glow: rgba(162,84,220,.22);
+  --rarity-ring: rgba(191,126,239,.98);
   border-color: rgba(162, 84, 220, .95) !important;
   box-shadow: inset 0 0 20px rgba(162,84,220,.14), 0 0 16px rgba(162,84,220,.14);
 }
 
 .rarity-legendary {
-  --rarity-frame: url("assets/rarity-frame-legendary-holo.png");
+  --rarity-glow: rgba(236,137,35,.26);
+  --rarity-ring: rgba(248,190,94,.98);
   border-color: rgba(236, 137, 35, .98) !important;
   box-shadow: inset 0 0 24px rgba(236,137,35,.18), 0 0 22px rgba(236,137,35,.22);
   animation: legendaryFoil 5.2s ease-in-out infinite;
@@ -1051,14 +1074,21 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .cost {
-  width: auto;
-  min-width: 28px;
-  height: auto;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border: 0;
-  color: #f5e6cb;
-  background: transparent;
+  border: 2px solid rgba(245,230,203,.76);
+  border-radius: 50%;
+  color: #f7ecd9;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(255,255,255,.24), transparent 32%),
+    radial-gradient(circle at 50% 52%, rgba(15,16,20,.96), rgba(4,4,4,.98));
+  box-shadow:
+    inset 0 0 0 2px rgba(0,0,0,.42),
+    0 0 0 2px var(--rarity-ring, rgba(190,171,139,.72)),
+    0 10px 18px rgba(0,0,0,.38);
   font-size: 1.08rem;
   font-weight: 900;
   text-shadow: 0 2px 10px rgba(0,0,0,.94);
@@ -1358,10 +1388,10 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .delilah-figure {
-  left: 3%;
-  bottom: 5%;
-  width: clamp(220px, 24vw, 330px);
-  height: clamp(330px, 39vw, 500px);
+  left: 4%;
+  bottom: 2%;
+  width: clamp(190px, 20vw, 282px);
+  height: clamp(292px, 33vw, 420px);
   background-image: url("assets/delilah-sprite-cutout.png");
 }
 
@@ -1646,7 +1676,7 @@ body[data-screen="boardScreen"] .board-screen {
 .status-line .instinct { color: #ffe9ae; border-color: rgba(226,195,118,.58); background: rgba(102,76,26,.62); }
 
 .hand-row {
-  min-height: 312px;
+  min-height: 328px;
   display: flex;
   gap: 10px;
   justify-content: center;
@@ -1659,16 +1689,23 @@ body[data-screen="boardScreen"] .board-screen {
 .card {
   position: relative;
   overflow: hidden;
-  width: min(18vw, 184px);
-  min-width: 148px;
-  height: 276px;
-  padding: 12px;
+  width: min(18.5vw, 194px);
+  min-width: 156px;
+  height: 296px;
+  padding: 12px 12px 11px;
   border: 1px solid rgba(177,139,86,.42);
-  background: var(--rarity-frame, url("assets/rarity-frame-common.png")) center / 100% 100% no-repeat;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(15,13,11,.98), rgba(4,4,4,.98)),
+    radial-gradient(circle at 50% 5%, var(--rarity-glow, rgba(170,150,118,.18)), transparent 32%);
+  display: grid;
+  grid-template-rows: 50px 1fr auto auto 90px;
+  gap: 6px;
   text-align: left;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.04),
+    inset 0 0 0 3px rgba(0,0,0,.42),
+    0 15px 26px rgba(0,0,0,.38);
   transition: transform .14s ease, border-color .14s ease, filter .14s ease;
 }
 
@@ -1694,27 +1731,36 @@ body[data-screen="boardScreen"] .board-screen {
 .card.disabled { opacity: .48; cursor: not-allowed; filter: grayscale(.5); }
 
 .card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: start;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 50px;
+  padding: 3px 8px 3px 2px;
+  border: 1px solid rgba(226,195,118,.24);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(32,28,24,.94), rgba(8,7,6,.98));
 }
 
 .card h3 {
   margin: 0;
-  font-size: 1.03rem;
-  line-height: 1;
+  max-width: 100%;
+  font-size: clamp(.84rem, .95vw, 1.02rem);
+  line-height: .94;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .card p {
-  margin: auto 0 0;
-  padding: 8px 8px 9px;
-  min-height: 78px;
+  margin: 0;
+  padding: 10px 11px;
+  min-height: 90px;
+  border: 1px solid rgba(177,139,86,.28);
+  border-radius: 12px;
   color: #3a2417;
-  background: rgba(235, 220, 197, .86);
+  background: rgba(239, 227, 207, .95);
   font-size: .85rem;
-  line-height: 1.3;
+  line-height: 1.22;
   text-shadow: none;
 }
 
@@ -1737,19 +1783,43 @@ body[data-screen="boardScreen"] .board-screen {
 .keyword-instinct { color: #245c77; }
 
 .card-type {
-  margin-top: 4px;
+  display: grid;
+  align-items: center;
+  min-height: 22px;
+  padding: 4px 8px;
+  border: 1px solid rgba(226,195,118,.22);
+  border-radius: 999px;
   color: #f4e3c7;
+  background: rgba(9,8,7,.94);
   text-transform: uppercase;
-  font-size: .72rem;
+  font-size: .65rem;
+  line-height: 1;
 }
 
 .card-scope {
+  align-self: end;
+  min-height: 18px;
+  padding: 3px 7px;
+  border-left: 2px solid var(--rarity-ring, rgba(190,171,139,.72));
   color: #f2dfc2;
+  background: rgba(12,10,8,.72);
   font-family: "Trebuchet MS", Verdana, sans-serif;
-  font-size: .68rem;
+  font-size: .64rem;
   font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.card::after,
+.deck-card::after,
+.reward-card-preview::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--rarity-ring, rgba(190,171,139,.72));
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
 }
 
 .card-browser-modal {
@@ -1770,9 +1840,12 @@ body[data-screen="boardScreen"] .board-screen {
   min-height: 190px;
   padding: 12px;
   border: 1px solid rgba(177,139,86,.25);
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
-  background: var(--rarity-frame, url("assets/rarity-frame-common.png")) center / 100% 100% no-repeat;
+  background:
+    linear-gradient(180deg, rgba(15,13,11,.98), rgba(4,4,4,.98)),
+    radial-gradient(circle at 50% 5%, var(--rarity-glow, rgba(170,150,118,.18)), transparent 32%);
 }
 
 .collection-card b {
@@ -2037,12 +2110,15 @@ body[data-screen="boardScreen"] .board-screen {
   aspect-ratio: 2 / 3;
   padding: 14px;
   border: 1px solid rgba(177,139,86,.32);
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
-  background: var(--rarity-frame, url("assets/rarity-frame-common.png")) center / 100% 100% no-repeat;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  background:
+    linear-gradient(180deg, rgba(15,13,11,.98), rgba(4,4,4,.98)),
+    radial-gradient(circle at 50% 5%, var(--rarity-glow, rgba(170,150,118,.18)), transparent 32%);
+  display: grid;
+  grid-template-rows: 58px 1fr auto auto 126px auto;
+  gap: 8px;
   box-shadow: 0 18px 38px rgba(0,0,0,.5);
 }
 
@@ -2069,11 +2145,12 @@ body[data-screen="boardScreen"] .board-screen {
 
 .reward-card-preview h3 {
   margin: 0;
-  max-width: 185px;
+  max-width: 100%;
   color: #f5ead8;
-  font-size: 1.25rem;
-  line-height: .95;
+  font-size: clamp(1rem, 2.1vw, 1.2rem);
+  line-height: .96;
   text-transform: uppercase;
+  text-wrap: balance;
 }
 
 .reward-card-preview .card-type,
@@ -2084,9 +2161,10 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .reward-card-preview p {
-  margin: auto 0 0;
+  margin: 0;
   padding: 12px;
   border: 1px solid rgba(177,139,86,.24);
+  border-radius: 12px;
   color: #3a2417;
   background: rgba(235, 220, 197, .88);
   font-size: .94rem;
@@ -2167,10 +2245,10 @@ body[data-screen="boardScreen"] .board-screen {
   .map-node { font-size: .65rem; padding: 8px; }
   .map-node::before { width: 22px; height: 34px; margin-top: -39px; }
   .hand-row { justify-content: start; overflow-x: auto; }
-  .card { width: 142px; min-width: 142px; }
+  .card { width: 150px; min-width: 150px; }
   .reward-choices { grid-template-columns: 1fr; }
   .battle-scene { min-height: 430px; }
-  .delilah-figure { left: -10%; bottom: 8%; width: 235px; height: 350px; }
+  .delilah-figure { left: -7%; bottom: 5%; width: 205px; height: 320px; }
   .lady-figure { left: 16%; bottom: 2%; width: 235px; height: 225px; }
   .enemy-line { left: 43%; right: 0; gap: 2px; overflow: visible; }
   .enemy { width: 86px; min-height: 220px; }
