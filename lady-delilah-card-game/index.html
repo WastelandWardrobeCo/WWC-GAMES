@@ -196,7 +196,7 @@
           <div class="delilah-figure"></div>
           <div class="lady-figure"></div>
           <div id="battlefieldStatus" class="battlefield-status" hidden></div>
-          <div id="statusGlossary" class="status-glossary"></div>
+          <button id="statusLegendBtn" class="status-legend-btn" type="button">Status Legend</button>
           <div id="enemyActionBanner" class="enemy-action-banner" hidden></div>
           <div id="enemyLine" class="enemy-line"></div>
         </div>
@@ -278,6 +278,27 @@
       <h2 id="tutorialTitle">Choose a contract.</h2>
       <p id="tutorialText">Start with Black Veil Camp. It is rated 1 / 5 and built for a first hunt.</p>
       <div id="tutorialActions" class="route-actions"></div>
+    </form>
+  </dialog>
+
+  <dialog id="statusLegendDialog" class="modal status-legend-modal">
+    <form method="dialog">
+      <p class="kicker">Battlefield Reference</p>
+      <h2>Status Legend</h2>
+      <div id="statusGlossary" class="status-glossary-modal"></div>
+      <button class="blood-btn" value="ok">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="bandageDialog" class="modal bandage-modal">
+    <form method="dialog">
+      <p class="kicker">Bandage</p>
+      <h2>Who needs treatment?</h2>
+      <p>Recover 6 Health. Choosing Delilah also clears her Bleed.</p>
+      <div class="route-actions">
+        <button id="bandageDelilahBtn" class="blood-btn" type="button">Treat Delilah</button>
+        <button id="bandageLadyBtn" class="plain-btn" type="button">Treat Lady</button>
+      </div>
     </form>
   </dialog>
 
