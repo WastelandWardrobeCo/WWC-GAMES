@@ -56,16 +56,20 @@ button {
   padding: 12px;
 }
 
+body[data-screen="boardScreen"] {
+  overflow: hidden;
+}
+
 .topbar {
   display: grid;
-  grid-template-columns: minmax(270px, 1fr) auto;
-  gap: 14px;
+  grid-template-columns: minmax(220px, 1fr) auto 112px;
+  gap: 10px;
   align-items: stretch;
-  min-height: 82px;
+  min-height: 70px;
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(7,6,4,.92), rgba(13,11,8,.88));
   box-shadow: var(--shadow);
-  padding: 14px 18px;
+  padding: 10px 18px;
 }
 
 .kicker,
@@ -87,7 +91,7 @@ h1, h2, h3, p { margin-top: 0; }
 
 h1 {
   margin: 0;
-  font-size: clamp(2.4rem, 5.4vw, 4.7rem);
+  font-size: clamp(2.2rem, 4.7vw, 4.2rem);
   line-height: .85;
   letter-spacing: .02em;
   text-transform: uppercase;
@@ -110,13 +114,26 @@ h1 {
   display: block;
   margin-top: 4px;
   color: #e4ccb0;
-  font-size: 1.25rem;
+  font-size: 1.12rem;
   font-weight: 400;
 }
 
 .screen {
   margin-top: 12px;
   min-height: calc(100vh - 118px);
+}
+
+body[data-screen="boardScreen"] .game-shell {
+  height: 100vh;
+  overflow: hidden;
+}
+
+body[data-screen="boardScreen"] .screen {
+  min-height: 0;
+}
+
+body[data-screen="boardScreen"] .board-screen {
+  height: calc(100vh - 106px);
 }
 
 .panel {
@@ -129,9 +146,10 @@ h1 {
 
 .board-screen {
   display: grid;
-  grid-template-columns: 310px minmax(420px, 1fr) 330px;
-  grid-template-rows: minmax(580px, 1fr) auto;
+  grid-template-columns: 295px minmax(480px, 1fr) 300px;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 12px;
+  min-height: 0;
 }
 
 .contract-list,
@@ -146,13 +164,24 @@ h1 {
   padding: 16px;
 }
 
+.contract-list,
+.contract-detail {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contract-detail {
+  display: flex;
+  flex-direction: column;
+}
+
 .contract-card {
   display: grid;
-  grid-template-columns: 120px 1fr auto;
-  gap: 12px;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
   align-items: center;
   width: 100%;
-  margin-top: 12px;
+  margin-top: 9px;
   padding: 8px;
   border: 1px solid rgba(177,139,86,.22);
   background: rgba(8,7,5,.72);
@@ -165,7 +194,7 @@ h1 {
 }
 
 .contract-thumb {
-  height: 72px;
+  height: 58px;
   border: 1px solid rgba(177,139,86,.22);
   background: center / cover;
   filter: saturate(.75) contrast(1.1);
@@ -173,14 +202,14 @@ h1 {
 
 .contract-card h3 {
   margin: 0 0 4px;
-  font-size: 1rem;
+  font-size: .92rem;
   text-transform: uppercase;
 }
 
 .contract-card p {
-  margin: 0 0 8px;
+  margin: 0 0 5px;
   color: var(--muted);
-  font-size: .86rem;
+  font-size: .78rem;
 }
 
 .pips,
@@ -190,8 +219,7 @@ h1 {
 }
 
 .faction-mark {
-  color: var(--red-bright);
-  font-size: 1.7rem;
+  display: none;
 }
 
 .plain-btn,
@@ -218,6 +246,13 @@ h1 {
   padding: 9px 14px;
 }
 
+.profile-top-btn {
+  align-self: center;
+  width: 100%;
+  margin-top: 0;
+  padding: 11px 12px;
+}
+
 .blood-btn {
   width: 100%;
   padding: 15px 18px;
@@ -229,18 +264,35 @@ h1 {
   font-size: .9rem;
 }
 
-.map-panel { overflow: hidden; }
+.map-panel {
+  position: relative;
+  overflow: hidden;
+}
 
 .map-art {
   position: relative;
   height: 100%;
-  min-height: 548px;
+  min-height: 500px;
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 50%, rgba(113,81,48,.26), transparent 18rem),
     linear-gradient(rgba(205,178,128,.18), rgba(104,80,49,.24)),
     url("assets/map-polished.png") center / cover;
   filter: sepia(.06) saturate(.94);
+}
+
+.map-accept-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 6;
+  width: min(330px, 54%);
+  transform: translateX(-50%);
+  box-shadow: 0 18px 42px rgba(0,0,0,.58), 0 0 22px rgba(224,67,49,.18);
+}
+
+.contract-detail .detail-box:has(.reward-icons) {
+  display: none;
 }
 
 .map-art::after {
@@ -334,7 +386,7 @@ h1 {
 .map-node[data-contract="sawmill"] { --flag-image: url("assets/flag-old-sawmill.png"); }
 
 .poster {
-  height: 198px;
+  height: 170px;
   margin-bottom: 16px;
   border: 1px solid var(--line);
   background: url("assets/combat-reference.png") center / cover;
@@ -408,6 +460,11 @@ h1 {
   gap: 12px;
 }
 
+.board-dock {
+  grid-template-columns: minmax(260px, 420px);
+  justify-content: center;
+}
+
 .bond-card,
 .lady-note,
 .marks-card {
@@ -432,6 +489,10 @@ h1 {
 
 .dock-btn {
   min-height: 70px;
+}
+
+.board-dock .dock-btn {
+  min-height: 52px;
 }
 
 .prep-screen {
@@ -1148,7 +1209,7 @@ h1 {
   background:
     radial-gradient(circle at 52% 62%, rgba(216,69,43,.12), transparent 28rem),
     linear-gradient(rgba(8,7,5,.1), rgba(8,7,5,.46) 58%, rgba(4,3,2,.82)),
-    url("assets/black-veil-background.png") center / cover;
+    var(--battle-bg, url("assets/black-veil-background.png")) center / cover;
 }
 
 .battle-scene::before {
@@ -1235,7 +1296,7 @@ h1 {
 
 .lady-figure {
   left: 18%;
-  bottom: 2%;
+  bottom: -4%;
   width: clamp(230px, 26vw, 370px);
   height: clamp(215px, 25vw, 345px);
   background-image: url("assets/lady-sprite.png");
@@ -1245,12 +1306,12 @@ h1 {
 
 .enemy-line {
   position: absolute;
-  right: 3%;
-  left: 47%;
-  bottom: 7%;
+  right: 1%;
+  left: 49%;
+  bottom: -2%;
   display: flex;
-  justify-content: center;
-  gap: clamp(8px, 2vw, 28px);
+  justify-content: space-around;
+  gap: clamp(28px, 4.5vw, 72px);
   align-items: flex-end;
   z-index: 4;
 }
@@ -1316,7 +1377,7 @@ h1 {
 
 .enemy {
   position: relative;
-  width: clamp(96px, 10vw, 145px);
+  width: clamp(150px, 15vw, 225px);
   min-height: clamp(230px, 25vw, 330px);
   display: grid;
   align-content: end;
@@ -1347,6 +1408,8 @@ h1 {
 }
 
 .enemy-body {
+  position: relative;
+  z-index: 1;
   width: clamp(92px, 10vw, 145px);
   height: clamp(205px, 24vw, 320px);
   background: url("assets/cultist-sprite.png") center bottom / contain no-repeat;
@@ -1405,7 +1468,8 @@ h1 {
 
 .enemy-nameplate {
   position: absolute;
-  top: 8px;
+  top: -4px;
+  z-index: 5;
   min-width: 135px;
   padding: 8px;
   border: 1px solid rgba(177,139,86,.38);
@@ -1428,6 +1492,36 @@ h1 {
 .enemy-nameplate span {
   color: var(--muted);
   font-size: .76rem;
+}
+
+.tactical-badges {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.tactical-badges span {
+  padding: 2px 5px;
+  border: 1px solid rgba(177,139,86,.24);
+  color: #d8c29e;
+  background: rgba(0,0,0,.26);
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-size: .56rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.tactical-badges .moving {
+  border-color: rgba(224,67,49,.48);
+  color: #f0b49f;
+}
+
+.tactical-badges .not-acted {
+  border-color: rgba(226,195,118,.5);
+  color: #f5dfb8;
 }
 
 .hpbar {
@@ -1534,6 +1628,8 @@ h1 {
 .keyword-flanked { color: #bfe0c4; }
 .keyword-root { color: #c8b08a; }
 .keyword-terrified { color: #d4a8ee; }
+.keyword-moving { color: #edb66d; }
+.keyword-notActed { color: #f5dfb8; }
 .keyword-dodge,
 .keyword-guard,
 .keyword-instinct { color: #b9d5e5; }
@@ -1681,6 +1777,54 @@ h1 {
 .modal::backdrop { background: rgba(0,0,0,.78); backdrop-filter: blur(3px); }
 .modal h2 { font-size: 1.8rem; }
 .modal p { color: var(--muted); line-height: 1.45; }
+
+.victory-modal {
+  width: min(920px, calc(100vw - 28px));
+  padding: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(6,5,4,.18), rgba(6,5,4,.94) 68%),
+    var(--victory-bg, url("assets/black-veil-background.png")) center / cover;
+}
+
+.victory-modal form {
+  min-height: min(620px, calc(100vh - 52px));
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  padding: 42px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 36%, rgba(226,195,118,.18), transparent 18rem),
+    linear-gradient(90deg, rgba(0,0,0,.78), transparent 28%, transparent 72%, rgba(0,0,0,.78));
+}
+
+.victory-modal .kicker {
+  color: #e7c887;
+  text-shadow: 0 3px 8px rgba(0,0,0,.85);
+}
+
+.victory-modal h2 {
+  margin: 0 0 8px;
+  color: #f7ead4;
+  font-size: clamp(4rem, 10vw, 8.5rem);
+  line-height: .78;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-shadow: 0 8px 24px rgba(0,0,0,.9), 0 0 18px rgba(224,67,49,.32);
+}
+
+.victory-modal p {
+  width: min(680px, 100%);
+  margin-bottom: 22px;
+  color: #dac6a7;
+  font-size: 1.08rem;
+}
+
+.victory-modal .route-actions {
+  width: min(420px, 100%);
+  grid-template-columns: 1fr;
+}
 
 .toast {
   position: fixed;
