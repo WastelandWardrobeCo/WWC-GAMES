@@ -10,24 +10,24 @@ const LEGACY_MIGRATED_KEY = 'ladyDelilahLegacyMigrated.v1';
 
 const contracts = [
   { id: 'black-veil', name: 'Black Veil Camp', type: 'Cult Activity', color: 'red', threat: 1, objective: 'Break the cult patrol', env: ['Night Hunt', 'Light Rain', 'Poison Traps'], desc: 'Travelers speak of chanting in the night and offerings made to something unseen. Put an end to their rites.', poster: 'assets/black-veil-background.png' },
-  { id: 'frozen', name: 'Frozen Crossing', type: 'Beast Sighting', color: 'blue', threat: 2, objective: 'Drive off the winter pack', env: ['Snow', 'Poor Sight'], desc: 'Something huge circles the crossing. The tracks stop where the screams begin.', poster: 'assets/encounter-reference.png' },
-  { id: 'bone', name: 'Bone Pit Tunnels', type: 'Scavenger Stronghold', color: 'orange', threat: 3, objective: 'Clear the bone raiders', env: ['Tunnels', 'Ambush'], desc: 'A raider shrine beneath the road, full of scrap, bones, and bad decisions.', poster: 'assets/card-reference.png' },
-  { id: 'hollow', name: 'Whispering Hollow', type: 'Hollowed Presence', color: 'violet', threat: 4, objective: 'Silence the hollowed dead', env: ['Fog', 'Fear'], desc: 'The trees repeat words they should not know. Lady will not look away.', poster: 'assets/encounter-reference.png' },
-  { id: 'sawmill', name: 'The Old Sawmill', type: 'Ritual Site', color: 'green', threat: 5, objective: 'Survive the old mill', env: ['Rot', 'Ritual'], desc: 'A silent mill, fresh ash, and a blade still warm from use.', poster: 'assets/hunt-board-reference.png' }
+  { id: 'frozen', name: 'Frozen Crossing', type: 'Beast Sighting', color: 'blue', threat: 2, objective: 'Drive off the winter pack', env: ['Snow', 'Poor Sight'], desc: 'Something huge circles the crossing. The tracks stop where the screams begin.', poster: 'assets/camp-frozen-crossing.png' },
+  { id: 'bone', name: 'Bone Pit Tunnels', type: 'Scavenger Stronghold', color: 'orange', threat: 3, objective: 'Clear the bone raiders', env: ['Tunnels', 'Ambush'], desc: 'A raider shrine beneath the road, full of scrap, bones, and bad decisions.', poster: 'assets/camp-bone-pit-tunnels.png' },
+  { id: 'hollow', name: 'Whispering Hollow', type: 'Hollowed Presence', color: 'violet', threat: 4, objective: 'Silence the hollowed dead', env: ['Fog', 'Fear'], desc: 'The trees repeat words they should not know. Lady will not look away.', poster: 'assets/camp-whispering-hollow.png' },
+  { id: 'sawmill', name: 'The Old Sawmill', type: 'Ritual Site', color: 'green', threat: 5, objective: 'Survive the old mill', env: ['Rot', 'Ritual'], desc: 'A silent mill, fresh ash, and a blade still warm from use.', poster: 'assets/camp-old-sawmill.png' }
 ];
 
 const cards = [
   { id: 'spear', name: 'Spear Thrust', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 5 damage. Apply Exposed.', effect: g => attack(g, 5, { exposed: 2 }) },
-  { id: 'aimed', name: 'Aimed Shot', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 6 damage. +2 if target has not acted.', effect: g => attack(g, 6 + (g.target.acted ? 0 : 2)) },
+  { id: 'aimed', name: 'Aimed Shot', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 6 damage. +2 if target has not acted this round.', effect: g => attack(g, 6 + (g.target.acted ? 0 : 2)) },
   { id: 'hamstring', name: 'Hamstring Cut', type: 'Attack', cost: 2, rarity: 'Sharp', text: 'Deal 4 damage. Apply Bleed 2 and Root.', effect: g => attack(g, 4, { bleed: 2, root: 1 }) },
   { id: 'throat', name: 'Through the Throat', type: 'Attack', cost: 2, rarity: 'Blackmark', text: 'Deal 10. If target is Terrified, gain 1 Action.', effect: g => { attack(g, 10); if (g.target.status.terrified) gainActions(1, 'terror opening'); } },
-  { id: 'scent', name: 'Scent Trail', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Reveal intent. Increase Lady instinct.', effect: () => { state.ladyInstinct += 2; state.intentClear = true; log('Lady reads the camp. Enemy intent is clear.'); } },
-  { id: 'growl', name: 'Warning Growl', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Terrify target. Reduce its next damage by 3.', effect: g => { addStatus(g.target, 'terrified', 2); addStatus(g.target, 'weakened', 1); log(`${g.target.name} falters under Lady's growl.`); } },
+  { id: 'scent', name: 'Scent Trail', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Reveal intent. Gain 2 Instinct. Lady attacks deal +1 per Instinct.', effect: () => { state.ladyInstinct += 2; state.intentClear = true; log('Lady reads the camp. Enemy intent is clear.'); } },
+  { id: 'growl', name: 'Warning Growl', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Apply Terrified. Also Weakened: target deals 3 less damage next attack.', effect: g => { addStatus(g.target, 'terrified', 2); addStatus(g.target, 'weakened', 1); log(`${g.target.name} falters under Lady's growl.`); } },
   { id: 'pack', name: 'Pack Rush', type: 'Instinct', cost: 2, rarity: 'Sharp', text: 'Lady deals 5 damage. Apply Flanked.', effect: g => attack(g, 5 + state.ladyInstinct, { flanked: 2 }, 'Lady') },
   { id: 'lunge', name: 'Protective Lunge', type: 'Survival', cost: 1, rarity: 'Sharp', text: 'Prevent next attack against Delilah.', effect: () => { state.guard += 1; state.ladyInstinct += 1; log('Lady interposes herself. Next hit is guarded.'); } },
   { id: 'snare', name: 'Set Snare', type: 'Tactic', cost: 2, rarity: 'Roadworn', text: 'Place a trap. Moving enemies take 7 and Root.', effect: () => { state.traps += relic('Rusted Trap Kit') && !state.freeTrapUsed ? 2 : 1; state.freeTrapUsed = true; log('Delilah sets wire low in the mud.'); } },
   { id: 'step', name: 'Evasive Step', type: 'Survival', cost: 0, rarity: 'Roadworn', text: 'Gain Dodge. Draw 1.', effect: () => { state.dodge += 1; draw(1); log('Delilah changes the angle.'); } },
-  { id: 'funnel', name: 'Funnel Path', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Moving enemies become Exposed.', effect: () => { state.funnel = true; log('The only clean path is the one Delilah chose.'); } },
+  { id: 'funnel', name: 'Funnel Path', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Enemies with Moving intent become Exposed when they move.', effect: () => { state.funnel = true; log('The only clean path is the one Delilah chose.'); } },
   { id: 'poison', name: 'Poison Coating', type: 'Preparation', cost: 1, rarity: 'Sharp', text: 'Next attack applies Bleed 4.', effect: () => { state.nextBleed += 4; log('The spear darkens with poison.'); } },
   { id: 'silent', name: 'Silent Advance', type: 'Preparation', cost: 1, rarity: 'Blackmark', text: 'First attack next turn deals +4.', effect: () => { state.nextTurnBonus += 4; log('Delilah and Lady disappear into the rain.'); } },
   { id: 'bandage', name: 'Bandage', type: 'Survival', cost: 1, rarity: 'Roadworn', text: 'Recover 6 Health. Remove Bleed.', effect: () => { heal('delilah', 6); state.bleed = 0; log('Bandages, teeth, breath. Still alive.'); } },
@@ -47,7 +47,7 @@ cards.push(
   { id: 'clean-cut', name: 'Clean Cut', type: 'Attack', cost: 1, rarity: 'Common', text: 'Deal 4 damage. +3 if target is Exposed.', effect: g => attack(g, 4 + (g.target.status.exposed ? 3 : 0)) },
   { id: 'mud-step', name: 'Mud Step', type: 'Tactic', cost: 0, rarity: 'Common', text: 'Apply Root 1. Lose 1 Action next turn.', effect: g => { addStatus(g.target, 'root', 1); state.nextActionPenalty = (state.nextActionPenalty || 0) + 1; log(`${g.target.name} slips into the killing mud.`); } },
   { id: 'field-dressing', name: 'Field Dressing', type: 'Survival', cost: 1, rarity: 'Common', text: 'Heal Delilah 4. Heal Lady 2.', effect: () => { heal('delilah', 4); heal('lady', 2); log('A fast field dressing keeps both hunters moving.'); } },
-  { id: 'wolf-glance', name: 'Wolf Glance', type: 'Instinct', cost: 0, rarity: 'Common', text: 'Reveal intent this turn. Gain 1 Lady instinct.', effect: () => { state.intentClear = true; state.ladyInstinct += 1; log('Lady sees the twitch before the strike.'); } },
+  { id: 'wolf-glance', name: 'Wolf Glance', type: 'Instinct', cost: 0, rarity: 'Common', text: 'Reveal intent this turn. Gain 1 Instinct for Lady attacks.', effect: () => { state.intentClear = true; state.ladyInstinct += 1; log('Lady sees the twitch before the strike.'); } },
   { id: 'rusted-hook', name: 'Rusted Hook', type: 'Attack', cost: 1, rarity: 'Common', text: 'Deal 3 damage. Apply Bleed 1.', effect: g => attack(g, 3, { bleed: 1 }) },
   { id: 'ash-breath', name: 'Ash Breath', type: 'Preparation', cost: 1, rarity: 'Common', text: 'Next attack applies Terrified.', effect: () => { state.nextTerror += 2; log('The air goes cold before the next hit.'); } },
   { id: 'quick-cache', name: 'Quick Cache', type: 'Tactic', cost: 0, rarity: 'Common', text: 'Draw 1. Gain 1 Scrap.', effect: () => { draw(1); state.scrap += 1; log('Delilah pockets a useful scrap of trouble.'); } },
@@ -62,7 +62,7 @@ cards.push(
   { id: 'fear-break', name: 'Fear Break', type: 'Instinct', cost: 2, rarity: 'Rare', text: 'Terrify all enemies. Draw 1.', effect: () => { state.enemies.filter(e => e.hp > 0).forEach(e => addStatus(e, 'terrified', 2)); draw(1); log('The whole camp remembers it can die.'); } },
   { id: 'five-count', name: 'Five Count', type: 'Preparation', cost: 1, rarity: 'Rare', text: 'If you spend all 3 Actions this turn, heal 5 at end turn.', effect: () => { state.fiveCount = true; log('Delilah starts counting to five.'); } },
   { id: 'shatter-rite', name: 'Shatter Rite', type: 'Attack', cost: 3, rarity: 'Rare', text: 'Deal 8 to all enemies. +4 to Ritual enemies.', effect: () => { state.enemies.filter(e => e.hp > 0).forEach(e => e.hp = Math.max(0, e.hp - 8 - (['acolyte','leader'].includes(e.key) ? 4 : 0))); log('The rite shatters across the camp.'); } },
-  { id: 'bone-whistle', name: 'Bone Whistle', type: 'Instinct', cost: 1, rarity: 'Rare', text: 'Lady instinct +3. Reveal intent. Draw 1.', effect: () => { state.ladyInstinct += 3; state.intentClear = true; draw(1); log('The bone whistle calls Lady forward.'); } },
+  { id: 'bone-whistle', name: 'Bone Whistle', type: 'Instinct', cost: 1, rarity: 'Rare', text: 'Gain 3 Instinct. Reveal intent. Draw 1.', effect: () => { state.ladyInstinct += 3; state.intentClear = true; draw(1); log('The bone whistle calls Lady forward.'); } },
   { id: 'kill-lane', name: 'Kill Lane', type: 'Tactic', cost: 2, rarity: 'Rare', text: 'Place 1 trap. All moving enemies become Exposed 3.', effect: () => { state.traps += 1; state.funnel = true; state.killLane = true; log('There is only one lane left, and it belongs to Delilah.'); } },
   { id: 'no-mercy-left', name: 'No Mercy Left', type: 'Attack', cost: 2, rarity: 'Epic', text: 'Deal 12 damage. If this kills, gain 1 Action.', effect: g => { attack(g, 12); if (g.target.hp <= 0) gainActions(1, 'No Mercy Left'); } },
   { id: 'moon-hunt', name: 'Moon Hunt', type: 'Synchronized', cost: 3, rarity: 'Epic', text: 'Deal 8 to all enemies. Heal Lady 5.', effect: () => { state.enemies.filter(e => e.hp > 0).forEach(e => e.hp = Math.max(0, e.hp - 8 - (relic('Wolf Fang Charm') ? 2 : 0))); heal('lady', 5); log('Delilah and Lady move under one moon.'); } },
@@ -193,12 +193,14 @@ const statusHelp = {
   exposed: { label: 'Exposed', text: 'Takes +2 damage from Delilah and Lady attacks.' },
   flanked: { label: 'Flanked', text: 'Counts as an execution setup and powers some Lady/Synchronized cards.' },
   root: { label: 'Root', text: 'Enemy loses its next movement/action and can trigger trap plans.' },
-  terrified: { label: 'Terrified', text: 'Unlocks fear payoffs and can enable bonus actions or executions.' },
+  terrified: { label: 'Terrified', text: 'Sets up fear payoff cards. It does not reduce damage by itself; Warning Growl also applies Weakened.' },
   weakened: { label: 'Weakened', text: 'Deals 3 less damage on its next attack.' },
   dodge: { label: 'Dodge', text: 'Cancels the next incoming hit.' },
   guard: { label: 'Guard', text: 'Lady absorbs part of the next hit for Delilah.' },
-  instinct: { label: 'Instinct', text: 'Adds damage to Lady attacks and improves her tactical pressure.' },
-  trap: { label: 'Trap', text: 'Moving enemies take 7 damage and Root when the trap triggers.' }
+  instinct: { label: 'Instinct', text: 'Lady attack cards deal +1 damage per Instinct. Some cards also build more Instinct for later hits.' },
+  trap: { label: 'Trap', text: 'Moving enemies take 7 damage and Root when the trap triggers.' },
+  moving: { label: 'Moving', text: 'This enemy intent counts as movement. It can trigger traps and Funnel Path.' },
+  notActed: { label: 'Not Acted', text: 'This enemy has not acted yet this round. Aimed Shot gets its bonus against it.' }
 };
 
 let state;
@@ -694,12 +696,23 @@ function escapeHtml(value) {
 }
 
 function enrichCardText(text) {
+  const tokens = [];
+  const stash = html => {
+    const token = `@@KEYWORD_${tokens.length}@@`;
+    tokens.push({ token, html });
+    return token;
+  };
+  let safe = escapeHtml(text);
+  safe = safe.replace(/moving enemies/gi, match => stash(`<span class="keyword keyword-moving" title="${escapeHtml(statusHelp.moving.text)}">${match}</span>`));
+  safe = safe.replace(/target has not acted/gi, match => stash(`<span class="keyword keyword-notActed" title="${escapeHtml(statusHelp.notActed.text)}">${match}</span>`));
   const labels = Object.entries(statusHelp).map(([key, help]) => ({ key, label: help.label, text: help.text }));
   const pattern = new RegExp(`\\b(${labels.map(x => x.label).join('|')})\\b`, 'gi');
-  return escapeHtml(text).replace(pattern, match => {
+  safe = safe.replace(pattern, match => {
     const found = labels.find(x => x.label.toLowerCase() === match.toLowerCase());
     return found ? `<span class="keyword keyword-${found.key}" title="${escapeHtml(found.text)}">${match}</span>` : match;
   });
+  tokens.forEach(({ token, html }) => safe = safe.replace(token, html));
+  return safe;
 }
 
 function tutorialEligible() {
@@ -835,6 +848,7 @@ function showCombat() {
 
 function setScreen(id, kicker, title) {
   ['splashScreen', 'profileScreen', 'firstRevealScreen', 'boardScreen', 'prepScreen', 'combatScreen'].forEach(s => $(s).hidden = s !== id);
+  document.body.dataset.screen = id;
   $('screenKicker').textContent = kicker;
   $('screenTitle').textContent = title;
 }
@@ -1047,6 +1061,7 @@ function draw(n) {
 
 function renderCombat() {
   renderResources();
+  $('battleScene').style.setProperty('--battle-bg', `url("${selectedContract.poster}")`);
   $('objectiveText').textContent = selectedContract.objective || 'Complete the hunt';
   $('conditionList').innerHTML = selectedContract.env.map(e => `<li>${e}</li>`).join('');
   $('delilahHp').style.width = `${100 * state.delilah.hp / state.delilah.max}%`;
@@ -1088,9 +1103,11 @@ function renderStatusGlossary() {
   const active = new Set(['bleed', 'exposed', 'flanked', 'root', 'terrified']);
   state.enemies.forEach(e => Object.entries(e.status || {}).forEach(([k, v]) => { if (v > 0) active.add(k); }));
   if (state.traps) active.add('trap');
+  if (state.enemies.some(e => e.hp > 0 && movingIntent(e))) active.add('moving');
+  if (target() && !target().acted) active.add('notActed');
   if (state.dodge) active.add('dodge');
   if (state.guard) active.add('guard');
-  if (state.ladyInstinct) active.add('instinct');
+  active.add('instinct');
   el.innerHTML = [...active].filter(k => statusHelp[k]).map(k => {
     const h = statusHelp[k];
     return `<span title="${escapeHtml(h.text)}"><b>${h.label}</b>: ${h.text}</span>`;
@@ -1154,8 +1171,12 @@ function enemyHtml(e) {
     return `<span title="${escapeHtml(help?.text || k)}">${help?.label || k} ${v}</span>`;
   }).join('');
   const statuses = Object.entries(e.status).filter(([,v]) => v > 0).map(([k,v]) => `${k} ${v}`).join(' · ');
+  const tacticalBadges = [
+    movingIntent(e) ? `<span class="moving" title="${escapeHtml(statusHelp.moving.text)}">Moving</span>` : '',
+    !e.acted ? `<span class="not-acted" title="${escapeHtml(statusHelp.notActed.text)}">Not Acted</span>` : `<span title="This enemy has already acted this round.">Acted</span>`
+  ].filter(Boolean).join('');
   return `<button class="enemy enemy-${enemyFamily(e.key)} enemy-sprite-${enemySprite(e.key)} ${e.elite ? 'elite' : ''} ${chosen ? 'selected' : ''}" data-id="${e.id}" type="button" aria-label="Target ${e.name}">
-    <div class="enemy-nameplate"><b>${e.name}</b><span>${e.hp}/${e.max}</span><div class="hpbar"><i style="width:${100 * e.hp / e.max}%"></i></div><div class="status-line">${statusLabels}</div></div>
+    <div class="enemy-nameplate"><b>${e.name}</b><span>${e.hp}/${e.max}</span><div class="hpbar"><i style="width:${100 * e.hp / e.max}%"></i></div><div class="tactical-badges">${tacticalBadges}</div><div class="status-line">${statusLabels}</div></div>
     <div class="enemy-body"></div>
   </button>`;
 }
@@ -1674,10 +1695,12 @@ function showDefeatDialog(reason) {
 
 function showVictoryCachePrompt(final) {
   pendingVictoryFinal = final;
-  const title = final ? `${selectedContract.name} is broken.` : 'The battle is won.';
+  const dialog = $('victoryDialog');
+  if (dialog) dialog.style.setProperty('--victory-bg', `url("${selectedContract.poster}")`);
+  const title = 'Victory';
   const text = final
-    ? `Congratulations. You completed the hunt. Proceed to the winner's cache and claim the card the camp left behind.`
-    : `Congratulations. You won the battle. Proceed to the winner's cache and reveal the card you earned.`;
+    ? `${selectedContract.name} is broken. The hunt is complete. Proceed to the winner's cache and claim what the camp left behind.`
+    : `${selectedContract.name} goes quiet. Proceed to the winner's cache and reveal the card you earned.`;
   $('victoryTitle').textContent = title;
   $('victoryText').textContent = text;
   setTimeout(() => {
@@ -1801,13 +1824,21 @@ function randomRewardCard() {
 }
 
 function rewardOdds() {
-  const wins = Math.max(1, state.battlesWon || 1);
+  const wins = Math.max(0, state.battlesWon || 0);
   const riskBonus = Math.max(0, (selectedContract.threat || 1) - 1);
-  const legendary = Math.min(22, 1 + Math.max(0, wins - 1) * 1.75 + riskBonus * 1.8);
-  const epic = Math.min(28, 8 + wins * 1.1 + riskBonus * 2.5);
-  const rare = Math.min(32, 18 + wins * .8 + riskBonus * 2);
-  const uncommon = 34;
-  const common = Math.max(5, 100 - legendary - epic - rare - uncommon);
+  const ownedLegendary = ownedRarityCount('Legendary');
+  const ownedEpic = ownedRarityCount('Epic');
+  const momentum = Math.min(8, Math.max(0, wins - ownedLegendary * 3 - ownedEpic));
+  let legendary = .8 + momentum * .45 + riskBonus * .55;
+  if (ownedLegendary === 1) legendary = Math.min(legendary, 2.2 + riskBonus * .45);
+  if (ownedLegendary >= 2) legendary = Math.min(legendary, 1 + riskBonus * .35);
+  legendary = clamp(legendary, .6, 7.5);
+  let epic = 6 + Math.min(6, wins * .45) + riskBonus * 1.25 - ownedEpic * 1.2 - ownedLegendary * .8;
+  epic = clamp(epic, 4, 16);
+  let rare = 20 + Math.min(6, wins * .35) + riskBonus * 1.15 - ownedLegendary * .5;
+  rare = clamp(rare, 18, 31);
+  const uncommon = clamp(37 - wins * .25 + ownedLegendary * 1.2, 30, 40);
+  const common = Math.max(12, 100 - legendary - epic - rare - uncommon);
   const total = common + uncommon + rare + epic + legendary;
   return {
     Common: +(common * 100 / total).toFixed(1),
@@ -1816,6 +1847,14 @@ function rewardOdds() {
     Epic: +(epic * 100 / total).toFixed(1),
     Legendary: +(legendary * 100 / total).toFixed(1)
   };
+}
+
+function ownedRarityCount(rarity) {
+  return cards.reduce((sum, c) => sum + (displayRarity(c) === rarity ? (state.owned[c.id] || 0) : 0), 0);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function formatRewardOdds() {
@@ -1856,8 +1895,9 @@ function nextIntent(e) {
 
 function intentText(e) {
   const behavior = e.behavior || { label: e.intent, telegraph: e.intent };
-  if (!state.intentClear && !e.status.bleed && !relic('Blood Lantern')) return `${e.name}: ${behavior.telegraph || 'Hostile movement'}`;
-  return `${e.name}: ${behavior.label} - ${behavior.telegraph || 'Hostile movement'}`;
+  const tags = [movingIntent(e) ? 'Moving' : '', !e.acted ? 'Not Acted' : 'Acted'].filter(Boolean).join(' · ');
+  if (!state.intentClear && !e.status.bleed && !relic('Blood Lantern')) return `${e.name}: ${behavior.telegraph || 'Hostile movement'} (${tags})`;
+  return `${e.name}: ${behavior.label} - ${behavior.telegraph || 'Hostile movement'} (${tags})`;
 }
 
 function movingIntent(enemyOrIntent) {
