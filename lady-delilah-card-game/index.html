@@ -12,8 +12,7 @@
       <div>
         <p class="kicker" id="screenKicker">Choose Your Hunt</p>
         <h1 id="screenTitle">Hunt Board</h1>
-        <button id="allCardsBtn" class="plain-btn title-action" type="button">All Cards</button>
-        <button id="profilesBtn" class="plain-btn title-action" type="button">Profiles</button>
+        <button id="allCardsBtn" class="plain-btn title-action" type="button" hidden>All Cards</button>
       </div>
       <div class="resource-strip">
         <div><span>Hunter Rank</span><b id="rankText">VI</b></div>
@@ -21,6 +20,7 @@
         <div><span>Scrap</span><b id="scrapText">340</b></div>
         <div><span>Reputation</span><b id="repText">Renowned</b></div>
       </div>
+      <button id="profilesBtn" class="plain-btn profile-top-btn" type="button">Profiles</button>
     </header>
 
     <section id="splashScreen" class="screen splash-screen" hidden>
@@ -98,6 +98,7 @@
             <path d="M500 110 C535 190 625 195 660 250" />
             <path d="M235 275 C390 225 470 290 540 380" />
           </svg>
+          <button id="acceptBtn" class="blood-btn map-accept-btn" type="button">Accept Contract</button>
         </div>
       </section>
 
@@ -124,19 +125,18 @@
             <div>?</div>
           </div>
         </div>
-        <button id="acceptBtn" class="blood-btn" type="button">Accept Contract</button>
       </aside>
 
-      <footer class="bottom-dock">
-        <div class="bond-card">
+      <footer class="bottom-dock board-dock">
+        <div class="bond-card" hidden>
           <b>Delilah & Lady</b>
           <span>Bond Level <i id="bondText">I</i></span>
         </div>
         <button class="dock-btn" id="deckBtn" type="button">Your Deck</button>
-        <button class="dock-btn" id="prepBtn" type="button">Preparation</button>
-        <button class="dock-btn" id="archiveBtn" type="button">Archive</button>
-        <button class="dock-btn" id="journalBtn" type="button">Journal</button>
-        <div class="lady-note" id="ladyNote">Lady senses weakness at Black Veil Camp.</div>
+        <button class="dock-btn" id="prepBtn" type="button" hidden>Preparation</button>
+        <button class="dock-btn" id="archiveBtn" type="button" hidden>Archive</button>
+        <button class="dock-btn" id="journalBtn" type="button" hidden>Journal</button>
+        <div class="lady-note" id="ladyNote" hidden>Lady senses weakness at Black Veil Camp.</div>
       </footer>
     </section>
 
@@ -236,7 +236,7 @@
     </form>
   </dialog>
 
-  <dialog id="victoryDialog" class="modal">
+  <dialog id="victoryDialog" class="modal victory-modal">
     <form method="dialog">
       <p class="kicker">Hunt Won</p>
       <h2 id="victoryTitle">The camp goes quiet.</h2>
