@@ -1051,13 +1051,17 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .cost {
-  width: 34px;
-  height: 34px;
+  width: auto;
+  min-width: 28px;
+  height: auto;
   display: grid;
   place-items: center;
-  border: 1px solid var(--gold);
-  color: #f1dfc8;
-  background: rgba(0,0,0,.5);
+  border: 0;
+  color: #f5e6cb;
+  background: transparent;
+  font-size: 1.08rem;
+  font-weight: 900;
+  text-shadow: 0 2px 10px rgba(0,0,0,.94);
 }
 
 .relic-shelf {
@@ -1271,7 +1275,7 @@ body[data-screen="boardScreen"] .board-screen {
 
 .battle-scene {
   position: relative;
-  min-height: 460px;
+  min-height: 390px;
   overflow: hidden;
   background:
     radial-gradient(circle at 52% 62%, rgba(216,69,43,.12), transparent 28rem),
@@ -1373,9 +1377,9 @@ body[data-screen="boardScreen"] .board-screen {
 
 .enemy-line {
   position: absolute;
-  right: 1%;
-  left: 49%;
-  bottom: -2%;
+  right: 2%;
+  left: 52%;
+  bottom: -7%;
   display: flex;
   justify-content: space-around;
   gap: clamp(28px, 4.5vw, 72px);
@@ -1415,37 +1419,51 @@ body[data-screen="boardScreen"] .board-screen {
   color: #ffe0cf;
 }
 
-.status-glossary {
+.status-legend-btn {
   position: absolute;
   left: 2%;
-  bottom: 3%;
+  bottom: 4%;
   z-index: 6;
-  width: min(330px, 42%);
-  display: grid;
-  gap: 5px;
+  width: auto;
+  padding: 10px 14px;
+  border: 1px solid rgba(226,195,118,.42);
+  color: #f4e6cf;
+  background: rgba(7,6,4,.78);
+  box-shadow: 0 12px 28px rgba(0,0,0,.4), inset 0 0 16px rgba(226,195,118,.08);
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   pointer-events: auto;
 }
 
-.status-glossary span {
-  padding: 5px 7px;
-  border: 1px solid rgba(177,139,86,.2);
-  color: rgba(232,216,192,.8);
-  background: rgba(7,6,4,.62);
-  box-shadow: 0 10px 22px rgba(0,0,0,.26);
-  font-family: "Trebuchet MS", Verdana, sans-serif;
-  font-size: .64rem;
-  line-height: 1.25;
+.status-glossary-modal {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 18px;
 }
 
-.status-glossary b {
+.status-glossary-modal span {
+  padding: 8px 10px;
+  border: 1px solid rgba(177,139,86,.2);
+  color: rgba(232,216,192,.94);
+  background: rgba(7,6,4,.72);
+  box-shadow: 0 10px 22px rgba(0,0,0,.26);
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+
+.status-glossary-modal b {
   color: #f0d9bf;
   text-transform: uppercase;
 }
 
 .enemy {
   position: relative;
-  width: clamp(150px, 15vw, 225px);
-  min-height: clamp(230px, 25vw, 330px);
+  width: clamp(132px, 13vw, 196px);
+  min-height: clamp(205px, 22vw, 292px);
   display: grid;
   align-content: end;
   justify-items: center;
@@ -1477,8 +1495,8 @@ body[data-screen="boardScreen"] .board-screen {
 .enemy-body {
   position: relative;
   z-index: 1;
-  width: clamp(92px, 10vw, 145px);
-  height: clamp(205px, 24vw, 320px);
+  width: clamp(82px, 8.8vw, 128px);
+  height: clamp(178px, 21vw, 282px);
   background: url("assets/cultist-sprite.png") center bottom / contain no-repeat;
   filter: drop-shadow(0 20px 18px rgba(0,0,0,.78));
   transform: scaleX(-1);
@@ -1490,29 +1508,29 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .enemy-sprite-frost-wolf .enemy-body {
-  width: clamp(170px, 17vw, 260px);
-  height: clamp(165px, 18vw, 255px);
+  width: clamp(145px, 14vw, 220px);
+  height: clamp(138px, 15vw, 216px);
   background-image: url("assets/enemy-frost-wolf.png");
   background-size: auto 100%;
 }
 
 .enemy-sprite-ice-stalker .enemy-body {
-  width: clamp(132px, 13vw, 205px);
-  height: clamp(230px, 27vw, 360px);
+  width: clamp(112px, 11vw, 176px);
+  height: clamp(196px, 23vw, 318px);
   background-image: url("assets/enemy-ice-stalker.png");
   background-size: auto 100%;
 }
 
 .enemy-sprite-bone-brute .enemy-body {
-  width: clamp(140px, 14vw, 220px);
-  height: clamp(235px, 27vw, 365px);
+  width: clamp(118px, 12vw, 188px);
+  height: clamp(202px, 23vw, 322px);
   background-image: url("assets/enemy-bone-brute.png");
   background-size: auto 100%;
 }
 
 .enemy-sprite-hollow-lantern .enemy-body {
-  width: clamp(138px, 14vw, 218px);
-  height: clamp(240px, 28vw, 375px);
+  width: clamp(116px, 12vw, 186px);
+  height: clamp(205px, 24vw, 330px);
   background-image: url("assets/enemy-hollow-lantern.png");
   background-size: auto 100%;
 }
@@ -1523,8 +1541,8 @@ body[data-screen="boardScreen"] .board-screen {
 .enemy-sawmill .enemy-body { filter: sepia(.45) hue-rotate(330deg) saturate(1.35) brightness(.88) drop-shadow(0 0 18px rgba(224,67,49,.22)) drop-shadow(0 20px 18px rgba(0,0,0,.78)); }
 
 .enemy.elite .enemy-body {
-  width: clamp(118px, 12vw, 176px);
-  height: clamp(260px, 30vw, 385px);
+  width: clamp(108px, 11vw, 160px);
+  height: clamp(224px, 26vw, 348px);
   filter: drop-shadow(0 0 20px rgba(224,67,49,.28)) drop-shadow(0 22px 18px rgba(0,0,0,.82));
 }
 
@@ -1621,10 +1639,16 @@ body[data-screen="boardScreen"] .board-screen {
   text-transform: uppercase;
 }
 
+.status-line .bleed { color: #ffd3cb; border-color: rgba(224,67,49,.58); background: rgba(118,23,19,.62); }
+.status-line .dodge,
+.status-line .guard { color: #d9efff; border-color: rgba(109,155,184,.58); background: rgba(30,64,82,.62); }
+.status-line .buff,
+.status-line .instinct { color: #ffe9ae; border-color: rgba(226,195,118,.58); background: rgba(102,76,26,.62); }
+
 .hand-row {
-  min-height: 230px;
+  min-height: 312px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
   align-items: end;
   padding: 14px;
@@ -1635,10 +1659,10 @@ body[data-screen="boardScreen"] .board-screen {
 .card {
   position: relative;
   overflow: hidden;
-  width: min(17vw, 156px);
-  min-width: 118px;
-  height: 208px;
-  padding: 10px;
+  width: min(18vw, 184px);
+  min-width: 148px;
+  height: 276px;
+  padding: 12px;
   border: 1px solid rgba(177,139,86,.42);
   background: var(--rarity-frame, url("assets/rarity-frame-common.png")) center / 100% 100% no-repeat;
   display: flex;
@@ -1652,7 +1676,7 @@ body[data-screen="boardScreen"] .board-screen {
   left: 7%;
   right: 7%;
   top: 18%;
-  height: 36%;
+  height: 38%;
   border-radius: 8px;
 }
 
@@ -1678,7 +1702,7 @@ body[data-screen="boardScreen"] .board-screen {
 
 .card h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.03rem;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -1686,7 +1710,7 @@ body[data-screen="boardScreen"] .board-screen {
 .card p {
   margin: auto 0 0;
   padding: 8px 8px 9px;
-  min-height: 58px;
+  min-height: 78px;
   color: #3a2417;
   background: rgba(235, 220, 197, .86);
   font-size: .85rem;
@@ -1695,21 +1719,22 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .keyword {
-  color: #f5dfb8;
+  color: #7a4c15;
   border-bottom: 1px dotted rgba(226,195,118,.58);
   cursor: help;
+  font-weight: 900;
 }
 
-.keyword-bleed { color: #f0a28f; }
-.keyword-exposed { color: #f4cf86; }
-.keyword-flanked { color: #bfe0c4; }
-.keyword-root { color: #c8b08a; }
-.keyword-terrified { color: #d4a8ee; }
-.keyword-moving { color: #edb66d; }
-.keyword-notActed { color: #f5dfb8; }
+.keyword-bleed { color: #a02622; }
+.keyword-exposed { color: #93610d; }
+.keyword-flanked { color: #2f6f45; }
+.keyword-root { color: #6d4d2a; }
+.keyword-terrified { color: #7a3a96; }
+.keyword-moving { color: #9b4f09; }
+.keyword-notActed { color: #735211; }
 .keyword-dodge,
 .keyword-guard,
-.keyword-instinct { color: #b9d5e5; }
+.keyword-instinct { color: #245c77; }
 
 .card-type {
   margin-top: 4px;
