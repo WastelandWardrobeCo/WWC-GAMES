@@ -73,6 +73,34 @@ cards.push(
   { id: 'black-road-myth', name: 'Black Road Myth', type: 'Legend', cost: 2, rarity: 'Legendary', text: 'Draw 3. This turn, Synchronized cards cost 1 less.', effect: () => { draw(3); state.syncDiscount = true; log('The Black Road remembers their names.'); } }
 );
 
+const forgeCards = [
+  { id: 'forge-iron-vow', name: 'Iron Vow', type: 'Survival', cost: 1, rarity: 'Uncommon', forgeOnly: true, text: 'Gain 1 Guard. If Delilah is below half HP, draw 1.', effect: () => { state.guard += 1; if (state.delilah.hp < state.delilah.max / 2) draw(1); log('Iron holds where flesh should fail.'); } },
+  { id: 'forge-hookline-signal', name: 'Hookline Signal', type: 'Instinct', cost: 1, rarity: 'Uncommon', forgeOnly: true, text: 'Apply Flanked. Gain 1 Instinct.', effect: g => { addStatus(g.target, 'flanked', 2); state.ladyInstinct += 1; log('Lady sees the hookline before it tightens.'); } },
+  { id: 'forge-counter-cut', name: 'Counter-Cut', type: 'Survival', cost: 1, rarity: 'Rare', forgeOnly: true, text: 'Gain Dodge. Your next attack deals +3.', effect: () => { state.dodge += 1; state.nextTurnBonus += 3; log('Delilah leaves a wound where the miss should be.'); } },
+  { id: 'forge-cornered-animal', name: 'Cornered Animal', type: 'Survival', cost: 1, rarity: 'Rare', forgeOnly: true, text: 'If Delilah is below 40% HP, next attack deals +8 and gain Dodge. Otherwise next attack deals +3.', effect: () => { if (state.delilah.hp <= state.delilah.max * .4) { state.nextTurnBonus += 8; state.dodge += 1; log('Cornered does not mean beaten.'); } else { state.nextTurnBonus += 3; log('Delilah saves the worst of herself for later.'); } } },
+  { id: 'forge-blood-trail', name: 'Blood Trail', type: 'Preparation', cost: 2, rarity: 'Epic', forgeOnly: true, text: 'For this combat, Synchronized attacks deal +3 to Bleeding enemies.', effect: () => { state.syncBleedBonus = Math.max(state.syncBleedBonus || 0, 3); log('Every drop becomes a road Lady can follow.'); } },
+  { id: 'forge-last-light-stance', name: 'Last Light Stance', type: 'Survival', cost: 1, rarity: 'Epic', forgeOnly: true, text: 'If Delilah is below half HP, heal both 5 and gain 2 Guard. Otherwise gain 1 Guard and draw 1.', effect: () => { if (state.delilah.hp < state.delilah.max / 2) { heal('delilah', 5); heal('lady', 5); state.guard += 2; log('The last light finds both of them standing.'); } else { state.guard += 1; draw(1); log('Delilah keeps the stance half-hidden.'); } } },
+  { id: 'forge-red-sermon', name: 'Red Sermon', type: 'Tactic', cost: 2, rarity: 'Epic', forgeOnly: true, text: 'Terrify all enemies. Bleeding enemies become Exposed 2.', effect: () => { state.enemies.filter(e => e.hp > 0).forEach(e => { addStatus(e, 'terrified', 2); if (e.status.bleed) addStatus(e, 'exposed', 2); }); log('The sermon is red, brief, and understood.'); } },
+  { id: 'forge-black-forge-oath', name: 'Black Forge Oath', type: 'Synchronized', cost: 3, rarity: 'Legendary', forgeOnly: true, text: 'Deal 12 to all enemies. Bleeding or Flanked enemies take +5.', effect: () => { state.enemies.filter(e => e.hp > 0).forEach(e => { const bonus = (e.status.bleed || e.status.flanked) ? 5 : 0; e.hp = Math.max(0, e.hp - 12 - bonus - (relic('Wolf Fang Charm') ? 2 : 0)); }); log('The oath rings once. Everything answers in blood.'); } },
+  { id: 'forge-mercy-blade', name: 'Mercy Is A Blade', type: 'Attack', cost: 2, rarity: 'Legendary', forgeOnly: true, text: 'Deal 9 damage. If this kills, draw 1 and gain 1 Action.', effect: g => { attack(g, 9); if (g.target.hp <= 0) { draw(1); gainActions(1, 'Mercy Is A Blade'); } } },
+  { id: 'forge-last-door', name: 'The Last Door Opens', type: 'Legend', cost: 3, rarity: 'Legendary', forgeOnly: true, text: 'Heal both 6. Next Synchronized card costs 1 less and deals +6.', effect: () => { heal('delilah', 6); heal('lady', 6); state.syncDiscount = true; state.nextSyncBonus = Math.max(state.nextSyncBonus || 0, 6); log('The last door opens, and the hunt steps through.'); } }
+];
+
+cards.push(...forgeCards);
+
+const forgeInventory = [
+  { id: 'forge-hookline-signal', price: 75 },
+  { id: 'forge-iron-vow', price: 90 },
+  { id: 'forge-counter-cut', price: 165 },
+  { id: 'forge-cornered-animal', price: 210 },
+  { id: 'forge-blood-trail', price: 340 },
+  { id: 'forge-red-sermon', price: 410 },
+  { id: 'forge-last-light-stance', price: 480 },
+  { id: 'forge-mercy-blade', price: 760 },
+  { id: 'forge-last-door', price: 930 },
+  { id: 'forge-black-forge-oath', price: 1150 }
+];
+
 const starterDeck = ['spear','spear','aimed','aimed','hamstring','hamstring','scent','growl','pack','lunge','snare','snare','step','step','funnel','poison','silent','bandage','bandage','sync'];
 
 const relics = [
@@ -226,7 +254,7 @@ function freshState() {
     delilah: { hp: 38, max: 38 }, lady: { hp: 32, max: 32 },
     enemies: [], targetId: null, log: [],
     enemyActionEvents: [], debugEvents: [],
-    guard: 0, dodge: 0, traps: 0, ladyInstinct: 0, intentClear: false, funnel: false, nextBleed: 0, nextTurnBonus: 0, nextTerror: 0, bleed: 0, freeTrapUsed: false,
+      guard: 0, dodge: 0, traps: 0, ladyInstinct: 0, intentClear: false, funnel: false, nextBleed: 0, nextTurnBonus: 0, nextTerror: 0, nextSyncBonus: 0, syncBleedBonus: 0, bleed: 0, freeTrapUsed: false,
     reinforcements: 0, huntLost: false, pendingRewardCard: null, pendingFinal: false
   };
 }
@@ -401,6 +429,7 @@ function bind() {
   $('profilesBtn').addEventListener('click', showProfileGate);
   $('splashBeginBtn').addEventListener('click', showProfileGate);
   $('deckBtn').addEventListener('click', () => showPrep());
+  $('forgeBtn').addEventListener('click', showForge);
   $('prepBtn').addEventListener('click', () => showPrep());
   $('archiveBtn').addEventListener('click', () => showPrep());
   document.querySelectorAll('.map-node').forEach(btn => btn.addEventListener('click', () => {
@@ -408,6 +437,8 @@ function bind() {
     maybeShowContractTutorialAfterSelection();
   }));
   $('backBoardBtn').addEventListener('click', () => showBoard());
+  $('forgeBackBoardBtn').addEventListener('click', () => showBoard());
+  $('forgeDeckBtn').addEventListener('click', () => showPrep());
   $('recommendBtn').addEventListener('click', () => {
     recommendationsOn = !recommendationsOn;
     renderPrep();
@@ -920,13 +951,18 @@ function showPrep() {
   maybeShowPrepTutorial();
 }
 
+function showForge() {
+  renderForge();
+  setScreen('forgeScreen', 'Systema Obscura', 'The Forge');
+}
+
 function showCombat() {
   setScreen('combatScreen', `Hunt: ${selectedContract.name}`, selectedContract.name);
   maybeShowCombatTutorial();
 }
 
 function setScreen(id, kicker, title) {
-  ['splashScreen', 'profileScreen', 'firstRevealScreen', 'boardScreen', 'prepScreen', 'combatScreen'].forEach(s => $(s).hidden = s !== id);
+  ['splashScreen', 'profileScreen', 'firstRevealScreen', 'boardScreen', 'prepScreen', 'forgeScreen', 'combatScreen'].forEach(s => $(s).hidden = s !== id);
   document.body.dataset.screen = id;
   $('screenKicker').textContent = kicker;
   $('screenTitle').textContent = title;
@@ -940,6 +976,7 @@ function renderResources() {
   $('repText').textContent = state.rep;
   $('bondText').textContent = state.bond;
   $('combatMarks').textContent = state.marks;
+  if ($('forgeMarks')) $('forgeMarks').textContent = state.marks.toLocaleString();
 }
 
 function renderContracts() {
@@ -1028,6 +1065,51 @@ function renderPrep() {
   document.querySelectorAll('[data-minus-card]').forEach(b => b.addEventListener('click', () => removeCardFromDeck(b.dataset.minusCard)));
 }
 
+function renderForge() {
+  renderResources();
+  const grid = $('forgeInventory');
+  if (!grid) return;
+  grid.innerHTML = forgeInventory.map(item => {
+    const c = card(item.id);
+    if (!c) return '';
+    const owned = state.owned[c.id] || 0;
+    const affordable = state.marks >= item.price;
+    const locked = !owned && !affordable;
+    return `<article class="forge-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? 'owned' : ''} ${locked ? 'locked' : ''}" style="${cardArtStyle(c)}">
+      <div class="forge-card-preview">
+        <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
+        <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
+        <span class="card-scope">${cardScope(c)}</span>
+        <p>${enrichCardText(c.text)}</p>
+      </div>
+      <div class="forge-card-meta">
+        <span>${displayRarity(c)}</span>
+        <b>${item.price.toLocaleString()} Marks</b>
+        <small>${owned ? 'Owned' : affordable ? 'Available' : 'Need more Marks'}</small>
+      </div>
+      <button class="plain-btn forge-buy-btn" data-buy-forge="${c.id}" type="button" ${owned || !affordable ? 'disabled' : ''}>${owned ? 'Purchased' : 'Buy Card'}</button>
+    </article>`;
+  }).join('');
+  document.querySelectorAll('[data-buy-forge]').forEach(btn => btn.addEventListener('click', () => buyForgeCard(btn.dataset.buyForge)));
+}
+
+function buyForgeCard(id) {
+  const item = forgeInventory.find(x => x.id === id);
+  const c = card(id);
+  if (!item || !c || (state.owned[id] || 0) || state.marks < item.price) return;
+  state.marks -= item.price;
+  state.owned[id] = 1;
+  log(`${c.name} purchased from The Forge.`);
+  saveProgress(`${c.name} added to your archive.`);
+  playSoundCue(displayRarity(c) === 'Legendary' ? 'legendary-claim' : displayRarity(c) === 'Epic' ? 'epic' : 'claim');
+  renderForge();
+  const bought = document.querySelector(`[data-buy-forge="${CSS.escape(id)}"]`)?.closest('.forge-card');
+  if (bought) {
+    bought.classList.add('forge-flash');
+    setTimeout(() => bought.classList.remove('forge-flash'), 1200);
+  }
+}
+
 function addCardToDeck(id) {
   const owned = state.owned[id] || 0;
   const used = state.activeDeck.filter(x => x === id).length;
@@ -1077,7 +1159,7 @@ function startEncounter() {
   state.deck = shuffle([...state.activeDeck]);
   state.discard = [];
   state.hand = [];
-  state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.freeTrapUsed = false;
+  state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.nextSyncBonus = 0; state.syncBleedBonus = 0; state.currentCardType = ''; state.freeTrapUsed = false;
   state.enemyActionText = ''; state.enemyActionPulse = ''; state.nextActionPenalty = 0; state.retaliate = 0; state.guardAll = false; state.fiveCount = false; state.killLane = false; state.silenceReinforcements = false; state.nextAttackCharges = 0; state.nextAttackChargeBonus = 0; state.syncDiscount = false;
   state.enemyActionEvents = [];
   state.debugEvents = [];
@@ -1319,7 +1401,9 @@ function resolveCardPlay(index, c, playCost, payload) {
   state.hand.splice(index, 1);
   state.discard.push(c.id);
   const before = target();
+  state.currentCardType = c.type;
   c.effect({ ...payload, target: payload?.target || before });
+  state.currentCardType = '';
   cleanupDead();
   const after = target();
   if (before && before.hp <= 0 && after && before.id !== after.id && cardScope(c) === 'Target') {
@@ -1332,6 +1416,12 @@ function resolveCardPlay(index, c, playCost, payload) {
 function attack(g, base, status = {}, source = 'Delilah') {
   const e = g.target;
   let dmg = base + (e.status.exposed ? 2 : 0) + state.nextTurnBonus;
+  const synchronized = state.currentCardType === 'Synchronized' || /Lady|Shared|Pack Angle|Synchronized/i.test(source);
+  if (synchronized && e.status.bleed && state.syncBleedBonus) dmg += state.syncBleedBonus;
+  if (synchronized && state.nextSyncBonus) {
+    dmg += state.nextSyncBonus;
+    state.nextSyncBonus = 0;
+  }
   if (state.nextAttackCharges > 0) {
     dmg += state.nextAttackChargeBonus || 0;
     state.nextAttackCharges -= 1;
@@ -1352,10 +1442,10 @@ function target() {
 }
 
 function cardScope(c) {
-  if (['rain-bolts', 'black-rain', 'shatter-rite', 'moon-hunt'].includes(c.id)) return 'All Enemies';
-  if (['snare', 'tripwire', 'funnel', 'trapline-map', 'spear-wall', 'kill-lane', 'grave-silence'].includes(c.id)) return 'Battlefield';
+  if (['rain-bolts', 'black-rain', 'shatter-rite', 'moon-hunt', 'forge-black-forge-oath'].includes(c.id)) return 'All Enemies';
+  if (['snare', 'tripwire', 'funnel', 'trapline-map', 'spear-wall', 'kill-lane', 'grave-silence', 'forge-red-sermon'].includes(c.id)) return 'Battlefield';
   if (c.id === 'bandage') return 'Choose Ally';
-  if (['scent', 'lunge', 'step', 'poison', 'silent', 'last-breath', 'low-guard', 'field-dressing', 'wolf-glance', 'ash-breath', 'quick-cache', 'hard-pivot', 'five-count', 'bone-whistle', 'red-door', 'wolf-saint', 'black-road-myth'].includes(c.id)) return 'No Target';
+  if (['scent', 'lunge', 'step', 'poison', 'silent', 'last-breath', 'low-guard', 'field-dressing', 'wolf-glance', 'ash-breath', 'quick-cache', 'hard-pivot', 'five-count', 'bone-whistle', 'red-door', 'wolf-saint', 'black-road-myth', 'forge-iron-vow', 'forge-counter-cut', 'forge-cornered-animal', 'forge-blood-trail', 'forge-last-light-stance', 'forge-last-door'].includes(c.id)) return 'No Target';
   return 'Target';
 }
 
@@ -1930,8 +2020,9 @@ function randomRewardCard() {
       break;
     }
   }
-  const pool = cards.filter(c => displayRarity(c) === rarity);
-  return shuffle(pool.length ? pool : cards)[0];
+  const rewardPool = cards.filter(c => !c.forgeOnly);
+  const pool = rewardPool.filter(c => displayRarity(c) === rarity);
+  return shuffle(pool.length ? pool : rewardPool)[0];
 }
 
 function rewardOdds() {
@@ -1978,7 +2069,7 @@ function scrapValue(c) {
 }
 
 function rewardOptions(final) {
-  const pool = shuffle(cards.filter(c => (state.owned[c.id] || 0) < 3 && (final || c.rarity !== 'Rare')));
+  const pool = shuffle(cards.filter(c => !c.forgeOnly && (state.owned[c.id] || 0) < 3 && (final || c.rarity !== 'Rare')));
   const opts = pool.slice(0, relic('Hunter’s Compass') ? 3 : 2).map(c => ({
     title: `Add ${c.name}`,
     text: `${c.type}. ${c.text}`,
