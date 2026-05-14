@@ -133,6 +133,7 @@
           <span>Bond Level <i id="bondText">I</i></span>
         </div>
         <button class="dock-btn" id="deckBtn" type="button">Your Deck</button>
+        <button class="dock-btn forge-dock-btn" id="forgeBtn" type="button">The Forge</button>
         <button class="dock-btn" id="prepBtn" type="button" hidden>Preparation</button>
         <button class="dock-btn" id="archiveBtn" type="button" hidden>Archive</button>
         <button class="dock-btn" id="journalBtn" type="button" hidden>Journal</button>
@@ -156,6 +157,29 @@
         <button id="startHuntBtn" class="blood-btn" type="button">Begin The Hunt</button>
         <button id="saveBtn" class="plain-btn" type="button">Save Game</button>
         <button id="backBoardBtn" class="plain-btn" type="button">Back To Board</button>
+      </aside>
+    </section>
+
+    <section id="forgeScreen" class="screen forge-screen" hidden>
+      <section class="panel forge-hero">
+        <p class="kicker">Systema Obscura</p>
+        <h2>The Forge</h2>
+        <p>Jonas keeps the forbidden work behind iron, ash, and silence. These cards do not appear in normal caches. Buy once, keep forever.</p>
+        <div class="forge-wallet">
+          <span>Hunter Marks</span>
+          <b id="forgeMarks">0</b>
+        </div>
+      </section>
+      <section class="panel forge-inventory-panel">
+        <div class="panel-title">Black Market Techniques</div>
+        <div id="forgeInventory" class="forge-grid"></div>
+      </section>
+      <aside class="panel forge-side">
+        <div class="forge-anvil" aria-hidden="true"></div>
+        <p class="kicker">Jonas</p>
+        <p>Save for what changes a hunt. Waste marks on nothing pretty.</p>
+        <button id="forgeBackBoardBtn" class="plain-btn" type="button">Back To Board</button>
+        <button id="forgeDeckBtn" class="blood-btn" type="button">Open Your Deck</button>
       </aside>
     </section>
 
