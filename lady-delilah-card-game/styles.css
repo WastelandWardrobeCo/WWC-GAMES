@@ -695,6 +695,12 @@ body[data-screen="boardScreen"] .board-screen {
   color: #f3d19a;
 }
 
+.forge-buy-btn.cannot-afford {
+  border-color: rgba(177,139,86,.28);
+  color: rgba(216,194,158,.64);
+  background: rgba(12,10,8,.74);
+}
+
 .forge-flash {
   animation: forgeFlash 1.2s ease both;
 }
@@ -1225,8 +1231,8 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .deck-edit-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   align-items: center;
   gap: 8px;
   padding-top: 7px;
@@ -1248,6 +1254,23 @@ body[data-screen="boardScreen"] .board-screen {
 .owned-count b {
   color: var(--gold);
   font-size: .54rem;
+}
+
+.sell-value span {
+  color: #f3d19a;
+}
+
+.sell-card-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  border-color: rgba(236,137,35,.48);
+  color: #f3d19a;
+  background: rgba(62,26,15,.42);
+}
+
+.sell-card-btn:not(:disabled):hover {
+  border-color: rgba(255,191,96,.78);
+  box-shadow: 0 0 16px rgba(236,137,35,.18);
 }
 
 .owned-count span {
