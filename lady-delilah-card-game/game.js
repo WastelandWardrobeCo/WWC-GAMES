@@ -315,9 +315,11 @@ function upsertProfileSummary() {
 
 function sanitizeSave(saved) {
   const starter = starterOwned();
-  const owned = { ...starter };
+  const hasOwnedSave = Boolean(saved.owned || saved.ownedCards);
+  const owned = hasOwnedSave ? {} : { ...starter };
   Object.entries(saved.owned || saved.ownedCards || {}).forEach(([id, count]) => {
-    if (card(id)) owned[id] = Math.max(owned[id] || 0, Number(count) || 0);
+    const safeCount = Math.max(0, Number(count) || 0);
+    if (card(id) && safeCount > 0) owned[id] = safeCount;
   });
   const deck = Array.isArray(saved.activeDeck || saved.currentDeck) ? (saved.activeDeck || saved.currentDeck).filter(id => card(id)) : [];
   return {
@@ -1033,6 +1035,7 @@ function renderPrep() {
     const owned = state.owned[c.id] || 0;
     const used = state.activeDeck.filter(id => id === c.id).length;
     const canAdd = owned && used < owned && count < 20;
+    const sellMarks = scrapValue(c);
     const isRecommended = recommendationsOn && used > 0 && recommended.has(c.id);
     return `<article class="archive-card deck-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? '' : 'missing'} ${used ? 'selected' : ''} ${isRecommended ? 'recommended' : ''}" style="${cardArtStyle(c)}">
       <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
@@ -1042,10 +1045,12 @@ function renderPrep() {
       <div class="deck-edit-row">
         <div class="owned-count"><b>Owned</b><span>${owned}</span></div>
         <div class="owned-count"><b>In Deck</b><span>${used}</span></div>
+        <div class="owned-count sell-value"><b>Sell</b><span>${sellMarks}</span></div>
         <div>
           <button class="mini-btn" data-minus-card="${c.id}" type="button" ${used ? '' : 'disabled'}>-</button>
           <button class="mini-btn" data-add="${c.id}" type="button" ${canAdd ? '' : 'disabled'}>+</button>
         </div>
+        <button class="mini-btn sell-card-btn" data-sell-card="${c.id}" type="button" ${owned ? '' : 'disabled'}>Sell</button>
       </div>
     </article>`;
   }).join('');
@@ -1063,6 +1068,7 @@ function renderPrep() {
   }));
   document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => addCardToDeck(b.dataset.add)));
   document.querySelectorAll('[data-minus-card]').forEach(b => b.addEventListener('click', () => removeCardFromDeck(b.dataset.minusCard)));
+  document.querySelectorAll('[data-sell-card]').forEach(b => b.addEventListener('click', () => sellCardFromArchive(b.dataset.sellCard)));
 }
 
 function renderForge() {
@@ -1087,7 +1093,7 @@ function renderForge() {
         <b>${item.price.toLocaleString()} Marks</b>
         <small>${owned ? 'Owned' : affordable ? 'Available' : 'Need more Marks'}</small>
       </div>
-      <button class="plain-btn forge-buy-btn" data-buy-forge="${c.id}" type="button" ${owned || !affordable ? 'disabled' : ''}>${owned ? 'Purchased' : 'Buy Card'}</button>
+      <button class="plain-btn forge-buy-btn ${!owned && !affordable ? 'cannot-afford' : ''}" data-buy-forge="${c.id}" type="button" ${owned ? 'disabled' : ''}>${owned ? 'Purchased' : 'Buy Card'}</button>
     </article>`;
   }).join('');
   document.querySelectorAll('[data-buy-forge]').forEach(btn => btn.addEventListener('click', () => buyForgeCard(btn.dataset.buyForge)));
@@ -1096,7 +1102,17 @@ function renderForge() {
 function buyForgeCard(id) {
   const item = forgeInventory.find(x => x.id === id);
   const c = card(id);
-  if (!item || !c || (state.owned[id] || 0) || state.marks < item.price) return;
+  if (!item || !c) return;
+  if (state.owned[id] || 0) {
+    showToast(`${c.name} is already in your archive.`);
+    return;
+  }
+  if (state.marks < item.price) {
+    const short = item.price - state.marks;
+    showToast(`Not enough Hunter Marks. You need ${short.toLocaleString()} more.`);
+    playSoundCue('scrap');
+    return;
+  }
   state.marks -= item.price;
   state.owned[id] = 1;
   log(`${c.name} purchased from The Forge.`);
@@ -1127,6 +1143,24 @@ function removeCardFromDeck(id) {
   syncProgression();
   saveProgress();
   renderPrep();
+}
+
+function sellCardFromArchive(id) {
+  const c = card(id);
+  const owned = state.owned[id] || 0;
+  if (!c || owned <= 0) return;
+  const deckIndex = state.activeDeck.lastIndexOf(id);
+  if (deckIndex >= 0) state.activeDeck.splice(deckIndex, 1);
+  state.owned[id] = owned - 1;
+  if (state.owned[id] <= 0) delete state.owned[id];
+  const marks = scrapValue(c);
+  state.marks += marks;
+  syncProgression();
+  log(`${c.name} sold for ${marks} Hunter Marks.`);
+  playSoundCue('scrap');
+  saveProgress(`${c.name} sold for ${marks} Marks.`);
+  renderPrep();
+  renderResources();
 }
 
 function showAllCards() {
