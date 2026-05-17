@@ -2934,6 +2934,149 @@ body[data-screen="boardScreen"] .board-screen {
   text-shadow: 0 2px 3px rgba(0,0,0,.9);
 }
 
+/* Template fit pass: keep text inside the intended bands and preserve the bottom button wells. */
+.card {
+  width: min(16.7vw, 188px);
+  min-width: 150px;
+  height: 312px;
+}
+
+.archive-grid,
+.all-cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(184px, 1fr));
+}
+
+.deck-card {
+  max-width: 220px;
+}
+
+.forge-card-preview {
+  min-height: 282px;
+}
+
+.reward-card-preview {
+  width: min(292px, 82vw);
+}
+
+.cost {
+  top: 4.4%;
+  left: 3.9%;
+  width: 44px;
+  min-width: 44px;
+  height: 61px;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+}
+
+.card-top::after {
+  top: 4.6%;
+  left: 19%;
+  right: 8%;
+  font-size: clamp(.68rem, .95vw, 1rem);
+}
+
+.card h3,
+.deck-card h3,
+.collection-card h3,
+.collection-card .card-top b,
+.reward-card-preview h3,
+.forge-card-preview h3 {
+  left: 8%;
+  right: 8%;
+  top: 50.8%;
+  min-height: 4.8%;
+  place-items: center;
+  font-size: clamp(.66rem, .92vw, .95rem);
+  line-height: .88;
+  letter-spacing: .005em;
+  text-align: center;
+}
+
+.card-type {
+  left: 8%;
+  right: 8%;
+  top: 56.7%;
+  font-size: clamp(.54rem, .68vw, .68rem);
+  letter-spacing: .09em;
+}
+
+.card-scope {
+  left: 8.2%;
+  right: 8.2%;
+  top: 62.2%;
+  color: #fbecd0;
+  font-size: clamp(.52rem, .62vw, .62rem);
+  text-align: left;
+}
+
+.card p,
+.deck-card p,
+.archive-card p,
+.collection-card p,
+.reward-card-preview p,
+.forge-card-preview p {
+  left: 8.3%;
+  right: 8.3%;
+  top: 67.4%;
+  bottom: 11.5%;
+  padding: 2px 4px;
+  font-size: clamp(.62rem, .76vw, .82rem);
+  line-height: 1.14;
+}
+
+.reward-card-preview p {
+  font-size: clamp(.78rem, 1.1vw, .95rem);
+}
+
+.deck-edit-row {
+  left: auto;
+  right: 5.8%;
+  bottom: 4.2%;
+  width: 26.5%;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.deck-edit-row .owned-count {
+  display: none;
+}
+
+.mini-btn {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  font-size: .9rem;
+}
+
+.deck-card .card-top + span:not(.card-type):not(.card-scope),
+.collection-card .card-top + span:not(.card-type):not(.card-scope) {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 4.9%;
+  z-index: 4;
+  color: #fff8ec;
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-size: clamp(.52rem, .66vw, .66rem);
+  font-weight: 900;
+  letter-spacing: .05em;
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0,0,0,.95);
+}
+
+.keyword.keyword-bleed { color: #ff1838; }
+.keyword.keyword-exposed { color: #ffe119; }
+.keyword.keyword-flanked { color: #16ff7b; }
+.keyword.keyword-root { color: #9cff16; }
+.keyword.keyword-terrified { color: #e057ff; }
+.keyword.keyword-moving { color: #18f0ff; }
+.keyword.keyword-notActed { color: #ffffff; }
+.keyword.keyword-weakened { color: #ff8a00; }
+.keyword.keyword-trap { color: #fff04f; }
+.keyword.keyword-dodge,
+.keyword.keyword-guard,
+.keyword.keyword-instinct { color: #25d7ff; }
+
 .route-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
