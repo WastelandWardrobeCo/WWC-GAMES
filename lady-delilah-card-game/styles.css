@@ -2982,15 +2982,15 @@ body[data-screen="boardScreen"] .board-screen {
 .collection-card .card-top b,
 .reward-card-preview h3,
 .forge-card-preview h3 {
-  left: 8%;
+  left: 22%;
   right: 8%;
-  top: 47.7%;
-  min-height: 7.2%;
+  top: 52.2%;
+  min-height: 5.8%;
   padding: 2px 6px;
   place-items: center;
   color: #fff7ed;
-  background: linear-gradient(90deg, rgba(0,0,0,.08), rgba(0,0,0,.74) 16%, rgba(0,0,0,.86) 50%, rgba(0,0,0,.74) 84%, rgba(0,0,0,.08));
-  font-size: clamp(.56rem, .76vw, .82rem);
+  background: linear-gradient(90deg, rgba(0,0,0,.76), rgba(0,0,0,.9) 22%, rgba(0,0,0,.82));
+  font-size: clamp(.54rem, .72vw, .78rem);
   line-height: .9;
   letter-spacing: .005em;
   text-align: center;
@@ -3000,7 +3000,7 @@ body[data-screen="boardScreen"] .board-screen {
 .card-type {
   left: 8%;
   right: 8%;
-  top: 55.7%;
+  top: 58.5%;
   font-size: clamp(.48rem, .58vw, .6rem);
   letter-spacing: .08em;
 }
@@ -3008,10 +3008,11 @@ body[data-screen="boardScreen"] .board-screen {
 .card-scope {
   left: 8.2%;
   right: 8.2%;
-  top: 61.7%;
-  color: #fbecd0;
+  top: 62.8%;
+  color: #211209;
   font-size: clamp(.48rem, .56vw, .58rem);
   text-align: left;
+  text-shadow: 0 1px 0 rgba(255,255,255,.34);
 }
 
 .card p,
@@ -3022,16 +3023,18 @@ body[data-screen="boardScreen"] .board-screen {
 .forge-card-preview p {
   left: 8.3%;
   right: 8.3%;
-  top: 66.2%;
-  bottom: 12.5%;
+  top: 66.6%;
+  bottom: 12.4%;
   display: block;
   overflow: hidden;
   box-sizing: border-box;
   padding: 2px 4px;
+  color: #070403;
   font-size: clamp(.56rem, .66vw, .72rem);
   line-height: 1.04;
   overflow-wrap: anywhere;
   word-break: normal;
+  text-shadow: 0 1px 0 rgba(255,255,255,.42);
 }
 
 .reward-card-preview p {
@@ -3042,8 +3045,10 @@ body[data-screen="boardScreen"] .board-screen {
 .deck-card p,
 .collection-card p,
 .forge-card-preview p {
-  font-size: clamp(.48rem, .56vw, .6rem);
-  line-height: 1.02;
+  color: #070403;
+  font-size: clamp(.46rem, .53vw, .58rem);
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
 }
 
 .deck-edit-row {
