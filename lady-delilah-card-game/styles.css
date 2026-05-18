@@ -2968,10 +2968,12 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .card-top::after {
-  top: 4.6%;
-  left: 19%;
-  right: 8%;
-  font-size: clamp(.68rem, .95vw, 1rem);
+  content: none !important;
+  display: none;
+}
+
+.rarity-label {
+  display: none !important;
 }
 
 .card h3,
@@ -2982,29 +2984,33 @@ body[data-screen="boardScreen"] .board-screen {
 .forge-card-preview h3 {
   left: 8%;
   right: 8%;
-  top: 50.8%;
-  min-height: 4.8%;
+  top: 47.7%;
+  min-height: 7.2%;
+  padding: 2px 6px;
   place-items: center;
-  font-size: clamp(.66rem, .92vw, .95rem);
-  line-height: .88;
+  color: #fff7ed;
+  background: linear-gradient(90deg, rgba(0,0,0,.08), rgba(0,0,0,.74) 16%, rgba(0,0,0,.86) 50%, rgba(0,0,0,.74) 84%, rgba(0,0,0,.08));
+  font-size: clamp(.56rem, .76vw, .82rem);
+  line-height: .9;
   letter-spacing: .005em;
   text-align: center;
+  overflow: hidden;
 }
 
 .card-type {
   left: 8%;
   right: 8%;
-  top: 56.7%;
-  font-size: clamp(.54rem, .68vw, .68rem);
-  letter-spacing: .09em;
+  top: 55.7%;
+  font-size: clamp(.48rem, .58vw, .6rem);
+  letter-spacing: .08em;
 }
 
 .card-scope {
   left: 8.2%;
   right: 8.2%;
-  top: 62.2%;
+  top: 61.7%;
   color: #fbecd0;
-  font-size: clamp(.52rem, .62vw, .62rem);
+  font-size: clamp(.48rem, .56vw, .58rem);
   text-align: left;
 }
 
@@ -3016,15 +3022,28 @@ body[data-screen="boardScreen"] .board-screen {
 .forge-card-preview p {
   left: 8.3%;
   right: 8.3%;
-  top: 67.4%;
-  bottom: 11.5%;
+  top: 66.2%;
+  bottom: 12.5%;
+  display: block;
+  overflow: hidden;
+  box-sizing: border-box;
   padding: 2px 4px;
-  font-size: clamp(.62rem, .76vw, .82rem);
-  line-height: 1.14;
+  font-size: clamp(.56rem, .66vw, .72rem);
+  line-height: 1.04;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .reward-card-preview p {
-  font-size: clamp(.78rem, 1.1vw, .95rem);
+  font-size: clamp(.68rem, .95vw, .84rem);
+  line-height: 1.08;
+}
+
+.deck-card p,
+.collection-card p,
+.forge-card-preview p {
+  font-size: clamp(.48rem, .56vw, .6rem);
+  line-height: 1.02;
 }
 
 .deck-edit-row {
@@ -3050,16 +3069,16 @@ body[data-screen="boardScreen"] .board-screen {
 .deck-card .card-top + span:not(.card-type):not(.card-scope),
 .collection-card .card-top + span:not(.card-type):not(.card-scope) {
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 4.9%;
+  left: 7%;
+  right: 35%;
+  bottom: 4.5%;
   z-index: 4;
   color: #fff8ec;
   font-family: "Trebuchet MS", Verdana, sans-serif;
-  font-size: clamp(.52rem, .66vw, .66rem);
+  font-size: clamp(.42rem, .5vw, .52rem);
   font-weight: 900;
-  letter-spacing: .05em;
-  line-height: 1;
+  letter-spacing: .035em;
+  line-height: 1.05;
   text-transform: uppercase;
   text-shadow: 0 2px 4px rgba(0,0,0,.95);
 }
