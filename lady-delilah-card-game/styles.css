@@ -2984,7 +2984,7 @@ body[data-screen="boardScreen"] .board-screen {
 .forge-card-preview h3 {
   left: 22%;
   right: 8%;
-  top: 52.2%;
+  top: 54.1%;
   min-height: 5.8%;
   padding: 2px 6px;
   place-items: center;
@@ -3000,7 +3000,7 @@ body[data-screen="boardScreen"] .board-screen {
 .card-type {
   left: 8%;
   right: 8%;
-  top: 58.5%;
+  top: 59.9%;
   font-size: clamp(.48rem, .58vw, .6rem);
   letter-spacing: .08em;
 }
@@ -3008,9 +3008,10 @@ body[data-screen="boardScreen"] .board-screen {
 .card-scope {
   left: 8.2%;
   right: 8.2%;
-  top: 62.8%;
-  color: #211209;
-  font-size: clamp(.48rem, .56vw, .58rem);
+  top: 63.3%;
+  color: #090503;
+  font-size: clamp(.5rem, .6vw, .62rem);
+  font-weight: 1000;
   text-align: left;
   text-shadow: 0 1px 0 rgba(255,255,255,.34);
 }
@@ -3023,41 +3024,43 @@ body[data-screen="boardScreen"] .board-screen {
 .forge-card-preview p {
   left: 8.3%;
   right: 8.3%;
-  top: 66.6%;
+  top: 66.8%;
   bottom: 12.4%;
   display: block;
   overflow: hidden;
   box-sizing: border-box;
   padding: 2px 4px;
-  color: #070403;
-  font-size: clamp(.56rem, .66vw, .72rem);
-  line-height: 1.04;
+  color: #030201;
+  font-size: clamp(.6rem, .7vw, .76rem);
+  font-weight: 850;
+  line-height: 1.06;
   overflow-wrap: anywhere;
   word-break: normal;
   text-shadow: 0 1px 0 rgba(255,255,255,.42);
 }
 
 .reward-card-preview p {
-  font-size: clamp(.68rem, .95vw, .84rem);
-  line-height: 1.08;
+  font-size: clamp(.72rem, 1vw, .9rem);
+  line-height: 1.1;
 }
 
 .deck-card p,
 .collection-card p,
 .forge-card-preview p {
-  color: #070403;
-  font-size: clamp(.46rem, .53vw, .58rem);
-  line-height: 1;
-  text-shadow: 0 1px 0 rgba(255,255,255,.4);
+  color: #030201;
+  font-size: clamp(.52rem, .6vw, .66rem);
+  font-weight: 900;
+  line-height: 1.04;
+  text-shadow: 0 1px 0 rgba(255,255,255,.48);
 }
 
 .deck-edit-row {
   left: auto;
   right: 5.8%;
-  bottom: 4.2%;
-  width: 26.5%;
+  bottom: 4%;
+  width: 25.5%;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  gap: 4px;
 }
 
 .deck-edit-row .owned-count {
@@ -3069,6 +3072,13 @@ body[data-screen="boardScreen"] .board-screen {
   height: auto;
   aspect-ratio: 1;
   font-size: .9rem;
+}
+
+.deck-edit-row > div {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
 }
 
 .deck-card .card-top + span:not(.card-type):not(.card-scope),
