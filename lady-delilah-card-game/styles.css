@@ -3215,6 +3215,40 @@ body[data-screen="boardScreen"] .board-screen {
   line-height: 1;
 }
 
+/* Anchor card internals to the full card face, not the tiny header wrapper. */
+.card .card-top,
+.deck-card .card-top,
+.collection-card .card-top,
+.reward-card-preview .card-top,
+.forge-card-preview .card-top {
+  position: static;
+}
+
+.card .cost,
+.deck-card .cost,
+.collection-card .cost,
+.reward-card-preview .cost,
+.forge-card-preview .cost {
+  top: 4.4%;
+  left: 3.9%;
+}
+
+.card h3,
+.deck-card h3,
+.collection-card h3,
+.reward-card-preview h3,
+.forge-card-preview h3 {
+  top: 54.8%;
+  left: 21%;
+  right: 7%;
+}
+
+.deck-card h3,
+.collection-card h3,
+.forge-card-preview h3 {
+  top: 55.6%;
+}
+
 .route-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
