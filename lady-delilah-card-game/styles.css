@@ -3111,6 +3111,110 @@ body[data-screen="boardScreen"] .board-screen {
 .keyword.keyword-guard,
 .keyword.keyword-instinct { color: #25d7ff; }
 
+/* Late card polish: archive readability and battlefield card refinement. */
+.card h3,
+.deck-card h3,
+.collection-card h3,
+.reward-card-preview h3,
+.forge-card-preview h3 {
+  top: 56%;
+  min-height: 5%;
+  padding: 1px 5px;
+  font-size: clamp(.52rem, .7vw, .76rem);
+  line-height: .88;
+  background: linear-gradient(90deg, rgba(0,0,0,.8), rgba(0,0,0,.92) 24%, rgba(0,0,0,.84));
+}
+
+.deck-card h3,
+.collection-card h3,
+.forge-card-preview h3 {
+  top: 55.2%;
+  left: 20%;
+  right: 7%;
+  font-size: clamp(.56rem, .76vw, .82rem);
+  line-height: .9;
+}
+
+.card-type {
+  top: 61.1%;
+  font-size: clamp(.46rem, .56vw, .58rem);
+}
+
+.deck-card .card-type,
+.collection-card .card-type,
+.forge-card-preview .card-type {
+  top: 60.4%;
+}
+
+.card-scope {
+  top: 64.1%;
+  color: #050302;
+  font-size: clamp(.48rem, .58vw, .62rem);
+  font-weight: 1000;
+}
+
+.deck-card .card-scope,
+.collection-card .card-scope,
+.forge-card-preview .card-scope {
+  top: 63.7%;
+}
+
+.card p,
+.archive-card p,
+.deck-card p,
+.collection-card p,
+.reward-card-preview p,
+.forge-card-preview p {
+  top: 67.2%;
+  bottom: 12.7%;
+  color: #010101;
+  font-size: clamp(.64rem, .74vw, .82rem);
+  font-weight: 950;
+  line-height: 1.08;
+  letter-spacing: 0;
+  text-align: center;
+  text-shadow: none;
+}
+
+.deck-card p,
+.collection-card p,
+.forge-card-preview p {
+  top: 66.8%;
+  bottom: 12.8%;
+  font-size: clamp(.58rem, .66vw, .72rem);
+  line-height: 1.06;
+}
+
+.card .keyword,
+.deck-card .keyword,
+.collection-card .keyword,
+.reward-card-preview .keyword,
+.forge-card-preview .keyword {
+  font-weight: 1000;
+  text-shadow:
+    0 0 4px currentColor,
+    0 1px 0 rgba(255,255,255,.26);
+}
+
+.deck-edit-row {
+  right: 5.7%;
+  bottom: 3.8%;
+  width: 27%;
+}
+
+.deck-edit-row > div {
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.mini-btn {
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 1;
+  padding: 0;
+  line-height: 1;
+}
+
 .route-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
