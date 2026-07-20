@@ -12,211 +12,49 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#140f20;color:var(--cream);font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif}
-body{
-  min-height:100dvh; overflow-x:hidden;
-  background:
-    radial-gradient(circle at 14% 4%,#52305f 0 7%,transparent 26%),
-    radial-gradient(circle at 92% 30%,#173a55 0 6%,transparent 25%),
-    linear-gradient(180deg,#181125,#24152c 58%,#10131d);
-}
-button{font:inherit}
-.app{
-  width:min(100%,560px); min-height:100dvh; margin:auto;
-  padding:calc(10px + env(safe-area-inset-top)) 10px calc(14px + env(safe-area-inset-bottom));
-  display:flex; flex-direction:column; gap:9px;
-}
-header{
-  display:flex;justify-content:space-between;align-items:center;gap:8px;
-  background:rgba(29,20,43,.91);border:1px solid #ffffff18;border-radius:19px;
-  padding:10px 12px;box-shadow:0 10px 30px #0006;
-}
-.brand h1{margin:0;font-size:clamp(19px,5vw,28px);letter-spacing:-.8px;line-height:1}
-.brand p{margin:4px 0 0;font-size:10px;color:#cdbfda;text-transform:uppercase;letter-spacing:1.4px}
-.stats{display:flex;gap:6px}
-.stat{min-width:55px;text-align:center;background:#0e0b17;border-radius:12px;padding:6px 7px;font-size:9px;color:#bfb1ce}
-.stat b{display:block;font-size:17px;color:var(--gold)}
-.marquee{
-  position:relative;overflow:hidden;border-radius:18px;padding:9px 12px;
-  background:#f8df91;color:#47213f;border:4px solid #33203b;
-  text-align:center;font-weight:1000;box-shadow:0 0 18px #ff669f88;
-}
-.marquee small{display:block;font-size:9px;letter-spacing:2px}
-.marquee strong{font-size:clamp(18px,5vw,24px);color:#be2f70}
-.objectives{
-  display:grid;grid-template-columns:1fr 1fr auto;gap:7px;
-}
-.objective,.scorebox{
-  min-width:0;background:rgba(27,19,39,.92);border:1px solid #ffffff17;border-radius:15px;
-  padding:8px;box-shadow:0 7px 20px #0004;
-}
-.objtop{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px;color:#d0c5da}
-.objicon{font-size:19px}
-.track{height:7px;border-radius:99px;background:#0c0911;margin-top:6px;overflow:hidden}
-.fill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--gold));transition:.3s}
-.scorebox{text-align:center;display:grid;place-items:center;min-width:68px}
-.scorebox small{font-size:9px;color:#c6b9d2}.scorebox b{font-size:18px;color:var(--cyan)}
-.boardShell{
-  position:relative; width:100%; aspect-ratio:1/1; max-height:min(68dvh,540px);
-  border-radius:24px;padding:8px;
-  background:
-    linear-gradient(135deg,#f4d486 0 2%,#5a294b 2% 4%,#25172e 4% 96%,#5a294b 96% 98%,#f4d486 98%);
-  box-shadow:0 18px 45px #0008,0 0 22px #57e5ef25;
-}
-.board{
-  width:100%;height:100%;display:grid;grid-template-columns:repeat(7,1fr);
-  grid-template-rows:repeat(7,1fr);gap:clamp(3px,1vw,6px);touch-action:none;
-}
-.tile{
-  border:0;padding:0;border-radius:clamp(8px,2.3vw,14px);position:relative;display:grid;place-items:center;
-  overflow:hidden;cursor:pointer;transition:transform .12s,filter .12s,opacity .18s;
-  box-shadow:inset 0 0 0 1px #ffffff44,inset 0 -5px 0 #00000024,0 3px 4px #0005;
-  font-size:clamp(22px,7.5vw,43px);line-height:1;
-}
-.tile:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,#ffffff66,transparent 38%);pointer-events:none}
-.tile.selected{outline:3px solid white;transform:scale(.91);filter:brightness(1.2)}
-.tile.hint{animation:hint 1s ease-in-out 2}.tile.matched{animation:pop .26s ease forwards}
-.tile.striped:after{content:"↔";position:absolute;right:3px;bottom:1px;font-size:12px;color:white;text-shadow:0 1px 3px #000}
-.tile.bomb:after{content:"✦";position:absolute;right:4px;top:2px;font-size:13px;color:white;text-shadow:0 0 7px white}
-@keyframes hint{50%{transform:scale(.84);filter:brightness(1.45)}}
-@keyframes pop{50%{transform:scale(1.2);filter:brightness(1.8)}100%{transform:scale(0);opacity:0}}
-.t0{background:linear-gradient(145deg,#ff85ae,#c83274)} .t1{background:linear-gradient(145deg,#69edf5,#1687a0)}
-.t2{background:linear-gradient(145deg,#ffe17c,#d48a22)} .t3{background:linear-gradient(145deg,#9af2c4,#298b67)}
-.t4{background:linear-gradient(145deg,#c9b8ff,#7257b7)} .t5{background:linear-gradient(145deg,#ff9589,#b7423f)}
-.controls{display:flex;gap:7px}
-.controls button{
-  flex:1;border:1px solid #ffffff1e;border-radius:14px;padding:11px 8px;
-  color:#fff;background:#2a1d3c;font-weight:900;box-shadow:0 5px 0 #0e0a15;
-}
-.controls button.primary{background:#d74482}.controls button:active{transform:translateY(3px);box-shadow:0 2px 0 #0e0a15}
-.message{text-align:center;min-height:18px;font-size:11px;color:#d5cadf}
-.overlay{
-  position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;
-  background:#0b0811cc;backdrop-filter:blur(7px);
-}
-.overlay.hide{display:none}
-.modal{width:min(430px,92vw);background:#fff0ce;color:#35203d;border-radius:26px;padding:23px;text-align:center;box-shadow:0 22px 70px #0009}
-.modal h2{margin:0 0 5px;font-size:30px}.modal p{line-height:1.45}.modal button{width:100%;border:0;border-radius:15px;padding:14px;background:#cc3f7a;color:white;font-weight:1000}
-.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0}.legend div{background:#f1dbae;border-radius:12px;padding:8px;font-size:12px}.legend span{display:block;font-size:23px}
-@media(max-height:700px){
- .app{gap:6px;padding-top:5px}.brand p,.message{display:none}header{padding:7px 9px}
- .marquee{padding:5px 10px}.marquee strong{font-size:17px}.objective,.scorebox{padding:5px}
- .boardShell{max-height:64dvh}
-}
+body{min-height:100dvh;overflow-x:hidden;background:radial-gradient(circle at 14% 4%,#52305f 0 7%,transparent 26%),radial-gradient(circle at 92% 30%,#173a55 0 6%,transparent 25%),linear-gradient(180deg,#181125,#24152c 58%,#10131d)}
+button{font:inherit}.app{width:min(100%,560px);min-height:100dvh;margin:auto;padding:calc(10px + env(safe-area-inset-top)) 10px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:9px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(29,20,43,.91);border:1px solid #ffffff18;border-radius:19px;padding:10px 12px;box-shadow:0 10px 30px #0006}.brand h1{margin:0;font-size:clamp(19px,5vw,28px);letter-spacing:-.8px;line-height:1}.brand p{margin:4px 0 0;font-size:10px;color:#cdbfda;text-transform:uppercase;letter-spacing:1.4px}.stats{display:flex;gap:6px}.stat{min-width:55px;text-align:center;background:#0e0b17;border-radius:12px;padding:6px 7px;font-size:9px;color:#bfb1ce}.stat b{display:block;font-size:17px;color:var(--gold)}
+.marquee{position:relative;overflow:hidden;border-radius:18px;padding:9px 12px;background:#f8df91;color:#47213f;border:4px solid #33203b;text-align:center;font-weight:1000;box-shadow:0 0 18px #ff669f88}.marquee small{display:block;font-size:9px;letter-spacing:2px}.marquee strong{font-size:clamp(18px,5vw,24px);color:#be2f70}
+.revealCard{background:#19111f;border:1px solid #ffffff1a;border-radius:18px;padding:9px;box-shadow:0 8px 25px #0005}.revealTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.revealTop b{font-size:13px}.revealTop span{font-size:10px;color:#cdbfda}.revealMini,.revealModal .picture{position:relative;aspect-ratio:3/2;border-radius:13px;overflow:hidden;background-image:url("swamp-king.svg");background-size:cover;background-position:center;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:2px}.cover{border:0;border-radius:0;background:linear-gradient(145deg,#251d2b,#0c0910);color:#8c7c91;font-size:26px;font-weight:1000;box-shadow:inset 0 0 0 1px #ffffff18;transition:.35s}.cover.open{opacity:0;pointer-events:none;transform:scale(.82) rotate(-2deg)}.cover.pickable{animation:pick 1s ease-in-out infinite;cursor:pointer}.revealStatus{text-align:center;font-size:10px;color:#d5cadf;margin-top:6px}.revealModal .picture{border-radius:17px;gap:3px;margin:12px 0}.revealModal .cover{font-size:38px}.revealModal h2{font-size:27px}.revealDone{font-weight:900;color:#8a2f5c}@keyframes pick{50%{filter:brightness(1.35);box-shadow:inset 0 0 0 2px #ffd25f,0 0 15px #ffd25f88}}
+.objectives{display:grid;grid-template-columns:1fr 1fr auto;gap:7px}.objective,.scorebox{min-width:0;background:rgba(27,19,39,.92);border:1px solid #ffffff17;border-radius:15px;padding:8px;box-shadow:0 7px 20px #0004}.objtop{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px;color:#d0c5da}.objicon{font-size:19px}.track{height:7px;border-radius:99px;background:#0c0911;margin-top:6px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--gold));transition:.3s}.scorebox{text-align:center;display:grid;place-items:center;min-width:68px}.scorebox small{font-size:9px;color:#c6b9d2}.scorebox b{font-size:18px;color:var(--cyan)}
+.boardShell{position:relative;width:100%;aspect-ratio:1/1;max-height:min(68dvh,540px);border-radius:24px;padding:8px;background:linear-gradient(135deg,#f4d486 0 2%,#5a294b 2% 4%,#25172e 4% 96%,#5a294b 96% 98%,#f4d486 98%);box-shadow:0 18px 45px #0008,0 0 22px #57e5ef25}.board{width:100%;height:100%;display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);gap:clamp(3px,1vw,6px);touch-action:none}.tile{border:0;padding:0;border-radius:clamp(8px,2.3vw,14px);position:relative;display:grid;place-items:center;overflow:hidden;cursor:pointer;transition:transform .12s,filter .12s,opacity .18s;box-shadow:inset 0 0 0 1px #ffffff44,inset 0 -5px 0 #00000024,0 3px 4px #0005;font-size:clamp(22px,7.5vw,43px);line-height:1}.tile:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,#ffffff66,transparent 38%);pointer-events:none}.tile.selected{outline:3px solid white;transform:scale(.91);filter:brightness(1.2)}.tile.hint{animation:hint 1s ease-in-out 2}.tile.matched{animation:pop .26s ease forwards}.tile.striped:after{content:"↔";position:absolute;right:3px;bottom:1px;font-size:12px;color:white;text-shadow:0 1px 3px #000}.tile.bomb:after{content:"✦";position:absolute;right:4px;top:2px;font-size:13px;color:white;text-shadow:0 0 7px white}@keyframes hint{50%{transform:scale(.84);filter:brightness(1.45)}}@keyframes pop{50%{transform:scale(1.2);filter:brightness(1.8)}100%{transform:scale(0);opacity:0}}.t0{background:linear-gradient(145deg,#ff85ae,#c83274)}.t1{background:linear-gradient(145deg,#69edf5,#1687a0)}.t2{background:linear-gradient(145deg,#ffe17c,#d48a22)}.t3{background:linear-gradient(145deg,#9af2c4,#298b67)}.t4{background:linear-gradient(145deg,#c9b8ff,#7257b7)}.t5{background:linear-gradient(145deg,#ff9589,#b7423f)}
+.controls{display:flex;gap:7px}.controls button{flex:1;border:1px solid #ffffff1e;border-radius:14px;padding:11px 8px;color:#fff;background:#2a1d3c;font-weight:900;box-shadow:0 5px 0 #0e0a15}.controls button.primary{background:#d74482}.controls button:active{transform:translateY(3px);box-shadow:0 2px 0 #0e0a15}.message{text-align:center;min-height:18px;font-size:11px;color:#d5cadf}.overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:20px;background:#0b0811cc;backdrop-filter:blur(7px)}.overlay.hide{display:none}.modal{width:min(430px,92vw);background:#fff0ce;color:#35203d;border-radius:26px;padding:23px;text-align:center;box-shadow:0 22px 70px #0009}.modal h2{margin:0 0 5px;font-size:30px}.modal p{line-height:1.45}.modal button{width:100%;border:0;border-radius:15px;padding:14px;background:#cc3f7a;color:white;font-weight:1000}.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0}.legend div{background:#f1dbae;border-radius:12px;padding:8px;font-size:12px}.legend span{display:block;font-size:23px}@media(max-height:700px){.app{gap:6px;padding-top:5px}.brand p,.message{display:none}header{padding:7px 9px}.marquee{padding:5px 10px}.marquee strong{font-size:17px}.objective,.scorebox{padding:5px}.boardShell{max-height:64dvh}}
 </style>
 </head>
 <body>
 <div class="app">
-<header>
- <div class="brand"><h1>Atomic Americana Match</h1><p>Roadside relic restoration bureau</p></div>
- <div class="stats">
-  <div class="stat">LEVEL<b id="level">1</b></div>
-  <div class="stat">MOVES<b id="moves">22</b></div>
- </div>
-</header>
+<header><div class="brand"><h1>Atomic Americana Match</h1><p>Roadside relic restoration bureau</p></div><div class="stats"><div class="stat">LEVEL<b id="level">1</b></div><div class="stat">MOVES<b id="moves">22</b></div></div></header>
 <div class="marquee"><small>NOW PLAYING AT</small><strong id="venue">STARLITE MOTOR COURT</strong></div>
-<section class="objectives">
- <div class="objective"><div class="objtop"><span><b class="objicon" id="o1i">🚀</b> <span id="o1n">Rocket</span></span><b id="o1c">0/10</b></div><div class="track"><div class="fill" id="o1f"></div></div></div>
- <div class="objective"><div class="objtop"><span><b class="objicon" id="o2i">☕</b> <span id="o2n">Diner</span></span><b id="o2c">0/10</b></div><div class="track"><div class="fill" id="o2f"></div></div></div>
- <div class="scorebox"><small>SCORE</small><b id="score">0</b></div>
-</section>
-<div class="boardShell"><div class="board" id="board"></div></div>
-<div class="controls"><button id="reset">Restart</button><button id="hint">Hint</button><button class="primary" id="shuffle">Shuffle</button></div>
-<div class="message" id="msg">Tap one tile, then an adjacent tile. Swipe works too.</div>
+<section class="revealCard"><div class="revealTop"><b>SWAMP KING DISCOVERY</b><span id="revealCount">0/6 uncovered</span></div><div class="revealMini" id="revealMini"></div><div class="revealStatus" id="revealStatus">Win a level to uncover one panel.</div></section>
+<section class="objectives"><div class="objective"><div class="objtop"><span><b class="objicon" id="o1i">🚀</b> <span id="o1n">Rocket</span></span><b id="o1c">0/10</b></div><div class="track"><div class="fill" id="o1f"></div></div></div><div class="objective"><div class="objtop"><span><b class="objicon" id="o2i">☕</b> <span id="o2n">Diner</span></span><b id="o2c">0/10</b></div><div class="track"><div class="fill" id="o2f"></div></div></div><div class="scorebox"><small>SCORE</small><b id="score">0</b></div></section>
+<div class="boardShell"><div class="board" id="board"></div></div><div class="controls"><button id="reset">Restart</button><button id="hint">Hint</button><button class="primary" id="shuffle">Shuffle</button></div><div class="message" id="msg">Tap one tile, then an adjacent tile. Swipe works too.</div>
 </div>
 <div class="overlay" id="intro"><div class="modal"><h2>Atomic Americana Match</h2><p>Restore the roadside one match at a time. Match three relics, create powered tiles with four or five, and finish both collection goals before the moves run dry.</p><div class="legend"><div><span>🚀</span>Rocket</div><div><span>☕</span>Diner</div><div><span>🎳</span>Bowling</div><div><span>🛸</span>UFO</div><div><span>🔑</span>Motel Key</div><div><span>⭐</span>Neon Star</div></div><button id="start">Light the Sign</button></div></div>
 <div class="overlay hide" id="result"><div class="modal"><h2 id="resultTitle">Sign Restored!</h2><p id="resultText"></p><button id="next">Next Stop</button></div></div>
+<div class="overlay hide" id="revealOverlay"><div class="modal revealModal"><h2 id="revealTitle">Choose a Panel</h2><p id="revealText">Tap one covered square to reveal part of the Swamp King.</p><div class="picture" id="revealPicture"></div><div id="revealDone" class="revealDone"></div><button id="continueAfterReveal" style="display:none">Continue to Next Level</button></div></div>
 <script>
 (()=>{
-const N=7, icons=['🚀','☕','🎳','🛸','🔑','⭐'], names=['Rocket','Diner','Bowling','UFO','Motel Key','Neon Star'];
-const venues=['STARLITE MOTOR COURT','ATOMIC BOWL-O-RAMA','MOONBEAM DINER','ROCKET 66 SERVICE','GALAXY DRIVE-IN','NEON PALMS MOTEL'];
-const $=id=>document.getElementById(id); let board=[], level=+(localStorage.aaMatchLevel||1), moves=22, score=0, busy=false, selected=null, touchStart=null;
-let goals=[];
-function rngType(){return Math.floor(Math.random()*icons.length)}
-function freshTile(t=rngType()){return {t,s:null,id:crypto.randomUUID?.()||Math.random().toString(36)}}
-function setupGoals(){
- const a=(level*2+1)%6,b=(a+2+(level%3))%6,need=Math.min(18,8+level);
- goals=[{t:a,need,got:0},{t:b,need:Math.min(18,7+level),got:0}];
- moves=Math.max(18,23-Math.floor(level/4));score=0;
- $('venue').textContent=venues[(level-1)%venues.length]; $('level').textContent=level;
-}
-function build(){
- do{
-  board=Array.from({length:N},()=>Array(N));
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-   let t,guard=0;do{t=rngType();guard++}while(guard<20&&((x>1&&board[y][x-1].t===t&&board[y][x-2].t===t)||(y>1&&board[y-1][x].t===t&&board[y-2][x].t===t)));
-   board[y][x]=freshTile(t);
-  }
- }while(!findMove());
- render();update();
-}
-function render(){
- const el=$('board');el.innerHTML='';
- for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-  const t=board[y][x],b=document.createElement('button');b.className=`tile t${t.t}${t.s?' '+t.s:''}`;b.textContent=icons[t.t];b.dataset.x=x;b.dataset.y=y;b.setAttribute('aria-label',names[t.t]);el.appendChild(b);
- }
-}
-function update(){
- $('moves').textContent=moves;$('score').textContent=score;
- goals.forEach((g,i)=>{$(`o${i+1}i`).textContent=icons[g.t];$(`o${i+1}n`).textContent=names[g.t];$(`o${i+1}c`).textContent=`${g.got}/${g.need}`;$(`o${i+1}f`).style.width=Math.min(100,g.got/g.need*100)+'%'});
-}
-function adjacent(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)===1}
-function swap(a,b){[board[a.y][a.x],board[b.y][b.x]]=[board[b.y][b.x],board[a.y][a.x]]}
-function matches(){
- const set=new Set(),groups=[];
- for(let y=0;y<N;y++){let x=0;while(x<N){let t=board[y][x].t,r=1;while(x+r<N&&board[y][x+r].t===t)r++;if(r>=3){let cells=[];for(let k=0;k<r;k++){set.add(`${x+k},${y}`);cells.push({x:x+k,y})}groups.push({cells,dir:'h'})}x+=r}}
- for(let x=0;x<N;x++){let y=0;while(y<N){let t=board[y][x].t,r=1;while(y+r<N&&board[y+r][x].t===t)r++;if(r>=3){let cells=[];for(let k=0;k<r;k++){set.add(`${x},${y+k}`);cells.push({x,y:y+k})}groups.push({cells,dir:'v'})}y+=r}}
- return {set,groups}
-}
-function findMove(){
- for(let y=0;y<N;y++)for(let x=0;x<N;x++)for(const d of [[1,0],[0,1]]){let nx=x+d[0],ny=y+d[1];if(nx>=N||ny>=N)continue;swap({x,y},{x:nx,y:ny});let ok=matches().set.size;swap({x,y},{x:nx,y:ny});if(ok)return [{x,y},{x:nx,y:ny}]}
- return null
-}
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function attempt(a,b){
- if(busy||!adjacent(a,b))return;busy=true;swap(a,b);render();await sleep(130);
- let m=matches();if(!m.set.size){swap(a,b);render();$('msg').textContent='That swap makes no match.';busy=false;return}
- moves--;await resolve(m,a,b);selected=null;update();
- if(goals.every(g=>g.got>=g.need)){win();return}
- if(moves<=0){lose();return}
- if(!findMove())shuffleBoard();
- busy=false;
-}
-async function resolve(m,a,b){
- let cascade=0;
- while(m.set.size){
-  cascade++;
-  let special=null;
-  const involved=m.groups.filter(g=>g.cells.some(c=>(c.x===a.x&&c.y===a.y)||(c.x===b.x&&c.y===b.y))).sort((q,w)=>w.cells.length-q.cells.length)[0]||m.groups[0];
-  if(involved?.cells.length>=4){const anchor=involved.cells.find(c=>c.x===b.x&&c.y===b.y)||involved.cells[0];special={...anchor,s:involved.cells.length>=5?'bomb':'striped',t:board[anchor.y][anchor.x].t};m.set.delete(`${anchor.x},${anchor.y}`)}
-  const expanded=new Set(m.set);
-  for(const k of [...m.set]){const [x,y]=k.split(',').map(Number),tile=board[y][x];if(tile.s==='striped')for(let i=0;i<N;i++)expanded.add(`${i},${y}`);if(tile.s==='bomb')for(let yy=Math.max(0,y-1);yy<=Math.min(N-1,y+1);yy++)for(let xx=Math.max(0,x-1);xx<=Math.min(N-1,x+1);xx++)expanded.add(`${xx},${yy}`)}
-  document.querySelectorAll('.tile').forEach(e=>{if(expanded.has(`${e.dataset.x},${e.dataset.y}`))e.classList.add('matched')});await sleep(230);
-  for(const k of expanded){const [x,y]=k.split(',').map(Number),tile=board[y][x];if(!tile)continue;goals.forEach(g=>{if(tile.t===g.t)g.got++});score+=10*cascade;board[y][x]=null}
-  for(let x=0;x<N;x++){let stack=[];for(let y=N-1;y>=0;y--)if(board[y][x])stack.push(board[y][x]);for(let y=N-1;y>=0;y--)board[y][x]=stack[N-1-y]||freshTile()}
-  if(special)board[special.y][special.x]={...freshTile(special.t),s:special.s};
-  render();update();await sleep(180);m=matches()
- }
- $('msg').textContent=cascade>1?`${cascade}x roadside chain reaction!`:'Clean match.';
-}
-function shuffleBoard(){let flat=board.flat();for(let i=flat.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[flat[i],flat[j]]=[flat[j],flat[i]]}board=Array.from({length:N},(_,y)=>flat.slice(y*N,y*N+N));if(matches().set.size||!findMove())return build();render()}
-function select(p){
- if(busy)return;if(!selected){selected=p;mark();return}
- if(selected.x===p.x&&selected.y===p.y){selected=null;mark();return}
- if(adjacent(selected,p)){const a=selected;selected=null;mark();attempt(a,p)}else{selected=p;mark()}
-}
-function mark(){document.querySelectorAll('.tile').forEach(e=>e.classList.toggle('selected',selected&&+e.dataset.x===selected.x&&+e.dataset.y===selected.y))}
-$('board').addEventListener('click',e=>{const t=e.target.closest('.tile');if(t)select({x:+t.dataset.x,y:+t.dataset.y})});
-$('board').addEventListener('pointerdown',e=>{const t=e.target.closest('.tile');if(t)touchStart={x:+t.dataset.x,y:+t.dataset.y,px:e.clientX,py:e.clientY}});
-$('board').addEventListener('pointerup',e=>{if(!touchStart)return;let dx=e.clientX-touchStart.px,dy=e.clientY-touchStart.py;if(Math.hypot(dx,dy)>24){let b={x:touchStart.x+(Math.abs(dx)>Math.abs(dy)?Math.sign(dx):0),y:touchStart.y+(Math.abs(dy)>=Math.abs(dx)?Math.sign(dy):0)};if(b.x>=0&&b.x<N&&b.y>=0&&b.y<N)attempt({x:touchStart.x,y:touchStart.y},b)}touchStart=null});
-$('hint').onclick=()=>{const m=findMove();if(!m)return;document.querySelectorAll('.tile').forEach(e=>{if(m.some(p=>p.x===+e.dataset.x&&p.y===+e.dataset.y))e.classList.add('hint')});setTimeout(()=>document.querySelectorAll('.hint').forEach(e=>e.classList.remove('hint')),1900)};
-$('shuffle').onclick=()=>{if(!busy){score=Math.max(0,score-50);shuffleBoard();update();$('msg').textContent='The roadside sign rearranged itself.'}};
-$('reset').onclick=()=>{if(confirm('Restart this level?'))startLevel()};
-$('start').onclick=()=>{$('intro').classList.add('hide');startLevel()};
-$('next').onclick=()=>{$('result').classList.add('hide');if($('next').dataset.mode==='next'){level++;localStorage.aaMatchLevel=level}startLevel()};
-function startLevel(){setupGoals();selected=null;busy=false;build();$('result').classList.add('hide')}
-function win(){busy=true;score+=moves*25;update();$('resultTitle').textContent='Neon Restored!';$('resultText').textContent=`You revived ${venues[(level-1)%venues.length]} with ${moves} moves left. Final score: ${score}.`;$('next').textContent='Next Roadside Stop';$('next').dataset.mode='next';$('result').classList.remove('hide')}
-function lose(){busy=true;$('resultTitle').textContent='The Sign Went Dark';$('resultText').textContent='The collection goals were not finished before the moves ran out. The coffee is still warm, though.';$('next').textContent='Try This Stop Again';$('next').dataset.mode='retry';$('result').classList.remove('hide')}
-setupGoals();
+const N=7,icons=['🚀','☕','🎳','🛸','🔑','⭐'],names=['Rocket','Diner','Bowling','UFO','Motel Key','Neon Star'];
+const venues=['STARLITE MOTOR COURT','ATOMIC BOWL-O-RAMA','MOONBEAM DINER','ROCKET SERVICE','GALAXY DRIVE-IN','NEON PALMS MOTEL'];
+const $=id=>document.getElementById(id);let revealed=JSON.parse(localStorage.aaSwampKingRevealed||'[]'),revealPending=false,board=[],level=+(localStorage.aaMatchLevel||1),moves=22,score=0,busy=false,selected=null,touchStart=null,goals=[];
+function saveReveals(){localStorage.aaSwampKingRevealed=JSON.stringify(revealed)}
+function renderRevealBoards(){const make=(root,interactive=false)=>{root.innerHTML='';for(let i=0;i<6;i++){const b=document.createElement('button');b.className='cover'+(revealed.includes(i)?' open':'')+(interactive&&!revealed.includes(i)?' pickable':'');b.textContent='?';if(interactive)b.onclick=()=>chooseReveal(i);root.appendChild(b)}};make($('revealMini'));make($('revealPicture'),revealPending);$('revealCount').textContent=`${revealed.length}/6 uncovered`;$('revealStatus').textContent=revealed.length===6?'ATTRACTION RESTORED: The Swamp King':revealPending?'Choose your next panel.':'Win a level to uncover one panel.'}
+function openReveal(){revealPending=true;$('revealOverlay').classList.remove('hide');$('continueAfterReveal').style.display='none';$('revealDone').textContent='';$('revealTitle').textContent='Choose a Panel';$('revealText').textContent='Tap one covered square to reveal part of the Swamp King.';renderRevealBoards()}
+function chooseReveal(i){if(!revealPending||revealed.includes(i))return;revealed.push(i);saveReveals();revealPending=false;renderRevealBoards();$('revealTitle').textContent=revealed.length===6?'The Swamp King Revealed!':'Another Piece Uncovered';$('revealText').textContent=revealed.length===6?'You restored the legendary 20-foot roadside gator billboard.':'The attraction is coming back into view.';$('revealDone').textContent=revealed.length===6?'CAJUN KING • WORLD’S LARGEST GATOR (PROBABLY)':'';$('continueAfterReveal').style.display='block'}
+$('continueAfterReveal').onclick=()=>{$('revealOverlay').classList.add('hide');level++;localStorage.aaMatchLevel=level;startLevel()};
+function rngType(){return Math.floor(Math.random()*icons.length)}function freshTile(t=rngType()){return{t,s:null,id:crypto.randomUUID?.()||Math.random().toString(36)}}
+function setupGoals(){const a=(level*2+1)%6,b=(a+2+(level%3))%6,need=Math.min(18,8+level);goals=[{t:a,need,got:0},{t:b,need:Math.min(18,7+level),got:0}];moves=Math.max(18,23-Math.floor(level/4));score=0;$('venue').textContent=venues[(level-1)%venues.length];$('level').textContent=level}
+function build(){do{board=Array.from({length:N},()=>Array(N));for(let y=0;y<N;y++)for(let x=0;x<N;x++){let t,g=0;do{t=rngType();g++}while(g<20&&((x>1&&board[y][x-1].t===t&&board[y][x-2].t===t)||(y>1&&board[y-1][x].t===t&&board[y-2][x].t===t)));board[y][x]=freshTile(t)}}while(!findMove());render();update()}
+function render(){const el=$('board');el.innerHTML='';for(let y=0;y<N;y++)for(let x=0;x<N;x++){const t=board[y][x],b=document.createElement('button');b.className=`tile t${t.t}${t.s?' '+t.s:''}`;b.textContent=icons[t.t];b.dataset.x=x;b.dataset.y=y;el.appendChild(b)}}
+function update(){$('moves').textContent=moves;$('score').textContent=score;goals.forEach((g,i)=>{$(`o${i+1}i`).textContent=icons[g.t];$(`o${i+1}n`).textContent=names[g.t];$(`o${i+1}c`).textContent=`${g.got}/${g.need}`;$(`o${i+1}f`).style.width=Math.min(100,g.got/g.need*100)+'%'})}
+function adjacent(a,b){return Math.abs(a.x-b.x)+Math.abs(a.y-b.y)===1}function swap(a,b){[board[a.y][a.x],board[b.y][b.x]]=[board[b.y][b.x],board[a.y][a.x]]}
+function matches(){const set=new Set(),groups=[];for(let y=0;y<N;y++){let x=0;while(x<N){let t=board[y][x].t,r=1;while(x+r<N&&board[y][x+r].t===t)r++;if(r>=3){let cells=[];for(let k=0;k<r;k++){set.add(`${x+k},${y}`);cells.push({x:x+k,y})}groups.push({cells,dir:'h'})}x+=r}}for(let x=0;x<N;x++){let y=0;while(y<N){let t=board[y][x].t,r=1;while(y+r<N&&board[y+r][x].t===t)r++;if(r>=3){let cells=[];for(let k=0;k<r;k++){set.add(`${x},${y+k}`);cells.push({x,y:y+k})}groups.push({cells,dir:'v'})}y+=r}}return{set,groups}}
+function findMove(){for(let y=0;y<N;y++)for(let x=0;x<N;x++)for(const d of [[1,0],[0,1]]){let nx=x+d[0],ny=y+d[1];if(nx>=N||ny>=N)continue;swap({x,y},{x:nx,y:ny});let ok=matches().set.size;swap({x,y},{x:nx,y:ny});if(ok)return[{x,y},{x:nx,y:ny}]}return null}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));async function attempt(a,b){if(busy||!adjacent(a,b))return;busy=true;swap(a,b);render();await sleep(130);let m=matches();if(!m.set.size){swap(a,b);render();$('msg').textContent='That swap makes no match.';busy=false;return}moves--;await resolve(m,a,b);selected=null;update();if(goals.every(g=>g.got>=g.need)){win();return}if(moves<=0){lose();return}if(!findMove())shuffleBoard();busy=false}
+async function resolve(m,a,b){let cascade=0;while(m.set.size){cascade++;let special=null;const involved=m.groups.filter(g=>g.cells.some(c=>(c.x===a.x&&c.y===a.y)||(c.x===b.x&&c.y===b.y))).sort((q,w)=>w.cells.length-q.cells.length)[0]||m.groups[0];if(involved?.cells.length>=4){const anchor=involved.cells.find(c=>c.x===b.x&&c.y===b.y)||involved.cells[0];special={...anchor,s:involved.cells.length>=5?'bomb':'striped',t:board[anchor.y][anchor.x].t};m.set.delete(`${anchor.x},${anchor.y}`)}const expanded=new Set(m.set);for(const k of [...m.set]){const[x,y]=k.split(',').map(Number),tile=board[y][x];if(tile.s==='striped')for(let i=0;i<N;i++)expanded.add(`${i},${y}`);if(tile.s==='bomb')for(let yy=Math.max(0,y-1);yy<=Math.min(N-1,y+1);yy++)for(let xx=Math.max(0,x-1);xx<=Math.min(N-1,x+1);xx++)expanded.add(`${xx},${yy}`)}document.querySelectorAll('.tile').forEach(e=>{if(expanded.has(`${e.dataset.x},${e.dataset.y}`))e.classList.add('matched')});await sleep(230);for(const k of expanded){const[x,y]=k.split(',').map(Number),tile=board[y][x];if(!tile)continue;goals.forEach(g=>{if(tile.t===g.t)g.got++});score+=10*cascade;board[y][x]=null}for(let x=0;x<N;x++){let stack=[];for(let y=N-1;y>=0;y--)if(board[y][x])stack.push(board[y][x]);for(let y=N-1;y>=0;y--)board[y][x]=stack[N-1-y]||freshTile()}if(special)board[special.y][special.x]={...freshTile(special.t),s:special.s};render();update();await sleep(180);m=matches()}$('msg').textContent=cascade>1?`${cascade}x roadside chain reaction!`:'Clean match.'}
+function shuffleBoard(){let flat=board.flat();for(let i=flat.length-1;i;i--){let j=Math.floor(Math.random()*(i+1));[flat[i],flat[j]]=[flat[j],flat[i]]}board=Array.from({length:N},(_,y)=>flat.slice(y*N,y*N+N));if(matches().set.size||!findMove())return build();render()}function select(p){if(busy)return;if(!selected){selected=p;mark();return}if(selected.x===p.x&&selected.y===p.y){selected=null;mark();return}if(adjacent(selected,p)){const a=selected;selected=null;mark();attempt(a,p)}else{selected=p;mark()}}function mark(){document.querySelectorAll('.tile').forEach(e=>e.classList.toggle('selected',selected&&+e.dataset.x===selected.x&&+e.dataset.y===selected.y))}
+$('board').addEventListener('click',e=>{const t=e.target.closest('.tile');if(t)select({x:+t.dataset.x,y:+t.dataset.y})});$('board').addEventListener('pointerdown',e=>{const t=e.target.closest('.tile');if(t)touchStart={x:+t.dataset.x,y:+t.dataset.y,px:e.clientX,py:e.clientY}});$('board').addEventListener('pointerup',e=>{if(!touchStart)return;let dx=e.clientX-touchStart.px,dy=e.clientY-touchStart.py;if(Math.hypot(dx,dy)>24){let b={x:touchStart.x+(Math.abs(dx)>Math.abs(dy)?Math.sign(dx):0),y:touchStart.y+(Math.abs(dy)>=Math.abs(dx)?Math.sign(dy):0)};if(b.x>=0&&b.x<N&&b.y>=0&&b.y<N)attempt({x:touchStart.x,y:touchStart.y},b)}touchStart=null});$('hint').onclick=()=>{const m=findMove();if(!m)return;document.querySelectorAll('.tile').forEach(e=>{if(m.some(p=>p.x===+e.dataset.x&&p.y===+e.dataset.y))e.classList.add('hint')});setTimeout(()=>document.querySelectorAll('.hint').forEach(e=>e.classList.remove('hint')),1900)};$('shuffle').onclick=()=>{if(!busy){score=Math.max(0,score-50);shuffleBoard();update();$('msg').textContent='The roadside sign rearranged itself.'}};$('reset').onclick=()=>{if(confirm('Restart this level?'))startLevel()};$('start').onclick=()=>{$('intro').classList.add('hide');renderRevealBoards();startLevel()};$('next').onclick=()=>{$('result').classList.add('hide');if($('next').dataset.mode==='next'&&revealed.length<6){openReveal();return}if($('next').dataset.mode==='next'){level++;localStorage.aaMatchLevel=level}startLevel()};function startLevel(){renderRevealBoards();setupGoals();selected=null;busy=false;build();$('result').classList.add('hide')}function win(){busy=true;score+=moves*25;update();$('resultTitle').textContent=revealed.length<6?'Panel Earned!':'Neon Restored!';$('resultText').textContent=`You revived ${venues[(level-1)%venues.length]} with ${moves} moves left. Final score: ${score}.`;$('next').textContent=revealed.length<6?'Choose a Swamp King Panel':'Next Roadside Stop';$('next').dataset.mode='next';$('result').classList.remove('hide')}function lose(){busy=true;$('resultTitle').textContent='The Sign Went Dark';$('resultText').textContent='The collection goals were not finished before the moves ran out. The coffee is still warm, though.';$('next').textContent='Try This Stop Again';$('next').dataset.mode='retry';$('result').classList.remove('hide')}setupGoals();
 })();
 </script>
 </body></html>
