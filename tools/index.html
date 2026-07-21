@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lady &amp; Delilah Card Maker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="title-bar">
+    <h1>Lady &amp; Delilah Card Maker</h1>
+    <span class="version-mark">Version 2.0</span>
+  </header>
+
+  <main class="app-shell">
+    <section class="controls-panel" aria-label="Workspace controls">
+      <div class="workspace-tabs" role="tablist" aria-label="Workspace">
+        <button id="frontTab" class="tab-button is-active" type="button" aria-selected="true">Front</button>
+        <button id="backTab" class="tab-button" type="button" aria-selected="false">Back</button>
+        <button id="libraryTab" class="tab-button" type="button" aria-selected="false">Library</button>
+        <button id="packBuilderTab" class="tab-button" type="button" aria-selected="false">Pack Builder</button>
+        <button id="settingsTab" class="tab-button" type="button" aria-selected="false">Settings</button>
+      </div>
+
+      <div id="frontPanel" class="workspace-panel is-active">
+        <div class="upload-zone" id="dropZone">
+          <input id="imageInput" type="file" accept="image/*">
+          <label for="imageInput">
+            <span class="upload-title">Upload Artwork</span>
+            <span class="upload-copy">Drop an image here or choose a file</span>
+          </label>
+        </div>
+
+        <div class="field-grid">
+        <label>
+          Template
+          <select id="templateSelect">
+            <option value="default">Default</option>
+            <option value="character">Character</option>
+            <option value="weapon">Weapon</option>
+            <option value="location">Location</option>
+            <option value="creature">Creature</option>
+            <option value="artifact">Artifact</option>
+          </select>
+        </label>
+
+        <label>
+          Card Title
+          <input id="cardTitle" type="text" value="Lady of the Ash Road" maxlength="70">
+        </label>
+
+        <label>
+          Card Type
+          <select id="cardTypeSelect">
+            <option value="Character">Character</option>
+            <option value="Companion">Companion</option>
+            <option value="Weapon">Weapon</option>
+            <option value="Location">Location</option>
+            <option value="Artifact">Artifact</option>
+            <option value="Creature">Creature</option>
+            <option value="Legend">Legend</option>
+            <option value="Villain">Villain</option>
+            <option value="Promo">Promo</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </label>
+
+        <label id="customTypeLabel" class="is-hidden">
+          Custom Card Type
+          <input id="customCardType" type="text" value="Legendary Survivor" maxlength="44">
+        </label>
+
+        <label>
+          Card Number
+          <input id="cardNumber" type="text" value="C-001" maxlength="12">
+        </label>
+
+        <label id="quoteLabel">
+          <span class="range-label">
+            Quote
+            <output id="quoteCounter">0 / 90</output>
+          </span>
+          <textarea id="quoteText" rows="3" maxlength="90">"The road remembers every promise made in smoke."</textarea>
+        </label>
+
+        <label id="loreLabel">
+          <span class="range-label">
+            Lore
+            <output id="loreCounter">0 / 160</output>
+          </span>
+          <textarea id="loreText" rows="3" maxlength="160">Lady and Delilah walk the broken highways where old kingdoms rust under black rain.</textarea>
+        </label>
+
+        <label>
+          Footer Text
+          <input id="footerText" type="text" value="WASTELAND RELIC" maxlength="40">
+        </label>
+
+        <label>
+          Rarity
+          <select id="raritySymbol">
+            <option value="none">None</option>
+            <option value="common">Common</option>
+            <option value="uncommon">Uncommon</option>
+            <option value="rare">Rare</option>
+            <option value="epic">Epic</option>
+            <option value="legendary">Legendary</option>
+            <option value="promo">Promo</option>
+            <option value="foil">Foil</option>
+          </select>
+        </label>
+
+        <div class="control-group">
+          <div class="group-title">Image Controls</div>
+          <label>
+            <span class="range-label">
+              Image Zoom
+              <output id="zoomValue">1.00x</output>
+            </span>
+            <input id="zoomRange" type="range" min="0.5" max="3" step="0.01" value="1">
+          </label>
+          <div class="mini-button-row">
+            <button id="fitImage" type="button">Fit Image</button>
+            <button id="fillFrame" type="button">Fill Frame</button>
+            <button id="resetImage" type="button">Reset Image</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="group-title">Finish</div>
+          <label>
+            Finish Style
+            <select id="finishStyle">
+              <option value="standard">Standard</option>
+              <option value="foil">Foil</option>
+              <option value="holographic">Holographic</option>
+              <option value="relic">Relic</option>
+              <option value="darkMatte">Dark Matte</option>
+            </select>
+          </label>
+          <label>
+            <span class="range-label">
+              Finish Intensity
+              <output id="finishIntensityValue">35%</output>
+            </span>
+            <input id="finishIntensity" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+          <label class="check-row">
+            <input id="holoBorderEnabled" type="checkbox">
+            Holo Border
+          </label>
+          <label>
+            <span class="range-label">
+              Holo Intensity
+              <output id="holoIntensityValue">55%</output>
+            </span>
+            <input id="holoIntensity" type="range" min="0" max="1" step="0.01" value="0.55">
+          </label>
+          <label>
+            <span class="range-label">
+              Border Sparkle
+              <output id="borderSparkleValue">35%</output>
+            </span>
+            <input id="borderSparkle" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+        </div>
+        </div>
+
+        <div class="button-row">
+          <button id="addCurrentCardToLibrary" type="button">Add Current Card to Library</button>
+          <button id="duplicateCard" type="button">Duplicate Card</button>
+          <button id="saveProject" type="button">Save Project</button>
+          <button id="loadProjectButton" type="button">Load Project</button>
+          <input id="projectFileInput" class="is-hidden" type="file" accept="application/json,.json">
+          <button id="exportPng" type="button">Export PNG</button>
+          <button id="exportPdf" type="button">Export Card PDF</button>
+          <div id="libraryAddStatus" class="action-status" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div id="backPanel" class="workspace-panel">
+        <div class="control-group">
+          <div class="group-title">Back</div>
+          <label>
+            Card Number
+            <input id="backCardNumberMirror" type="text" value="C-001" readonly>
+          </label>
+          <div class="button-row">
+            <button id="exportBackPng" type="button">Export Back PNG</button>
+            <button id="exportBackPdf" type="button">Export Back PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="libraryPanel" class="workspace-panel">
+        <div class="pack-header">
+          <div>
+            <h2>Card Library</h2>
+            <p>Save finished front cards in this project, edit them later, and export sheets.</p>
+          </div>
+          <span id="libraryCount">Cards in Library: 0</span>
+        </div>
+
+        <div class="pack-step pack-exports">
+          <h3>Export Library</h3>
+          <button id="exportLibraryPdf" type="button">Export Library as 9-Card PDF</button>
+          <button id="exportLibraryPng" type="button">Export Library as 9-Card PNG</button>
+        </div>
+
+        <div class="pack-preview-wrap">
+          <div class="preview-header">
+            <span>Library Cards</span>
+            <span>Click a card to edit</span>
+          </div>
+          <div id="libraryPreview" class="pack-preview"></div>
+        </div>
+      </div>
+
+      <div id="packBuilderPanel" class="workspace-panel">
+        <div class="pack-header">
+          <div>
+            <h2>Pack Builder</h2>
+            <p>Load exported card PNGs, generate a random pack, preview it, then export.</p>
+          </div>
+          <span id="packLoadedCount">0 cards loaded</span>
+        </div>
+
+        <div class="pack-grid">
+          <div class="pack-step">
+            <h3>Load Cards</h3>
+            <label class="file-button" for="packCardInput">Choose Card PNGs</label>
+            <input id="packCardInput" class="is-hidden" type="file" accept="image/png" multiple>
+          </div>
+
+          <div class="pack-step">
+            <h3>Generate Pack</h3>
+            <label>
+              Number of Cards
+              <input id="packSize" type="number" min="1" max="99" value="10">
+            </label>
+            <label class="check-row">
+              <input id="allowPackDuplicates" type="checkbox">
+              Allow Duplicates
+            </label>
+            <label class="check-row">
+              <input id="balancedPackMode" type="checkbox">
+              Balanced Pack Mode
+            </label>
+            <button id="generatePack" type="button">Generate Pack</button>
+          </div>
+
+          <div class="pack-step pack-exports">
+            <h3>Export Pack</h3>
+            <button id="exportPackZip" type="button">Export Pack ZIP</button>
+            <button id="exportPackPdf" type="button">Export Pack PDF</button>
+            <button id="exportPackCsv" type="button">Export Pack CSV</button>
+          </div>
+        </div>
+
+        <div class="pack-preview-wrap">
+          <div class="preview-header">
+            <span>Preview Pack</span>
+            <span id="packPreviewCount">0 selected</span>
+          </div>
+          <div id="packPreview" class="pack-preview"></div>
+        </div>
+      </div>
+
+      <div id="settingsPanel" class="workspace-panel">
+        <div class="field-grid">
+          <div class="control-group">
+            <div class="group-title">Advanced Layout</div>
+            <label>
+              <span class="range-label">
+                Artwork Width Fine Tune
+                <output id="artworkWidthOffsetValue">Default</output>
+              </span>
+              <input id="artworkWidthOffset" type="range" min="-10" max="10" step="1" value="0">
+            </label>
+            <label>
+              <span class="range-label">
+                Artwork Height Fine Tune
+                <output id="artworkHeightOffsetValue">Default</output>
+              </span>
+              <input id="artworkHeightOffset" type="range" min="-10" max="10" step="1" value="0">
+            </label>
+          </div>
+
+          <div class="control-group">
+            <div class="group-title">Font Sizes</div>
+            <label>
+              Title Font Size
+              <select id="titleFontSize">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large" selected>Large</option>
+                <option value="xlarge">X-Large</option>
+              </select>
+            </label>
+            <label>
+              Card Type Font Size
+              <select id="typeFontSize">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium</option>
+                <option value="large">Large</option>
+                <option value="xlarge">X-Large</option>
+              </select>
+            </label>
+            <label>
+              Quote Font Size
+              <select id="quoteFontSize">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large" selected>Large</option>
+                <option value="xlarge">X-Large</option>
+              </select>
+            </label>
+            <label>
+              Lore Font Size
+              <select id="loreFontSize">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large" selected>Large</option>
+                <option value="xlarge">X-Large</option>
+              </select>
+            </label>
+            <label>
+              Footer Font Size
+              <select id="footerFontSize">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium</option>
+                <option value="large">Large</option>
+                <option value="xlarge">X-Large</option>
+              </select>
+            </label>
+          </div>
+
+          <fieldset class="print-options">
+            <legend>PDF Print Options</legend>
+            <label class="check-row">
+              <input id="printMargin" type="checkbox" checked>
+              Print Margin
+            </label>
+            <label class="check-row">
+              <input id="cutGuides" type="checkbox" checked>
+              Cut Guides
+            </label>
+            <label class="check-row">
+              <input id="cardBleed" type="checkbox">
+              Card Bleed
+            </label>
+            <label>
+              Export Profile
+              <select id="exportProfile">
+                <option value="screen">Screen Preview</option>
+                <option value="home" selected>Home Print</option>
+                <option value="bright">Bright Print</option>
+                <option value="maximum">Maximum Recovery</option>
+              </select>
+            </label>
+          </fieldset>
+
+          <div class="button-row">
+            <div id="exportProfileLabel" class="export-profile-label">Current Export Profile: Home Print</div>
+            <button id="exportSheet" type="button">Export 9-Card PNG</button>
+            <button id="exportSheetPdf" type="button">Export 9-Card PDF</button>
+            <button id="exportCalibrationSheet" type="button">Export Calibration Sheet</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-panel" aria-label="Live card preview">
+      <div class="preview-header">
+        <span id="previewSideLabel">Front Preview</span>
+        <span>2.5 x 3.5</span>
+      </div>
+      <canvas id="cardCanvas" width="750" height="1050" aria-label="Trading card preview"></canvas>
+      <p class="canvas-hint">Drag inside the artwork window to reposition the image. Use the slider or mouse wheel to zoom. Double-click to reset.</p>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
