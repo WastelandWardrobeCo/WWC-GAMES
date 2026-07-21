@@ -118,6 +118,16 @@ const encounters = [
   [{ key: 'leader', elite: true }]
 ];
 
+const RUN_NODES = [
+  { id: 'run-1', type: 'battle', label: 'Battle', contractId: 'black-veil', encounter: [{ key: 'cultist' }, { key: 'trapper' }] },
+  { id: 'run-2', type: 'battle', label: 'Battle', contractId: 'frozen', encounter: [{ key: 'frost-wolf' }, { key: 'ice-stalker' }] },
+  { id: 'run-3', type: 'campfire', label: 'Campfire', contractId: 'frozen' },
+  { id: 'run-4', type: 'elite', label: 'Elite', contractId: 'bone', encounter: [{ key: 'pit-brute', elite: true }, { key: 'scrap-thrower', elite: true }] },
+  { id: 'run-5', type: 'merchant', label: 'Merchant', contractId: 'sawmill' },
+  { id: 'run-6', type: 'battle', label: 'Battle', contractId: 'hollow', encounter: [{ key: 'hollow-wisp' }, { key: 'veil-touched' }] },
+  { id: 'run-7', type: 'boss', label: 'Boss', contractId: 'sawmill', encounter: [{ key: 'foreman-red', elite: true }] }
+];
+
 const encounterSets = {
   'black-veil': encounters,
   frozen: [
@@ -240,6 +250,7 @@ let pendingRevealCards = [];
 let revealIndex = 0;
 let pendingVictoryFinal = false;
 let pendingBandagePlay = null;
+let pendingSellCardId = null;
 
 function freshState() {
   return {
@@ -248,6 +259,11 @@ function freshState() {
     owned: starterOwned(),
     activeDeck: [...starterDeck],
     relics: ['Wolf Fang Charm'],
+    forgeTokens: 0,
+    run: null,
+    runHistory: [],
+    runCompleted: false,
+    unlockedRewards: [],
     completed: [], unlockedHunts: ['black-veil'], difficultyProgress: {}, settings: {},
     firstDeckRevealed: false,
     encounter: 0, turn: 1, actions: 3, maxActions: 3, deck: [], discard: [], hand: [],
@@ -255,7 +271,7 @@ function freshState() {
     enemies: [], targetId: null, log: [],
     enemyActionEvents: [], debugEvents: [],
       guard: 0, dodge: 0, traps: 0, ladyInstinct: 0, intentClear: false, funnel: false, nextBleed: 0, nextTurnBonus: 0, nextTerror: 0, nextSyncBonus: 0, syncBleedBonus: 0, bleed: 0, freeTrapUsed: false,
-    reinforcements: 0, huntLost: false, pendingRewardCard: null, pendingFinal: false
+    reinforcements: 0, huntLost: false, pendingRewardCard: null, pendingFinal: false, pendingRunRewardCards: []
   };
 }
 
@@ -336,11 +352,41 @@ function sanitizeSave(saved) {
     owned,
     activeDeck: deck.length === 20 ? deck : [...starterDeck],
     relics: Array.isArray(saved.relics) && saved.relics.length ? saved.relics : ['Wolf Fang Charm'],
+    forgeTokens: Math.max(0, Number(saved.forgeTokens) || 0),
+    run: saved.run && typeof saved.run === 'object' ? sanitizeRun(saved.run) : null,
+    runHistory: Array.isArray(saved.runHistory) ? saved.runHistory : [],
+    runCompleted: Boolean(saved.runCompleted),
+    unlockedRewards: Array.isArray(saved.unlockedRewards) ? saved.unlockedRewards.filter(id => card(id)) : [],
     completed: Array.isArray(saved.completed || saved.completedHunts) ? (saved.completed || saved.completedHunts) : [],
     unlockedHunts: Array.isArray(saved.unlockedHunts) && saved.unlockedHunts.length ? saved.unlockedHunts : ['black-veil'],
     difficultyProgress: saved.difficultyProgress && typeof saved.difficultyProgress === 'object' ? saved.difficultyProgress : {},
     settings: saved.settings && typeof saved.settings === 'object' ? saved.settings : {},
     firstDeckRevealed: Boolean(saved.firstDeckRevealed)
+  };
+}
+
+function sanitizeRun(run) {
+  const node = Math.min(RUN_NODES.length, Math.max(0, Number(run.currentNode) || 0));
+  const deck = Array.isArray(run.deck) ? run.deck.filter(id => card(id)) : [...starterDeck];
+  const completedNodes = Array.isArray(run.completedNodes) ? run.completedNodes.filter(id => RUN_NODES.some(n => n.id === id)) : [];
+  const upgrades = run.upgrades && typeof run.upgrades === 'object' ? Object.fromEntries(Object.entries(run.upgrades).filter(([id, value]) => card(id) && value)) : {};
+  return {
+    id: run.id || `run_${Date.now()}`,
+    currentNode: node,
+    currentAct: Math.max(1, Number(run.currentAct) || 1),
+    deck: deck.length ? deck : [...starterDeck],
+    relics: Array.isArray(run.relics) ? run.relics : ['Wolf Fang Charm'],
+    rewards: Array.isArray(run.rewards) ? run.rewards.filter(id => card(id)) : [],
+    completedNodes,
+    playerHp: {
+      delilah: clamp(Math.round(Number(run.playerHp?.delilah) || 38), 0, 38),
+      lady: clamp(Math.round(Number(run.playerHp?.lady) || 32), 0, 32)
+    },
+    upgrades,
+    completed: Boolean(run.completed),
+    forgeTokenAwarded: Boolean(run.forgeTokenAwarded),
+    startedAt: run.startedAt || new Date().toISOString(),
+    completedAt: run.completedAt || ''
   };
 }
 
@@ -381,6 +427,11 @@ function saveProgress(message = '') {
     activeDeck: state.activeDeck,
     currentDeck: state.activeDeck,
     relics: state.relics,
+    forgeTokens: state.forgeTokens || 0,
+    run: state.run,
+    runHistory: state.runHistory || [],
+    runCompleted: Boolean(state.runCompleted),
+    unlockedRewards: state.unlockedRewards || [],
     completed: state.completed,
     completedHunts: state.completed,
     unlockedHunts: state.unlockedHunts,
@@ -431,6 +482,7 @@ function bind() {
   $('profilesBtn').addEventListener('click', showProfileGate);
   $('splashBeginBtn').addEventListener('click', showProfileGate);
   $('deckBtn').addEventListener('click', () => showPrep());
+  $('runBtn').addEventListener('click', () => showRunMap());
   $('forgeBtn').addEventListener('click', showForge);
   $('prepBtn').addEventListener('click', () => showPrep());
   $('archiveBtn').addEventListener('click', () => showPrep());
@@ -441,6 +493,8 @@ function bind() {
   $('backBoardBtn').addEventListener('click', () => showBoard());
   $('forgeBackBoardBtn').addEventListener('click', () => showBoard());
   $('forgeDeckBtn').addEventListener('click', () => showPrep());
+  $('runBackBoardBtn').addEventListener('click', () => showBoard());
+  $('startRunBtn').addEventListener('click', startNewRun);
   $('recommendBtn').addEventListener('click', () => {
     recommendationsOn = !recommendationsOn;
     renderPrep();
@@ -448,13 +502,23 @@ function bind() {
   $('startHuntBtn').addEventListener('click', startHunt);
   $('saveBtn').addEventListener('click', () => saveProgress('Game saved.'));
   $('endTurnBtn').addEventListener('click', endTurn);
-  $('mapReturnBtn').addEventListener('click', () => showBoard());
+  $('mapReturnBtn').addEventListener('click', () => isRunActive() ? showRunMap() : showBoard());
   $('campBtn').addEventListener('click', camp);
   $('cardsBtn').addEventListener('click', () => showPrep());
   $('journalBtn').addEventListener('click', () => $('journalDialog').showModal());
   $('statusLegendBtn').addEventListener('click', () => $('statusLegendDialog').showModal());
   $('bandageDelilahBtn').addEventListener('click', () => resolveBandageChoice('delilah'));
   $('bandageLadyBtn').addEventListener('click', () => resolveBandageChoice('lady'));
+  $('cancelSellCardBtn').addEventListener('click', () => {
+    pendingSellCardId = null;
+    $('sellCardDialog').close();
+  });
+  $('confirmSellCardBtn').addEventListener('click', () => {
+    const id = pendingSellCardId;
+    pendingSellCardId = null;
+    $('sellCardDialog').close();
+    sellCardFromArchive(id, true);
+  });
   $('returnMapBtn').addEventListener('click', () => {
     $('routeDialog').close();
     showBoard();
@@ -469,16 +533,26 @@ function bind() {
     $('victoryDialog').close();
     reward(pendingVictoryFinal, true);
   });
+  $('runVictoryMapBtn').addEventListener('click', () => {
+    $('runVictoryDialog').close();
+    showRunMap();
+  });
   $('defeatMapBtn').addEventListener('click', () => {
+    const runDefeat = $('defeatDialog').dataset.runDefeat === 'true';
     $('defeatDialog').close();
-    showBoard();
+    runDefeat ? showRunMap() : showBoard();
   });
   $('defeatDeckBtn').addEventListener('click', () => {
     $('defeatDialog').close();
     showPrep();
   });
   $('defeatRetryBtn').addEventListener('click', () => {
+    const runDefeat = $('defeatDialog').dataset.runDefeat === 'true';
     $('defeatDialog').close();
+    if (runDefeat) {
+      startNewRun();
+      return;
+    }
     state.encounter = 0;
     restoreHunters();
     startEncounter();
@@ -958,13 +1032,205 @@ function showForge() {
   setScreen('forgeScreen', 'Systema Obscura', 'The Forge');
 }
 
+function showRunMap() {
+  renderRunMap();
+  setScreen('runMapScreen', 'Roguelike Run', 'Run Map');
+}
+
+function defaultRun() {
+  return {
+    id: `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    currentNode: 0,
+    currentAct: 1,
+    deck: [...state.activeDeck],
+    relics: [...state.relics],
+    rewards: [],
+    completedNodes: [],
+    playerHp: { delilah: state.delilah.max, lady: state.lady.max },
+    upgrades: {},
+    completed: false,
+    forgeTokenAwarded: false,
+    startedAt: new Date().toISOString(),
+    completedAt: ''
+  };
+}
+
+function isRunActive() {
+  return Boolean(state.run && !state.run.completed && state.run.currentNode < RUN_NODES.length);
+}
+
+function currentRunNode() {
+  return state.run ? RUN_NODES[state.run.currentNode] : null;
+}
+
+function startNewRun() {
+  if (state.activeDeck.length !== 20) {
+    showToast('Build a 20-card deck before starting a run.');
+    showPrep();
+    return;
+  }
+  state.run = defaultRun();
+  state.delilah.hp = state.run.playerHp.delilah;
+  state.lady.hp = state.run.playerHp.lady;
+  saveProgress('Run started.');
+  showRunMap();
+}
+
+function renderRunMap() {
+  renderResources();
+  const run = state.run;
+  const activeIndex = run && !run.completed ? run.currentNode : 0;
+  const list = $('runNodeList');
+  list.innerHTML = RUN_NODES.map((node, i) => {
+    const done = Boolean(run?.completedNodes?.includes(node.id));
+    const locked = !run || run.completed || i !== activeIndex;
+    const contract = contracts.find(c => c.id === node.contractId) || contracts[0];
+    return `<button class="run-node ${done ? 'completed' : ''} ${!locked ? 'available' : ''} run-${node.type}" data-run-node="${i}" type="button" ${locked ? 'disabled' : ''}>
+      <span>${i + 1}</span>
+      <b>${node.label}</b>
+      <small>${contract.name}</small>
+    </button>`;
+  }).join('');
+  const hp = run?.playerHp || { delilah: state.delilah.max, lady: state.lady.max };
+  const completed = run?.completedNodes?.length || 0;
+  $('runSummary').innerHTML = run && !run.completed
+    ? `<div><b>Act ${run.currentAct}</b><span>${completed} / ${RUN_NODES.length} nodes cleared</span></div>
+       <div><b>Delilah</b><span>${hp.delilah}/${state.delilah.max} HP</span></div>
+       <div><b>Lady</b><span>${hp.lady}/${state.lady.max} HP</span></div>
+       <div><b>Run Deck</b><span>${run.deck.length} cards</span></div>
+       <div><b>Forge Tokens</b><span>${state.forgeTokens || 0}</span></div>`
+    : `<div><b>No active run</b><span>Start a run to follow the Black Road from battle to boss.</span></div>
+       <div><b>Forge Tokens</b><span>${state.forgeTokens || 0}</span></div>`;
+  $('startRunBtn').textContent = run && !run.completed ? 'Restart Run' : 'Start New Run';
+  document.querySelectorAll('[data-run-node]').forEach(btn => {
+    btn.addEventListener('click', () => chooseRunNode(Number(btn.dataset.runNode)));
+  });
+}
+
+function chooseRunNode(index) {
+  if (!isRunActive() || index !== state.run.currentNode) return;
+  const node = currentRunNode();
+  if (node.type === 'campfire') return showCampfireNode();
+  if (node.type === 'merchant') return showMerchantNode();
+  startRunBattle(node);
+}
+
+function startRunBattle(node) {
+  selectContract(node.contractId);
+  state.encounter = 0;
+  state.delilah.hp = clamp(state.run.playerHp.delilah, 1, state.delilah.max);
+  state.lady.hp = clamp(state.run.playerHp.lady, 1, state.lady.max);
+  startEncounter({ preserveHp: true, runNode: node });
+  showCombat();
+}
+
+function showCampfireNode() {
+  $('runEventKicker').textContent = 'Campfire';
+  $('runEventTitle').textContent = 'A cold fire still burns.';
+  $('runEventText').textContent = 'Rest to recover 30% health, or train one card so it costs 1 less during this run.';
+  $('runEventActions').innerHTML = `
+    <button class="plain-btn" id="runRestBtn" type="button">Rest</button>
+    <button class="blood-btn" id="runTrainBtn" type="button">Train</button>
+  `;
+  $('runRestBtn').addEventListener('click', () => {
+    healRunPercent(.3);
+    finishRunNode('Rested at the campfire.');
+  });
+  $('runTrainBtn').addEventListener('click', showTrainChoices);
+  $('runEventDialog').showModal();
+}
+
+function showTrainChoices() {
+  const choices = uniqueRunCards().filter(id => !state.run.upgrades[id]).slice(0, 3);
+  if (!choices.length) {
+    showToast('No untrained cards left in this run deck.');
+    return;
+  }
+  $('runEventTitle').textContent = 'Train a card.';
+  $('runEventText').textContent = 'Upgraded cards cost 1 less during this run.';
+  $('runEventActions').innerHTML = choices.map(id => `<button class="plain-btn" data-train-card="${id}" type="button">${card(id).name}</button>`).join('');
+  document.querySelectorAll('[data-train-card]').forEach(btn => btn.addEventListener('click', () => {
+    state.run.upgrades[btn.dataset.trainCard] = true;
+    finishRunNode(`${card(btn.dataset.trainCard).name} upgraded for this run.`);
+  }));
+}
+
+function showMerchantNode() {
+  $('runEventKicker').textContent = 'Merchant';
+  $('runEventTitle').textContent = 'A black-market pack waits under canvas.';
+  $('runEventText').textContent = 'Spend Hunter Marks for one run advantage.';
+  $('runEventActions').innerHTML = `
+    <button class="plain-btn" id="runBuyCardBtn" type="button">Buy Card - 60</button>
+    <button class="plain-btn" id="runRemoveCardBtn" type="button">Remove Card - 40</button>
+    <button class="blood-btn" id="runHealBtn" type="button">Heal - 30</button>
+  `;
+  $('runBuyCardBtn').addEventListener('click', () => runMerchantBuyCard());
+  $('runRemoveCardBtn').addEventListener('click', () => runMerchantRemoveCard());
+  $('runHealBtn').addEventListener('click', () => runMerchantHeal());
+  $('runEventDialog').showModal();
+}
+
+function spendMarks(cost) {
+  if (state.marks < cost) {
+    showToast(`Not enough Hunter Marks. You need ${cost - state.marks} more.`);
+    return false;
+  }
+  state.marks -= cost;
+  return true;
+}
+
+function runMerchantBuyCard() {
+  if (!spendMarks(60)) return;
+  const c = randomRewardCard();
+  state.run.deck.push(c.id);
+  state.run.rewards.push(c.id);
+  finishRunNode(`${c.name} added to the run deck.`);
+}
+
+function runMerchantRemoveCard() {
+  if (state.run.deck.length <= 1) {
+    showToast('The run deck cannot be empty.');
+    return;
+  }
+  if (!spendMarks(40)) return;
+  const removed = state.run.deck.shift();
+  finishRunNode(`${card(removed)?.name || 'A card'} removed from the run deck.`);
+}
+
+function runMerchantHeal() {
+  if (!spendMarks(30)) return;
+  healRunPercent(.25);
+  finishRunNode('The merchant patches both hunters.');
+}
+
+function healRunPercent(percent) {
+  const delilahGain = Math.ceil(state.delilah.max * percent);
+  const ladyGain = Math.ceil(state.lady.max * percent);
+  state.run.playerHp.delilah = Math.min(state.delilah.max, state.run.playerHp.delilah + delilahGain);
+  state.run.playerHp.lady = Math.min(state.lady.max, state.run.playerHp.lady + ladyGain);
+}
+
+function finishRunNode(message) {
+  const node = currentRunNode();
+  if (!node) return;
+  state.run.completedNodes = [...new Set([...(state.run.completedNodes || []), node.id])];
+  state.run.currentNode = Math.min(RUN_NODES.length, state.run.currentNode + 1);
+  saveProgress(message);
+  $('runEventDialog').close();
+  showRunMap();
+}
+
+function uniqueRunCards() {
+  return [...new Set(state.run?.deck || [])].filter(id => card(id));
+}
+
 function showCombat() {
   setScreen('combatScreen', `Hunt: ${selectedContract.name}`, selectedContract.name);
   maybeShowCombatTutorial();
 }
 
 function setScreen(id, kicker, title) {
-  ['splashScreen', 'profileScreen', 'firstRevealScreen', 'boardScreen', 'prepScreen', 'forgeScreen', 'combatScreen'].forEach(s => $(s).hidden = s !== id);
+  ['splashScreen', 'profileScreen', 'firstRevealScreen', 'boardScreen', 'runMapScreen', 'prepScreen', 'forgeScreen', 'combatScreen'].forEach(s => $(s).hidden = s !== id);
   document.body.dataset.screen = id;
   $('screenKicker').textContent = kicker;
   $('screenTitle').textContent = title;
@@ -979,6 +1245,7 @@ function renderResources() {
   $('bondText').textContent = state.bond;
   $('combatMarks').textContent = state.marks;
   if ($('forgeMarks')) $('forgeMarks').textContent = state.marks.toLocaleString();
+  if ($('forgeTokens')) $('forgeTokens').textContent = (state.forgeTokens || 0).toLocaleString();
 }
 
 function renderContracts() {
@@ -1023,15 +1290,23 @@ function renderPrep() {
   syncProgression();
   const count = state.activeDeck.length;
   const recommended = recommendedCardIds();
+  const sellableMarks = cards.reduce((sum, c) => sum + (state.owned[c.id] || 0) * scrapValue(c), 0);
   $('deckCount').textContent = `Deck: ${count} / 20`;
   $('deckWarning').textContent = count === 20 ? 'Ready' : count > 20 ? 'Too many cards' : 'Add cards';
-  $('collectionCount').textContent = `Collection: ${ownedCardCount()} cards`;
+  $('collectionCount').textContent = `Collection: ${ownedCardCount()} cards • Sell value ${sellableMarks.toLocaleString()} Marks`;
   $('deckRatingText').textContent = 'Hunter rating recalculated';
   if ($('activeDeck')) $('activeDeck').innerHTML = state.activeDeck.map((id, i) => {
     const c = card(id);
     return `<div class="deck-row"><div><b>${c.name}</b><span>${c.type} · ${c.cost} Action</span></div><button data-remove="${i}" class="plain-btn" type="button">-</button></div>`;
   }).join('');
-  $('archiveGrid').innerHTML = cards.map(c => {
+  const archiveCards = [...cards].sort((a, b) => {
+    const ownedDelta = (state.owned[b.id] || 0) - (state.owned[a.id] || 0);
+    if (ownedDelta) return ownedDelta;
+    const usedDelta = state.activeDeck.filter(id => id === b.id).length - state.activeDeck.filter(id => id === a.id).length;
+    if (usedDelta) return usedDelta;
+    return cardPower(b) - cardPower(a);
+  });
+  $('archiveGrid').innerHTML = archiveCards.map(c => {
     const owned = state.owned[c.id] || 0;
     const used = state.activeDeck.filter(id => id === c.id).length;
     const canAdd = owned && used < owned && count < 20;
@@ -1075,13 +1350,22 @@ function renderForge() {
   renderResources();
   const grid = $('forgeInventory');
   if (!grid) return;
-  grid.innerHTML = forgeInventory.map(item => {
+  const sortedInventory = [...forgeInventory].sort((a, b) => {
+    const ownedDelta = Number(Boolean(state.owned[a.id])) - Number(Boolean(state.owned[b.id]));
+    if (ownedDelta) return ownedDelta;
+    const affordableDelta = Number(state.marks >= b.price) - Number(state.marks >= a.price);
+    if (affordableDelta) return affordableDelta;
+    return a.price - b.price;
+  });
+  grid.innerHTML = sortedInventory.map(item => {
     const c = card(item.id);
     if (!c) return '';
     const owned = state.owned[c.id] || 0;
     const affordable = state.marks >= item.price;
     const locked = !owned && !affordable;
-    return `<article class="forge-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? 'owned' : ''} ${locked ? 'locked' : ''}" style="${cardArtStyle(c)}">
+    const remaining = Math.max(0, item.price - state.marks);
+    const progress = Math.min(100, Math.round((state.marks / item.price) * 100));
+    return `<article class="forge-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? 'owned' : ''} ${affordable && !owned ? 'affordable' : ''} ${locked ? 'locked' : ''}" style="${cardArtStyle(c)}">
       <div class="forge-card-preview">
         <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
         <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
@@ -1091,8 +1375,9 @@ function renderForge() {
       <div class="forge-card-meta">
         <span>${displayRarity(c)}</span>
         <b>${item.price.toLocaleString()} Marks</b>
-        <small>${owned ? 'Owned' : affordable ? 'Available' : 'Need more Marks'}</small>
+        <small>${owned ? 'Owned' : affordable ? 'Ready to buy' : `Need ${remaining.toLocaleString()} more`}</small>
       </div>
+      <div class="forge-progress" aria-label="Forge purchase progress"><i style="width:${progress}%"></i></div>
       <button class="plain-btn forge-buy-btn ${!owned && !affordable ? 'cannot-afford' : ''}" data-buy-forge="${c.id}" type="button" ${owned ? 'disabled' : ''}>${owned ? 'Purchased' : 'Buy Card'}</button>
     </article>`;
   }).join('');
@@ -1145,10 +1430,19 @@ function removeCardFromDeck(id) {
   renderPrep();
 }
 
-function sellCardFromArchive(id) {
+function sellCardFromArchive(id, confirmed = false) {
   const c = card(id);
   const owned = state.owned[id] || 0;
   if (!c || owned <= 0) return;
+  if (!confirmed && displayRarity(c) !== 'Common') {
+    const marks = scrapValue(c);
+    pendingSellCardId = id;
+    $('sellCardTitle').textContent = `Sell ${c.name}?`;
+    $('sellCardText').textContent = `${displayRarity(c)} cards are harder to replace. Selling one copy pays ${marks} Hunter Marks and removes one copy from your current deck if it is equipped.`;
+    $('confirmSellCardBtn').textContent = `Sell For ${marks} Marks`;
+    $('sellCardDialog').showModal();
+    return;
+  }
   const deckIndex = state.activeDeck.lastIndexOf(id);
   if (deckIndex >= 0) state.activeDeck.splice(deckIndex, 1);
   state.owned[id] = owned - 1;
@@ -1184,13 +1478,13 @@ function startHunt() {
   showCombat();
 }
 
-function startEncounter() {
+function startEncounter(options = {}) {
   syncProgression();
-  restoreHunters();
+  if (!options.preserveHp) restoreHunters();
   state.turn = 1;
   state.maxActions = 3;
   state.actions = 3;
-  state.deck = shuffle([...state.activeDeck]);
+  state.deck = shuffle([...activeCombatDeck()]);
   state.discard = [];
   state.hand = [];
   state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.nextSyncBonus = 0; state.syncBleedBonus = 0; state.currentCardType = ''; state.freeTrapUsed = false;
@@ -1201,12 +1495,24 @@ function startEncounter() {
   state.huntLost = false;
   state.defeatShown = false;
   state.targetId = null;
-  state.enemies = currentEncounters()[state.encounter].map((e, i) => makeEnemy(e.key, i, e.elite));
+  const encounter = options.runNode?.encounter || currentEncounters()[state.encounter];
+  state.enemies = encounter.map((e, i) => makeEnemy(e.key, i, e.elite));
   if (relic('Ritual Bone')) state.enemies.forEach(e => addStatus(e, 'terrified', 1));
   draw(5);
   log(`Encounter ${state.encounter + 1}: ${state.enemies.map(e => e.name).join(', ')}.`);
-  debugEvent(`Encounter starts: ${selectedContract.name}, threat ${selectedContract.threat}, deck rating ${state.deckRating}.`);
+  debugEvent(`Encounter starts: ${selectedContract.name}, threat ${selectedContract.threat}, deck rating ${state.deckRating}${options.runNode ? ', run node ' + options.runNode.label : ''}.`);
   renderCombat();
+}
+
+function activeCombatDeck() {
+  return isRunActive() ? state.run.deck : state.activeDeck;
+}
+
+function runCard(id) {
+  const base = card(id);
+  if (!base) return null;
+  if (!isRunActive() || !state.run.upgrades?.[id]) return base;
+  return { ...base, name: `${base.name}+`, cost: Math.max(0, base.cost - 1), text: `${base.text} Upgraded: costs 1 less this run.` };
 }
 
 function restoreHunters() {
@@ -1273,7 +1579,7 @@ function renderCombat() {
   renderEnemyActionBanner();
   $('enemyLine').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => enemyHtml(e)).join('');
   $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card intent-${e.archetype || 'aggressive'}"><b>${e.name}</b><span>${archetypeLabel(e)}</span><br>${intentText(e)}</div>`).join('');
-  $('hand').innerHTML = state.hand.map((entry, i) => cardHtml(card(handCardId(entry)), i, Boolean(entry && entry.fresh))).join('');
+  $('hand').innerHTML = state.hand.map((entry, i) => cardHtml(runCard(handCardId(entry)), i, Boolean(entry && entry.fresh))).join('');
   state.hand.forEach(entry => { if (entry && typeof entry === 'object') entry.fresh = false; });
   $('combatLog').innerHTML = state.log.slice(0, 8).map(l => `<div class="log-line">${l}</div>`).join('');
   renderBalanceDebug();
@@ -1410,7 +1716,7 @@ function cardHtml(c, i, fresh = false) {
 
 function playCard(index) {
   const id = handCardId(state.hand[index]);
-  const c = card(id);
+  const c = runCard(id);
   const playCost = c ? effectiveCost(c) : 0;
   if (!c || playCost > state.actions || state.huntLost) return;
   if (c.id === 'bandage') {
@@ -1886,6 +2192,10 @@ function winEncounter() {
   state.unlockedHunts = [...new Set([...(state.unlockedHunts || ['black-veil']), selectedContract.id])];
   syncProgression();
   saveProgress();
+  if (isRunActive()) {
+    handleRunBattleVictory();
+    return;
+  }
   if (state.encounter >= currentEncounters().length - 1) {
     state.completed.push(selectedContract.id);
     syncProgression();
@@ -1900,20 +2210,110 @@ function winEncounter() {
 function loseHunt(reason = 'Return to the board and rebuild.') {
   debugEvent(`Defeat on round ${state.turn}. Reason: ${reason}`);
   log(`<b>The hunt fails.</b> ${reason}`);
+  const runDefeat = isRunActive();
+  if (runDefeat) failRun(reason);
   state.actions = 0;
   state.huntLost = true;
   state.defeatReason = reason;
-  showDefeatDialog(reason);
+  showDefeatDialog(reason, runDefeat);
 }
 
-function showDefeatDialog(reason) {
+function handleRunBattleVictory() {
+  const node = currentRunNode();
+  if (!node) return;
+  state.run.playerHp = { delilah: state.delilah.hp, lady: state.lady.hp };
+  state.run.completedNodes = [...new Set([...(state.run.completedNodes || []), node.id])];
+  if (node.type === 'boss') {
+    finishRun();
+    return;
+  }
+  showRunCardReward();
+}
+
+function showRunCardReward() {
+  const picks = Array.from({ length: 3 }, randomRewardCard);
+  state.pendingRunRewardCards = picks.map(c => c.id);
+  $('rewardDialog').dataset.rewardRarity = '';
+  $('rewardTitle').textContent = 'Choose one card for this run.';
+  $('rewardChoices').innerHTML = `
+    <div class="reward-odds">Run reward: choose 1 card. It joins this run deck only.</div>
+    <div class="run-reward-grid">
+      ${picks.map(c => `<button class="run-reward-card" data-run-reward="${c.id}" type="button">${rewardCardHtml(c)}</button>`).join('')}
+    </div>
+    <button class="reward-choice skip-run-reward" id="skipRunRewardBtn" type="button"><b>Skip</b><span>Keep the run deck lean.</span></button>
+  `;
+  document.querySelectorAll('[data-run-reward]').forEach(btn => btn.addEventListener('click', () => claimRunReward(btn.dataset.runReward)));
+  $('skipRunRewardBtn').addEventListener('click', () => claimRunReward(''));
+  playSoundCue('reward');
+  $('rewardDialog').showModal();
+}
+
+function claimRunReward(id) {
+  if (id && card(id)) {
+    state.run.deck.push(id);
+    state.run.rewards.push(id);
+    state.unlockedRewards = [...new Set([...(state.unlockedRewards || []), id])];
+    log(`${card(id).name} added to the current run deck.`);
+  } else {
+    log('Reward skipped. The run deck stays lean.');
+  }
+  state.pendingRunRewardCards = [];
+  $('rewardDialog').close();
+  state.run.currentNode = Math.min(RUN_NODES.length, state.run.currentNode + 1);
+  saveProgress();
+  showRunMap();
+}
+
+function finishRun() {
+  if (!state.run) return;
+  state.run.currentNode = RUN_NODES.length;
+  state.run.completed = true;
+  state.run.completedAt = new Date().toISOString();
+  if (!state.run.forgeTokenAwarded) {
+    state.run.forgeTokenAwarded = true;
+    state.forgeTokens = (state.forgeTokens || 0) + 1;
+  }
+  state.runCompleted = true;
+  state.runHistory = [...(state.runHistory || []), {
+    id: state.run.id,
+    completedAt: state.run.completedAt,
+    rewards: [...(state.run.rewards || [])],
+    deckSize: state.run.deck.length,
+    forgeTokenAwarded: state.run.forgeTokenAwarded
+  }].slice(-20);
+  saveProgress('Run complete. Forge Token awarded.');
+  playSoundCue('legendary-claim');
+  $('runVictoryText').textContent = `Run complete. Forge Tokens: ${state.forgeTokens || 0}.`;
+  $('runVictoryDialog').showModal();
+}
+
+function failRun(reason) {
+  if (!state.run) return;
+  state.runHistory = [...(state.runHistory || []), {
+    id: state.run.id,
+    failedAt: new Date().toISOString(),
+    failedNode: currentRunNode()?.id || '',
+    reason,
+    rewards: [...(state.run.rewards || [])],
+    deckSize: state.run.deck.length
+  }].slice(-20);
+  state.run = null;
+  saveProgress();
+}
+
+function showDefeatDialog(reason, runDefeat = false) {
   if (state.defeatShown) return;
   state.defeatShown = true;
   setTimeout(() => {
     const dialog = $('defeatDialog');
     if (!dialog || dialog.open) return;
-    $('defeatTitle').textContent = `${selectedContract.name} holds.`;
-    $('defeatText').textContent = `${reason} Return to the map, rebuild your deck, or retry this hunt at full health.`;
+    dialog.dataset.runDefeat = runDefeat ? 'true' : 'false';
+    $('defeatTitle').textContent = runDefeat ? 'The road claims this run.' : `${selectedContract.name} holds.`;
+    $('defeatText').textContent = runDefeat
+      ? `${reason} Return to the Run Map, rebuild your permanent deck, or begin a new run.`
+      : `${reason} Return to the map, rebuild your deck, or retry this hunt at full health.`;
+    $('defeatMapBtn').textContent = runDefeat ? 'Run Map' : 'Return To Map';
+    $('defeatRetryBtn').textContent = runDefeat ? 'New Run' : 'Retry Hunt';
     dialog.showModal();
   }, 250);
 }
