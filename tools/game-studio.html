@@ -3,62 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lady &amp; Delilah Game Studio</title>
+  <title>Systema Obscura Card Studio</title>
   <link rel="stylesheet" href="game-studio.css">
 </head>
 <body>
   <header class="studio-header">
     <div>
-      <p class="eyebrow">Lady &amp; Delilah™</p>
-      <h1>Game Studio</h1>
+      <p class="eyebrow">Systema Obscura</p>
+      <h1>Card Studio</h1>
+      <p class="subtitle">Lady &amp; Delilah™ Game Workspace</p>
     </div>
     <nav class="mode-nav" aria-label="Maker modes">
-      <a href="index.html">Card Maker</a>
+      <a href="index.html">Trading Cards</a>
       <span aria-current="page">Game Studio</span>
     </nav>
   </header>
 
-  <main class="studio-shell">
-    <section class="editor-panel" aria-label="Game card controls">
-      <div class="panel-heading">
+  <main class="studio-layout">
+    <aside class="studio-sidebar" aria-label="Studio sections">
+      <button class="section-link is-active" data-section="identity">Identity</button>
+      <button class="section-link" data-section="gameplay">Gameplay</button>
+      <button class="section-link" data-section="effects">Effect Builder</button>
+      <button class="section-link" data-section="lore">Lore &amp; Notes</button>
+      <button class="section-link" data-section="library">Card Library</button>
+      <button class="section-link" data-section="export">Export</button>
+      <div class="sidebar-divider"></div>
+      <button id="newCard" class="sidebar-action">New Card</button>
+      <button id="saveCard" class="sidebar-action primary">Save Card</button>
+    </aside>
+
+    <section class="workspace">
+      <div class="workspace-head">
         <div>
-          <h2>Game Card</h2>
-          <p>Gameplay data stays separate from the original trading-card workflow.</p>
+          <h2 id="workspaceTitle">Identity</h2>
+          <p id="workspaceHelp">Name the card, place it in a set, and assign its visual tier.</p>
         </div>
-        <span id="validationBadge" class="validation-badge">Ready</span>
+        <div class="health-wrap">
+          <span id="validationBadge" class="validation-badge">Ready</span>
+          <strong id="healthScore">100%</strong>
+        </div>
       </div>
 
-      <div class="form-grid">
-        <label>Artwork<input id="artInput" type="file" accept="image/*"></label>
-        <label>Card ID<input id="cardId" value="done-here" maxlength="48"></label>
-        <label>Title<input id="title" value="C’mon, Lady… We’re Done Here" maxlength="60"></label>
-        <label>Cost<input id="cost" type="number" min="0" max="9" value="3"></label>
-        <label>Type
-          <select id="type">
-            <option>Attack</option><option>Guard</option><option>Precision</option>
-            <option>Companion</option><option>Trap</option><option>Survival</option>
-          </select>
-        </label>
-        <label>Rarity
-          <select id="rarity">
-            <option>Common</option><option>Uncommon</option><option>Rare</option>
-            <option>Epic</option><option selected>Legendary</option><option>Mythic</option>
-          </select>
-        </label>
-        <label>Archetype<input id="archetype" value="Synchronized" maxlength="32"></label>
-        <label>Set<input id="setName" value="Base Set" maxlength="32"></label>
-      </div>
+      <section class="studio-section is-active" data-panel="identity">
+        <div class="form-grid">
+          <label>Artwork<input id="artInput" type="file" accept="image/*"></label>
+          <label>Card ID<input id="cardId" value="done-here" maxlength="48"></label>
+          <label class="span-2">Title<input id="title" value="C’mon, Lady… We’re Done Here" maxlength="60"></label>
+          <label>Set<input id="setName" value="Base Set" maxlength="32"></label>
+          <label>Card Number<input id="cardNumber" value="LD-001" maxlength="16"></label>
+          <label>Rarity
+            <select id="rarity"><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option><option selected>Legendary</option><option>Mythic</option></select>
+          </label>
+          <label>Archetype<input id="archetype" value="Synchronized" maxlength="32"></label>
+        </div>
+      </section>
 
-      <label class="wide">Rules Text<textarea id="rules" rows="4" maxlength="190">Deal 18 damage. Execute if the target is Bleeding, Flanked, or Terrified below 40% Health.</textarea></label>
-      <label class="wide">Flavor Text<textarea id="flavor" rows="2" maxlength="110">“Lady doesn’t ask twice. Neither do I.” — Delilah</textarea></label>
-      <label class="wide">Keywords<input id="keywords" value="Bleeding, Execute, Flanked"></label>
+      <section class="studio-section" data-panel="gameplay">
+        <div class="form-grid">
+          <label>Cost<input id="cost" type="number" min="0" max="9" value="3"></label>
+          <label>Type
+            <select id="type"><option>Attack</option><option>Guard</option><option>Precision</option><option>Companion</option><option>Trap</option><option>Survival</option><option>Relic</option><option>Event</option></select>
+          </label>
+          <label>Target
+            <select id="target"><option value="enemy">Enemy</option><option value="self">Self</option><option value="all-enemies">All Enemies</option><option value="ally">Ally</option><option value="none">None</option></select>
+          </label>
+          <label>Base Power<input id="power" type="number" min="0" max="99" value="18"></label>
+          <label class="check-card"><input id="exhaust" type="checkbox"> Exhaust after use</label>
+          <label class="check-card"><input id="upgradeable" type="checkbox" checked> Upgradeable</label>
+        </div>
+        <label class="wide">Rules Text<textarea id="rules" rows="5" maxlength="220">Deal 18 damage. Execute if the target is Bleeding, Flanked, or Terrified below 40% Health.</textarea></label>
+        <label class="wide">Keywords<input id="keywords" value="Bleeding, Execute, Flanked"></label>
+      </section>
 
-      <div class="button-row">
-        <button id="downloadJson" class="primary">Export Game JSON</button>
-        <button id="copyJson">Copy JSON</button>
-        <button id="resetCard">Reset Sample</button>
-      </div>
-      <pre id="jsonPreview" aria-label="Generated game data"></pre>
+      <section class="studio-section" data-panel="effects">
+        <div class="effect-builder">
+          <label>Action<select id="effectAction"><option value="damage">Deal Damage</option><option value="block">Gain Block</option><option value="status">Apply Status</option><option value="draw">Draw Cards</option><option value="energy">Gain Energy</option></select></label>
+          <label>Amount<input id="effectAmount" type="number" min="0" max="99" value="18"></label>
+          <label>Status<input id="effectStatus" value="Bleeding"></label>
+          <label>Condition<select id="effectCondition"><option value="none">None</option><option value="target-below-40">Target below 40% Health</option><option value="target-bleeding">Target is Bleeding</option><option value="target-flanked">Target is Flanked</option><option value="bond-ready">Bond is Ready</option></select></label>
+          <button id="addEffect" class="primary">Add Effect</button>
+        </div>
+        <div id="effectList" class="effect-list"></div>
+      </section>
+
+      <section class="studio-section" data-panel="lore">
+        <label class="wide">Flavor Text<textarea id="flavor" rows="3" maxlength="150">“Lady doesn’t ask twice. Neither do I.” — Delilah</textarea></label>
+        <label class="wide">Developer Notes<textarea id="developerNotes" rows="6" maxlength="500">Signature finisher. Teaches Execute and synchronized play. Keep expensive enough that it feels earned.</textarea></label>
+        <label class="wide">Artwork Prompt<textarea id="artPrompt" rows="5" maxlength="500">Delilah and Lady ending a moonlit hunt, forged dark-fantasy card art, cinematic, no text.</textarea></label>
+      </section>
+
+      <section class="studio-section" data-panel="library">
+        <div class="library-toolbar"><input id="librarySearch" placeholder="Search saved cards"><select id="libraryRarity"><option value="">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option><option>Legendary</option><option>Mythic</option></select></div>
+        <div id="cardLibrary" class="card-library"></div>
+      </section>
+
+      <section class="studio-section" data-panel="export">
+        <div class="export-grid">
+          <button id="downloadJson" class="primary">Export Game JSON</button>
+          <button id="copyJson">Copy JSON</button>
+          <button id="exportLibrary">Export Library JSON</button>
+          <button id="clearLibrary" class="danger">Clear Local Library</button>
+        </div>
+        <pre id="jsonPreview" aria-label="Generated game data"></pre>
+      </section>
     </section>
 
     <section class="preview-panel" aria-label="Live game card preview">
@@ -66,21 +113,15 @@
         <div class="aurora"></div>
         <div class="card-top">
           <div class="cost-medallion"><small>COST</small><strong id="pCost">3</strong></div>
-          <div class="title-block">
-            <h2 id="pTitle">C’mon, Lady… We’re Done Here</h2>
-            <p id="pFlavorTop">“Lady doesn’t ask twice. Neither do I.”</p>
-          </div>
+          <div class="title-block"><h2 id="pTitle">C’mon, Lady… We’re Done Here</h2><p id="pFlavorTop">“Lady doesn’t ask twice. Neither do I.”</p></div>
           <div class="crest" aria-hidden="true">🐺</div>
         </div>
         <div id="artFrame" class="art-frame"><div class="art-placeholder">Upload artwork</div></div>
         <div class="identity-bar"><span id="pType">ATTACK</span><b>◆</b><span id="pArchetype">SYNCHRONIZED</span><b>◆</b><span id="pRarity">LEGENDARY</span></div>
-        <div class="rules-box">
-          <p id="pRules">Deal 18 damage. Execute if the target is Bleeding, Flanked, or Terrified below 40% Health.</p>
-          <div id="keywordBadges" class="keyword-row"></div>
-        </div>
-        <div class="game-footer"><span id="pSet">BASE SET</span><span id="pId">DONE-HERE</span></div>
+        <div class="rules-box"><p id="pRules"></p><div id="keywordBadges" class="keyword-row"></div></div>
+        <div class="game-footer"><span id="pSet">BASE SET</span><span id="pNumber">LD-001</span></div>
       </div>
-      <p class="preview-note">This is the game-only template. The original Card Maker remains unchanged.</p>
+      <div class="preview-tools"><span id="previewStatus">Unsaved changes</span><button id="resetCard">Reset Sample</button></div>
     </section>
   </main>
   <script src="game-studio.js"></script>
