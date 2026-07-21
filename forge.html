@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jonas' Forge | Lady &amp; Delilah™</title>
+  <link rel="stylesheet" href="forge.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">LADY &amp; DELILAH™</p><h1>Jonas' Forge</h1></div>
+    <nav><a href="play.html">Return to the Hunt</a><button id="vaultBtn">The Vault</button></nav>
+  </header>
+
+  <main class="forge-shell">
+    <section class="jonas-panel">
+      <div class="forge-fire" aria-hidden="true"><span></span><span></span><span></span></div>
+      <p class="eyebrow">THE BLACKSMITH</p>
+      <h2>Jonas</h2>
+      <blockquote id="jonasLine">“Show me how you've been fighting.”</blockquote>
+      <div class="token-box"><span>Forge Tokens</span><strong id="tokenCount">0</strong></div>
+      <p id="tokenDetail" class="muted"></p>
+    </section>
+
+    <form id="forgeForm" class="forge-controls">
+      <div class="section-title"><p class="eyebrow">SHAPE THE STEEL</p><h2>Design the card</h2></div>
+      <label>Card name<input id="cardName" maxlength="42" value="Hunter's Reckoning" required></label>
+      <div class="two-col">
+        <label>Energy cost<select id="cardCost"><option>0</option><option selected>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+        <label>Card type<select id="cardType"><option>Attack</option><option>Guard</option><option>Trap</option><option>Precision</option><option>Survival</option><option>Companion</option></select></label>
+      </div>
+      <fieldset><legend>Primary effect</legend><div class="three-col"><select id="primaryType"></select><input id="primaryAmount" type="number" min="1" max="30" value="8"><select id="primaryStatus"></select></div></fieldset>
+      <fieldset><legend>Secondary effect</legend><div class="three-col"><select id="secondaryType"></select><input id="secondaryAmount" type="number" min="0" max="30" value="0"><select id="secondaryStatus"></select></div></fieldset>
+      <label class="check"><input id="exhaust" type="checkbox"> Exhaust after use</label>
+      <label>Flavor text<textarea id="flavorText" maxlength="120" placeholder="Steel remembers every mistake."></textarea></label>
+      <div class="heat"><div class="heat-label"><span>Forge heat</span><b id="heatWord">Cold</b></div><div class="heat-track"><span id="heatBar"></span></div></div>
+      <button id="strikeBtn" class="strike" type="submit">Strike the Anvil</button>
+      <p id="forgeError" class="error" role="alert"></p>
+    </form>
+
+    <section class="preview-panel">
+      <p class="eyebrow">LIVE PREVIEW</p>
+      <article id="cardPreview" class="card-preview">
+        <div class="card-head"><h3 id="previewName"></h3><strong id="previewCost"></strong></div>
+        <div class="card-art"><span id="previewIcon">⚔</span></div>
+        <div id="previewType" class="card-type"></div>
+        <p id="previewRules" class="rules"></p>
+        <p id="previewFlavor" class="flavor"></p>
+        <footer>FORGED IN JONAS' FIRE</footer>
+      </article>
+      <div class="verdict"><span>Jonas says</span><strong id="verdictText"></strong></div>
+    </section>
+  </main>
+
+  <dialog id="successDialog" class="success-dialog"><div class="anvil-flash">✦</div><p class="eyebrow">THE STRIKE HOLDS</p><h2 id="forgedTitle"></h2><p id="forgedMeta"></p><button id="viewVaultBtn">Place it in the Vault</button></dialog>
+  <dialog id="vaultDialog" class="vault-dialog"><div class="dialog-head"><div><p class="eyebrow">PERMANENT COLLECTION</p><h2>The Vault</h2></div><button id="closeVaultBtn">Close</button></div><div class="vault-tools"><input id="vaultSearch" placeholder="Search forged cards"><select id="vaultSort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name</option></select></div><div id="vaultGrid" class="vault-grid"></div></dialog>
+
+  <script src="forge-core.js"></script>
+  <script src="forge.js"></script>
+</body>
+</html>
