@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lady &amp; Delilah Game Studio</title>
+  <link rel="stylesheet" href="game-studio.css">
+</head>
+<body>
+  <header class="studio-header">
+    <div>
+      <p class="eyebrow">Lady &amp; Delilah™</p>
+      <h1>Game Studio</h1>
+    </div>
+    <nav class="mode-nav" aria-label="Maker modes">
+      <a href="index.html">Card Maker</a>
+      <span aria-current="page">Game Studio</span>
+    </nav>
+  </header>
+
+  <main class="studio-shell">
+    <section class="editor-panel" aria-label="Game card controls">
+      <div class="panel-heading">
+        <div>
+          <h2>Game Card</h2>
+          <p>Gameplay data stays separate from the original trading-card workflow.</p>
+        </div>
+        <span id="validationBadge" class="validation-badge">Ready</span>
+      </div>
+
+      <div class="form-grid">
+        <label>Artwork<input id="artInput" type="file" accept="image/*"></label>
+        <label>Card ID<input id="cardId" value="done-here" maxlength="48"></label>
+        <label>Title<input id="title" value="C’mon, Lady… We’re Done Here" maxlength="60"></label>
+        <label>Cost<input id="cost" type="number" min="0" max="9" value="3"></label>
+        <label>Type
+          <select id="type">
+            <option>Attack</option><option>Guard</option><option>Precision</option>
+            <option>Companion</option><option>Trap</option><option>Survival</option>
+          </select>
+        </label>
+        <label>Rarity
+          <select id="rarity">
+            <option>Common</option><option>Uncommon</option><option>Rare</option>
+            <option>Epic</option><option selected>Legendary</option><option>Mythic</option>
+          </select>
+        </label>
+        <label>Archetype<input id="archetype" value="Synchronized" maxlength="32"></label>
+        <label>Set<input id="setName" value="Base Set" maxlength="32"></label>
+      </div>
+
+      <label class="wide">Rules Text<textarea id="rules" rows="4" maxlength="190">Deal 18 damage. Execute if the target is Bleeding, Flanked, or Terrified below 40% Health.</textarea></label>
+      <label class="wide">Flavor Text<textarea id="flavor" rows="2" maxlength="110">“Lady doesn’t ask twice. Neither do I.” — Delilah</textarea></label>
+      <label class="wide">Keywords<input id="keywords" value="Bleeding, Execute, Flanked"></label>
+
+      <div class="button-row">
+        <button id="downloadJson" class="primary">Export Game JSON</button>
+        <button id="copyJson">Copy JSON</button>
+        <button id="resetCard">Reset Sample</button>
+      </div>
+      <pre id="jsonPreview" aria-label="Generated game data"></pre>
+    </section>
+
+    <section class="preview-panel" aria-label="Live game card preview">
+      <div id="gameCard" class="game-card rarity-legendary">
+        <div class="aurora"></div>
+        <div class="card-top">
+          <div class="cost-medallion"><small>COST</small><strong id="pCost">3</strong></div>
+          <div class="title-block">
+            <h2 id="pTitle">C’mon, Lady… We’re Done Here</h2>
+            <p id="pFlavorTop">“Lady doesn’t ask twice. Neither do I.”</p>
+          </div>
+          <div class="crest" aria-hidden="true">🐺</div>
+        </div>
+        <div id="artFrame" class="art-frame"><div class="art-placeholder">Upload artwork</div></div>
+        <div class="identity-bar"><span id="pType">ATTACK</span><b>◆</b><span id="pArchetype">SYNCHRONIZED</span><b>◆</b><span id="pRarity">LEGENDARY</span></div>
+        <div class="rules-box">
+          <p id="pRules">Deal 18 damage. Execute if the target is Bleeding, Flanked, or Terrified below 40% Health.</p>
+          <div id="keywordBadges" class="keyword-row"></div>
+        </div>
+        <div class="game-footer"><span id="pSet">BASE SET</span><span id="pId">DONE-HERE</span></div>
+      </div>
+      <p class="preview-note">This is the game-only template. The original Card Maker remains unchanged.</p>
+    </section>
+  </main>
+  <script src="game-studio.js"></script>
+</body>
+</html>
