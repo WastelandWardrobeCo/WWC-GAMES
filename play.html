@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lady &amp; Delilah™: The Hunt</title>
+  <link rel="stylesheet" href="play.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Lady &amp; Delilah™</p>
+      <h1>The Hunt</h1>
+    </div>
+    <div class="top-actions">
+      <a href="game-studio.html">Card Studio</a>
+      <button id="newRunBtn">New Battle</button>
+    </div>
+  </header>
+
+  <main class="battlefield">
+    <section class="combatant enemy-panel">
+      <div class="portrait enemy-portrait" aria-hidden="true">☠</div>
+      <div class="combatant-copy">
+        <div class="name-line"><h2 id="enemyName">White Tree Raider</h2><span id="enemyIntent" class="intent">Planning…</span></div>
+        <div class="bar"><span id="enemyHpBar"></span></div>
+        <div class="stats"><b id="enemyHp">52 / 52</b><span id="enemyArmor">0 Armor</span></div>
+        <div id="enemyStatuses" class="status-row"></div>
+      </div>
+    </section>
+
+    <section class="turn-center">
+      <div class="round-badge">ROUND <b id="round">1</b></div>
+      <div id="battleLog" class="battle-log" aria-live="polite"></div>
+      <button id="endTurnBtn" class="end-turn">End Turn</button>
+    </section>
+
+    <section class="combatant player-panel">
+      <div class="portrait player-portrait" aria-hidden="true">🐺</div>
+      <div class="combatant-copy">
+        <div class="name-line"><h2>Delilah &amp; Lady</h2><span class="energy">Energy <b id="energy">3</b>/3</span></div>
+        <div class="bar"><span id="playerHpBar"></span></div>
+        <div class="stats"><b id="playerHp">70 / 70</b><span id="playerArmor">0 Armor</span></div>
+        <div id="playerStatuses" class="status-row"></div>
+      </div>
+    </section>
+
+    <section class="deck-strip">
+      <button id="drawPileBtn" class="pile">Draw <b id="drawCount">0</b></button>
+      <button id="discardPileBtn" class="pile">Discard <b id="discardCount">0</b></button>
+      <button id="exhaustPileBtn" class="pile">Exhaust <b id="exhaustCount">0</b></button>
+    </section>
+
+    <section>
+      <div id="hand" class="hand" aria-label="Your hand"></div>
+      <p class="hint">Tap a card to play it. Cards are resolved by reusable game effects, not custom card code.</p>
+    </section>
+  </main>
+
+  <dialog id="pileDialog">
+    <div class="dialog-head"><h2 id="pileTitle">Cards</h2><button id="closePileBtn">Close</button></div>
+    <div id="pileCards" class="pile-cards"></div>
+  </dialog>
+
+  <dialog id="resultDialog" class="result-dialog">
+    <h2 id="resultTitle">Victory</h2>
+    <p id="resultCopy"></p>
+    <button id="restartBtn">Fight Again</button>
+  </dialog>
+
+  <script src="play.js"></script>
+</body>
+</html>
