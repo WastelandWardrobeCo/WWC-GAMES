@@ -1,6 +1,9 @@
 const $=id=>document.getElementById(id);
+const STUDIO_KEY='systema-obscura-card-studio-v3';
+const DECK_KEY='lady-delilah-active-deck-v1';
+const SUPPORTED=new Set(['damage','armor','heal','status','draw','energy','conditionalDamage','execute']);
 
-const CARD_LIBRARY=[
+const STARTER_LIBRARY=[
 {id:'spear-thrust',name:'Spear Thrust',cost:1,type:'Attack',rarity:'Common',icon:'⚔',rulesText:'Deal 7 damage.',keywords:['Precision'],effects:[{type:'damage',amount:7,target:'enemy'}]},
 {id:'lady-strikes',name:'Lady Strikes',cost:2,type:'Companion',rarity:'Uncommon',icon:'🐺',rulesText:'Deal 11 damage. Apply 1 Flanked.',keywords:['Flanked'],effects:[{type:'damage',amount:11,target:'enemy'},{type:'status',status:'Flanked',amount:1,target:'enemy'}]},
 {id:'black-leathers',name:'Black Leathers',cost:1,type:'Guard',rarity:'Common',icon:'◆',rulesText:'Gain 8 Armor.',keywords:['Armor'],effects:[{type:'armor',amount:8,target:'player'}]},
@@ -11,7 +14,7 @@ const CARD_LIBRARY=[
 {id:'done-here',name:'We’re Done Here',cost:3,type:'Attack',rarity:'Legendary',icon:'✦',rulesText:'Deal 18 damage. Execute below 25% Health.',keywords:['Execute'],effects:[{type:'damage',amount:18,target:'enemy'},{type:'execute',threshold:.25,target:'enemy'}]},
 {id:'steady-breath',name:'Steady Breath',cost:1,type:'Survival',rarity:'Common',icon:'❖',rulesText:'Heal 6. Gain 3 Armor.',keywords:['Heal'],effects:[{type:'heal',amount:6,target:'player'},{type:'armor',amount:3,target:'player'}]}
 ];
-
+const STARTER_IDS=['spear-thrust','spear-thrust','spear-thrust','lady-strikes','lady-strikes','black-leathers','black-leathers','hunter-focus','intimacy-blade','barbed-arrow','barbed-arrow','wrong-fire','done-here','steady-breath','steady-breath'];
 const ENEMY_CARDS=[
 {name:'Rusty Cleaver',cost:1,rulesText:'Deal 8 damage.',effects:[{type:'damage',amount:8,target:'player'}]},
 {name:'Hook and Drag',cost:1,rulesText:'Deal 5 damage. Apply 1 Flanked.',effects:[{type:'damage',amount:5,target:'player'},{type:'status',status:'Flanked',amount:1,target:'player'}]},
@@ -20,53 +23,55 @@ const ENEMY_CARDS=[
 {name:'Heavy Swing',cost:2,rulesText:'Deal 14 damage.',effects:[{type:'damage',amount:14,target:'player'}]}
 ];
 
-const freshState=()=>({
- round:1,turn:'player',energy:3,maxEnergy:3,
- player:{hp:70,maxHp:70,armor:0,statuses:{}},enemy:{name:'White Tree Raider',hp:52,maxHp:52,armor:0,statuses:{}},
- draw:shuffle([...CARD_LIBRARY,...CARD_LIBRARY.slice(0,6)]),hand:[],discard:[],exhaust:[],enemyDeck:shuffle([...ENEMY_CARDS,...ENEMY_CARDS]),enemyDiscard:[],enemyIntent:null,log:['The raider reaches for steel. Lady bares her teeth.']
-});
-let state=freshState();
-
+let availableCards=[...STARTER_LIBRARY];
+let workingDeck=[];
+function starterDeck(){return STARTER_IDS.map(id=>({...STARTER_LIBRARY.find(c=>c.id===id)}))}
+function savedDeck(){try{const d=JSON.parse(localStorage.getItem(DECK_KEY)||'null');return d&&Array.isArray(d.cards)&&d.cards.length>=10?d:null}catch{return null}}
+function activeDeck(){return savedDeck()||{name:'Starter Hunt',cards:starterDeck()}}
+function saveActiveDeck(name,cards){localStorage.setItem(DECK_KEY,JSON.stringify({name:name||'Unnamed Hunt',cards,updatedAt:new Date().toISOString()}))}
 function shuffle(items){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function normalizeStudioEffect(e,target){const amount=Number(e.amount)||0;switch(e.action){
+ case'damage':if(e.condition==='target-bleeding')return {type:'conditionalDamage',amount,status:'Bleeding',target};if(e.condition==='target-flanked')return {type:'conditionalDamage',amount,status:'Flanked',target};return {type:'damage',amount,target};
+ case'block':return {type:'armor',amount,target:'player'};
+ case'status':return {type:'status',status:e.status||'Bleeding',amount,target};
+ case'draw':return {type:'draw',amount,target:'player'};
+ case'energy':return {type:'energy',amount,target:'player'};
+ default:return {type:e.action,amount,target};
+ }}
+function normalizeCard(card){const target=card.game?.target||'enemy';const source=card.game?.effects||card.effects||[];const effects=source.map(e=>e.type?e:normalizeStudioEffect(e,target));return {id:card.id||crypto.randomUUID(),name:card.name||'Untitled Card',cost:Number(card.cost)||0,type:card.type||'Skill',rarity:card.rarity||'Common',icon:card.icon||'◆',rulesText:card.rulesText||'',keywords:card.keywords||[],exhaust:card.exhaust??card.game?.exhaust??false,effects}}
+function validateCard(card){const unsupported=card.effects.filter(e=>!SUPPORTED.has(e.type)).map(e=>e.type);const missing=[];if(!card.id)missing.push('id');if(!card.name)missing.push('name');if(!Number.isFinite(card.cost))missing.push('cost');if(!card.effects.length)missing.push('effects');return {ok:!unsupported.length&&!missing.length,unsupported,missing}}
+function importCards(raw,label){const list=Array.isArray(raw)?raw:(raw.cards||[raw]);const normalized=list.map(normalizeCard);const valid=[],problems=[];normalized.forEach(c=>{const v=validateCard(c);if(v.ok)valid.push(c);else problems.push(`${c.name}: ${[...v.missing,...v.unsupported.map(x=>'unsupported '+x)].join(', ')}`)});const map=new Map(availableCards.map(c=>[c.id,c]));valid.forEach(c=>map.set(c.id,c));availableCards=[...map.values()];$('importReport').textContent=`${label}: ${valid.length} playable card${valid.length===1?'':'s'} loaded${problems.length?`; ${problems.length} rejected. ${problems.slice(0,2).join(' | ')}`:'.'}`;renderBuilder()}
+
+const freshState=()=>{const deck=activeDeck();return {round:1,turn:'player',energy:3,maxEnergy:3,deckName:deck.name,player:{hp:70,maxHp:70,armor:0,statuses:{}},enemy:{name:'White Tree Raider',hp:52,maxHp:52,armor:0,statuses:{}},draw:shuffle(deck.cards.map(normalizeCard)),hand:[],discard:[],exhaust:[],enemyDeck:shuffle([...ENEMY_CARDS,...ENEMY_CARDS]),enemyDiscard:[],enemyIntent:null,log:[`${deck.name} is readied. The raider reaches for steel.`]}}
+let state=freshState();
 function status(entity,name){return entity.statuses[name]||0}
 function addStatus(entity,name,amount){entity.statuses[name]=(entity.statuses[name]||0)+amount}
 function log(text){state.log.unshift(text);state.log=state.log.slice(0,4)}
 function draw(count){for(let i=0;i<count;i++){if(!state.draw.length){if(!state.discard.length)break;state.draw=shuffle(state.discard);state.discard=[];log('The discard pile is reshuffled.')}state.hand.push(state.draw.pop())}}
 function mitigate(target,amount){let value=amount;if(status(target,'Terrified'))value=Math.max(0,value-2);if(status(target,'Flanked'))value+=3;const blocked=Math.min(target.armor,value);target.armor-=blocked;target.hp=Math.max(0,target.hp-(value-blocked));return {dealt:value-blocked,blocked}}
-function resolveEffect(effect,sourceLabel){const target=effect.target==='player'?state.player:state.enemy;switch(effect.type){
- case'damage':{const r=mitigate(target,effect.amount);log(`${sourceLabel} deals ${r.dealt} damage${r.blocked?` (${r.blocked} blocked)`:''}.`);break}
- case'conditionalDamage':if(status(target,effect.status)){const r=mitigate(target,effect.amount);log(`${effect.status} triggers ${r.dealt} bonus damage.`)}break;
- case'armor':target.armor+=effect.amount;log(`${sourceLabel} grants ${effect.amount} Armor.`);break;
- case'heal':{const before=target.hp;target.hp=Math.min(target.maxHp,target.hp+effect.amount);log(`${sourceLabel} restores ${target.hp-before} Health.`);break}
- case'status':addStatus(target,effect.status,effect.amount);log(`${target===state.player?'Delilah':state.enemy.name} gains ${effect.amount} ${effect.status}.`);break;
- case'draw':draw(effect.amount);log(`Draw ${effect.amount} cards.`);break;
- case'energy':state.energy=Math.min(6,state.energy+effect.amount);log(`Gain ${effect.amount} Energy.`);break;
- case'execute':if(target.hp>0&&target.hp/target.maxHp<=effect.threshold){target.hp=0;log('Execute. The hunt ends at once.')}break;
- }}
+function resolveEffect(effect,sourceLabel){const target=effect.target==='player'?state.player:state.enemy;switch(effect.type){case'damage':{const r=mitigate(target,effect.amount);log(`${sourceLabel} deals ${r.dealt} damage${r.blocked?` (${r.blocked} blocked)`:''}.`);break}case'conditionalDamage':if(status(target,effect.status)){const r=mitigate(target,effect.amount);log(`${effect.status} triggers ${r.dealt} bonus damage.`)}break;case'armor':target.armor+=effect.amount;log(`${sourceLabel} grants ${effect.amount} Armor.`);break;case'heal':{const before=target.hp;target.hp=Math.min(target.maxHp,target.hp+effect.amount);log(`${sourceLabel} restores ${target.hp-before} Health.`);break}case'status':addStatus(target,effect.status,effect.amount);log(`${target===state.player?'Delilah':state.enemy.name} gains ${effect.amount} ${effect.status}.`);break;case'draw':draw(effect.amount);log(`Draw ${effect.amount} cards.`);break;case'energy':state.energy=Math.min(6,state.energy+effect.amount);log(`Gain ${effect.amount} Energy.`);break;case'execute':if(target.hp>0&&target.hp/target.maxHp<=(effect.threshold??.25)){target.hp=0;log('Execute. The hunt ends at once.')}break}}
 function playCard(index){if(state.turn!=='player'||state.player.hp<=0||state.enemy.hp<=0)return;const card=state.hand[index];if(!card||card.cost>state.energy)return;state.energy-=card.cost;state.hand.splice(index,1);log(`Delilah plays ${card.name}.`);card.effects.forEach(e=>resolveEffect(e,card.name));(card.exhaust?state.exhaust:state.discard).push(card);checkEnd();render()}
 function chooseEnemyIntent(){if(!state.enemyDeck.length){state.enemyDeck=shuffle(state.enemyDiscard);state.enemyDiscard=[]}const affordable=state.enemyDeck.filter(c=>c.cost<=2);state.enemyIntent=affordable[Math.floor(Math.random()*affordable.length)]||state.enemyDeck[0]}
 function enemyTurn(){if(state.enemy.hp<=0)return;state.turn='enemy';const card=state.enemyIntent;log(`${state.enemy.name} plays ${card.name}.`);card.effects.forEach(e=>resolveEffect(e,card.name));const idx=state.enemyDeck.indexOf(card);if(idx>=0)state.enemyDeck.splice(idx,1);state.enemyDiscard.push(card);tickStatuses(state.player,'Delilah');tickStatuses(state.enemy,state.enemy.name);checkEnd();if(state.player.hp>0&&state.enemy.hp>0){state.round++;state.turn='player';state.energy=state.maxEnergy;state.player.armor=0;state.enemy.armor=0;draw(5-state.hand.length);chooseEnemyIntent()}render()}
 function tickStatuses(entity,label){if(status(entity,'Bleeding')){const amount=status(entity,'Bleeding');entity.hp=Math.max(0,entity.hp-amount);log(`${label} loses ${amount} Health to Bleeding.`)}Object.keys(entity.statuses).forEach(k=>{entity.statuses[k]=Math.max(0,entity.statuses[k]-1);if(!entity.statuses[k])delete entity.statuses[k]})}
 function checkEnd(){if(state.enemy.hp<=0)showResult(true);else if(state.player.hp<=0)showResult(false)}
-function showResult(win){$('resultTitle').textContent=win?'Victory':'The Hunt Ends';$('resultCopy').textContent=win?'The White Tree raider falls. The engine has resolved a complete battle using reusable card effects.':'Delilah falls, but the battle can begin again with a newly shuffled deck.';setTimeout(()=>$('resultDialog').showModal(),250)}
-function cardHtml(card,index,interactive=true){const disabled=interactive&&card.cost>state.energy;return `<button class="card ${disabled?'disabled':''}" ${interactive?`data-index="${index}"`:''}><div class="card-head"><h3>${escapeHtml(card.name)}</h3><span class="cost">${card.cost}</span></div><div class="card-art">${card.icon||'◆'}</div><div class="card-type">${(card.type||'ENEMY').toUpperCase()} · ${(card.rarity||'STANDARD').toUpperCase()}</div><div class="card-rules">${escapeHtml(card.rulesText)}</div><div class="card-keywords">${(card.keywords||[]).join(' · ')}</div></button>`}
-function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function showResult(win){$('resultTitle').textContent=win?'Victory':'The Hunt Ends';$('resultCopy').textContent=win?`${state.deckName} brought down the White Tree raider.`:'Delilah falls, but the deck can be revised and the battle begun again.';setTimeout(()=>$('resultDialog').showModal(),250)}
+function escapeHtml(s=''){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function cardHtml(card,index,interactive=true){const disabled=interactive&&card.cost>state.energy;return `<button class="card ${disabled?'disabled':''}" ${interactive?`data-index="${index}"`:''}><div class="card-head"><h3>${escapeHtml(card.name)}</h3><span class="cost">${card.cost}</span></div><div class="card-art">${card.icon||'◆'}</div><div class="card-type">${(card.type||'ENEMY').toUpperCase()} · ${(card.rarity||'STANDARD').toUpperCase()}</div><div class="card-rules">${escapeHtml(card.rulesText)}</div><div class="card-keywords">${(card.keywords||[]).map(escapeHtml).join(' · ')}</div></button>`}
 function statusHtml(entity){return Object.entries(entity.statuses).map(([k,v])=>`<span class="status">${escapeHtml(k)} ${v}</span>`).join('')}
-function render(){
- $('round').textContent=state.round;$('energy').textContent=state.energy;$('enemyName').textContent=state.enemy.name;
- $('playerHp').textContent=`${state.player.hp} / ${state.player.maxHp}`;$('enemyHp').textContent=`${state.enemy.hp} / ${state.enemy.maxHp}`;
- $('playerArmor').textContent=`${state.player.armor} Armor`;$('enemyArmor').textContent=`${state.enemy.armor} Armor`;
- $('playerHpBar').style.width=`${100*state.player.hp/state.player.maxHp}%`;$('enemyHpBar').style.width=`${100*state.enemy.hp/state.enemy.maxHp}%`;
- $('playerStatuses').innerHTML=statusHtml(state.player);$('enemyStatuses').innerHTML=statusHtml(state.enemy);
- $('enemyIntent').textContent=state.enemyIntent?`${state.enemyIntent.name}: ${state.enemyIntent.rulesText}`:'Planning…';
- $('drawCount').textContent=state.draw.length;$('discardCount').textContent=state.discard.length;$('exhaustCount').textContent=state.exhaust.length;
- $('battleLog').innerHTML=state.log.map(x=>`<div>${escapeHtml(x)}</div>`).join('');
- $('hand').innerHTML=state.hand.map((c,i)=>cardHtml(c,i,true)).join('');
- document.querySelectorAll('.card[data-index]').forEach(el=>el.addEventListener('click',()=>playCard(Number(el.dataset.index))));
- $('endTurnBtn').disabled=state.turn!=='player';
-}
+function render(){const deck=activeDeck();$('activeDeckName').textContent=deck.name;$('activeDeckCount').textContent=`${deck.cards.length} cards`;$('round').textContent=state.round;$('energy').textContent=state.energy;$('enemyName').textContent=state.enemy.name;$('playerHp').textContent=`${state.player.hp} / ${state.player.maxHp}`;$('enemyHp').textContent=`${state.enemy.hp} / ${state.enemy.maxHp}`;$('playerArmor').textContent=`${state.player.armor} Armor`;$('enemyArmor').textContent=`${state.enemy.armor} Armor`;$('playerHpBar').style.width=`${100*state.player.hp/state.player.maxHp}%`;$('enemyHpBar').style.width=`${100*state.enemy.hp/state.enemy.maxHp}%`;$('playerStatuses').innerHTML=statusHtml(state.player);$('enemyStatuses').innerHTML=statusHtml(state.enemy);$('enemyIntent').textContent=state.enemyIntent?`${state.enemyIntent.name}: ${state.enemyIntent.rulesText}`:'Planning…';$('drawCount').textContent=state.draw.length;$('discardCount').textContent=state.discard.length;$('exhaustCount').textContent=state.exhaust.length;$('battleLog').innerHTML=state.log.map(x=>`<div>${escapeHtml(x)}</div>`).join('');$('hand').innerHTML=state.hand.map((c,i)=>cardHtml(c,i,true)).join('');document.querySelectorAll('.card[data-index]').forEach(el=>el.addEventListener('click',()=>playCard(Number(el.dataset.index))));$('endTurnBtn').disabled=state.turn!=='player'}
 function openPile(title,cards){$('pileTitle').textContent=title;$('pileCards').innerHTML=cards.length?cards.map(c=>`<div class="pile-card"><b>${escapeHtml(c.name)}</b><span>${escapeHtml(c.rulesText)}</span></div>`).join(''):'<p>No cards here.</p>';$('pileDialog').showModal()}
 function start(){state=freshState();draw(5);chooseEnemyIntent();render()}
-$('endTurnBtn').addEventListener('click',enemyTurn);$('newRunBtn').addEventListener('click',start);$('restartBtn').addEventListener('click',()=>{$('resultDialog').close();start()});
-$('drawPileBtn').addEventListener('click',()=>openPile('Draw Pile',state.draw));$('discardPileBtn').addEventListener('click',()=>openPile('Discard Pile',state.discard));$('exhaustPileBtn').addEventListener('click',()=>openPile('Exhaust Pile',state.exhaust));$('closePileBtn').addEventListener('click',()=>$('pileDialog').close());
+
+function renderBuilder(){const counts=workingDeck.reduce((m,c)=>(m[c.id]=(m[c.id]||0)+1,m),{});$('builderLibrary').innerHTML=availableCards.map(c=>{const v=validateCard(c);return `<article class="builder-card ${v.ok?'':'invalid'}"><div><b>${escapeHtml(c.name)}</b><small>${escapeHtml(c.type)} · ${escapeHtml(c.rarity)} · Cost ${c.cost}</small></div><button data-add="${escapeHtml(c.id)}" ${v.ok?'':'disabled'}>Add</button></article>`}).join('');$('builderDeck').innerHTML=workingDeck.length?Object.entries(counts).map(([id,count])=>{const c=workingDeck.find(x=>x.id===id);return `<article class="builder-card"><div><b>${escapeHtml(c.name)} × ${count}</b><small>${escapeHtml(c.rulesText)}</small></div><button data-remove="${escapeHtml(id)}">Remove</button></article>`}).join(''):'<p class="hint">No cards selected.</p>';$('deckSize').textContent=workingDeck.length;const valid=workingDeck.length>=10;$('deckValidation').textContent=valid?'Deck ready for battle.':'Add at least 10 cards before saving.';$('saveDeckBtn').disabled=!valid}
+function openDeckBuilder(){const deck=activeDeck();availableCards=[...new Map([...STARTER_LIBRARY,...deck.cards].map(c=>[c.id,normalizeCard(c)])).values()];workingDeck=deck.cards.map(normalizeCard);$('deckName').value=deck.name;$('importReport').textContent='Load cards saved by Card Studio in this browser, or import an exported library JSON file.';renderBuilder();$('deckDialog').showModal()}
+$('builderLibrary').addEventListener('click',e=>{const id=e.target.dataset.add;if(!id)return;const c=availableCards.find(x=>x.id===id);if(c){workingDeck.push({...c});renderBuilder()}});
+$('builderDeck').addEventListener('click',e=>{const id=e.target.dataset.remove;if(!id)return;const i=workingDeck.findIndex(x=>x.id===id);if(i>=0){workingDeck.splice(i,1);renderBuilder()}});
+$('loadStudioBtn').addEventListener('click',()=>{try{importCards(JSON.parse(localStorage.getItem(STUDIO_KEY)||'[]'),'Card Studio')}catch{$('importReport').textContent='The Card Studio library could not be read.'}});
+$('libraryImport').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{importCards(JSON.parse(await file.text()),file.name)}catch{$('importReport').textContent='That file is not valid Card Studio JSON.'}e.target.value=''});
+$('starterDeckBtn').addEventListener('click',()=>{availableCards=[...STARTER_LIBRARY];workingDeck=starterDeck();$('deckName').value='Starter Hunt';$('importReport').textContent='Starter deck restored in the builder. Save it to make it active.';renderBuilder()});
+$('saveDeckBtn').addEventListener('click',()=>{if(workingDeck.length<10)return;saveActiveDeck($('deckName').value.trim(),workingDeck);$('deckDialog').close();start()});
+$('deckBuilderBtn').addEventListener('click',openDeckBuilder);$('closeDeckBtn').addEventListener('click',()=>$('deckDialog').close());
+$('endTurnBtn').addEventListener('click',enemyTurn);$('newRunBtn').addEventListener('click',start);$('restartBtn').addEventListener('click',()=>{$('resultDialog').close();start()});$('drawPileBtn').addEventListener('click',()=>openPile('Draw Pile',state.draw));$('discardPileBtn').addEventListener('click',()=>openPile('Discard Pile',state.discard));$('exhaustPileBtn').addEventListener('click',()=>openPile('Exhaust Pile',state.exhaust));$('closePileBtn').addEventListener('click',()=>$('pileDialog').close());
 start();

@@ -8,17 +8,20 @@
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <p class="eyebrow">Lady &amp; Delilah™</p>
-      <h1>The Hunt</h1>
-    </div>
+    <div><p class="eyebrow">Lady &amp; Delilah™</p><h1>The Hunt</h1></div>
     <div class="top-actions">
-      <a href="game-studio.html">Card Studio</a>
+      <a href="tools/game-studio.html">Card Studio</a>
+      <button id="deckBuilderBtn">Deck Builder</button>
       <button id="newRunBtn">New Battle</button>
     </div>
   </header>
 
   <main class="battlefield">
+    <section class="deck-banner">
+      <div><span class="eyebrow">ACTIVE DECK</span><strong id="activeDeckName">Starter Hunt</strong></div>
+      <span id="activeDeckCount">15 cards</span>
+    </section>
+
     <section class="combatant enemy-panel">
       <div class="portrait enemy-portrait" aria-hidden="true">☠</div>
       <div class="combatant-copy">
@@ -51,23 +54,27 @@
       <button id="exhaustPileBtn" class="pile">Exhaust <b id="exhaustCount">0</b></button>
     </section>
 
-    <section>
-      <div id="hand" class="hand" aria-label="Your hand"></div>
-      <p class="hint">Tap a card to play it. Cards are resolved by reusable game effects, not custom card code.</p>
-    </section>
+    <section><div id="hand" class="hand" aria-label="Your hand"></div><p class="hint">Tap a card to play it. Imported Card Studio effects are translated into reusable game actions.</p></section>
   </main>
 
-  <dialog id="pileDialog">
-    <div class="dialog-head"><h2 id="pileTitle">Cards</h2><button id="closePileBtn">Close</button></div>
-    <div id="pileCards" class="pile-cards"></div>
+  <dialog id="deckDialog" class="deck-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">ARSENAL</p><h2>Deck Builder</h2></div><button id="closeDeckBtn">Close</button></div>
+    <div class="deck-tools">
+      <label class="import-button">Import Card Library<input id="libraryImport" type="file" accept="application/json"></label>
+      <button id="loadStudioBtn">Load Cards From This Browser</button>
+      <button id="starterDeckBtn">Restore Starter Deck</button>
+    </div>
+    <div id="importReport" class="import-report">Card Studio cards saved in this browser can be loaded directly. JSON libraries can also be imported from another device.</div>
+    <div class="deck-name-row"><label>Deck name <input id="deckName" value="Starter Hunt"></label><span><b id="deckSize">15</b> cards selected</span></div>
+    <div class="builder-grid">
+      <section><h3>Card Library</h3><div id="builderLibrary" class="builder-list"></div></section>
+      <section><h3>Current Deck</h3><div id="builderDeck" class="builder-list"></div></section>
+    </div>
+    <div class="deck-footer"><span id="deckValidation">A deck needs at least 10 cards.</span><button id="saveDeckBtn" class="end-turn">Save &amp; Use Deck</button></div>
   </dialog>
 
-  <dialog id="resultDialog" class="result-dialog">
-    <h2 id="resultTitle">Victory</h2>
-    <p id="resultCopy"></p>
-    <button id="restartBtn">Fight Again</button>
-  </dialog>
-
+  <dialog id="pileDialog"><div class="dialog-head"><h2 id="pileTitle">Cards</h2><button id="closePileBtn">Close</button></div><div id="pileCards" class="pile-cards"></div></dialog>
+  <dialog id="resultDialog" class="result-dialog"><h2 id="resultTitle">Victory</h2><p id="resultCopy"></p><button id="restartBtn">Fight Again</button></dialog>
   <script src="play.js"></script>
 </body>
 </html>
