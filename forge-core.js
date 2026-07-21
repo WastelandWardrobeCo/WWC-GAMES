@@ -39,7 +39,7 @@ function awardForgeToken(options={}){
 function tokenBalance(){const p=profile(),run=runState();return {permanent:p.permanentTokens,run:run.tokens,total:p.permanentTokens+run.tokens}}
 function consumeForgeToken(preferRun=true){const p=profile(),run=runState();let scope=null;if(preferRun&&run.tokens>0){run.tokens--;scope='run';saveRun(run)}else if(p.permanentTokens>0){p.permanentTokens--;scope='permanent';p.tokenHistory.push({id:id('forge-token-use'),action:'consumed',scope,consumedAt:new Date().toISOString()});saveProfile(p)}else if(run.tokens>0){run.tokens--;scope='run';saveRun(run)}if(!scope)return null;global.dispatchEvent(new CustomEvent('forge:token-consumed',{detail:{scope}}));return {scope}}
 
-function conditionMultiplier(condition){return condition&&condition!=='none'?.72:1}
+function conditionMultiplier(condition){return condition&&condition!=='none'?0.72:1}
 function scoreEffect(effect){const type=effect.type||effect.action;const amount=Math.max(0,Number(effect.amount)||0);let score=(EFFECT_COST[type]??99)*Math.max(1,amount);if(type==='status')score=(STATUS_COST[effect.status]??4)*Math.max(1,amount);if(type==='execute')score=(EFFECT_COST.execute)*(Number(effect.threshold??.25)<=.25?1.1:.9);return score*conditionMultiplier(effect.condition)}
 function budgetFor(card){return CARD_BUDGET[Math.min(5,Math.max(0,Number(card.cost)||0))]??CARD_BUDGET[5]}
 function evaluateCard(card){
@@ -53,7 +53,7 @@ function evaluateCard(card){
  if((Number(card.cost)||0)<0||(Number(card.cost)||0)>5)errors.push('Cost must be between 0 and 5.');
  const ratio=budget?spent/budget:99;
  const verdict=errors.length?'invalid':ratio>1?'over-budget':ratio>.86?'tempered':ratio>.55?'balanced':'under-forged';
- const jonas={invalid:'This is not a weapon yet.', 'over-budget':'That would break in your hands.',tempered:'Heavy, but it will hold.',balanced:'Now we’re getting somewhere.','under-forged':'You left steel on the table.'}[verdict];
+ const jonas={invalid:'This is not a weapon yet.','over-budget':'That would break in your hands.',tempered:'Heavy, but it will hold.',balanced:'Now we’re getting somewhere.','under-forged':'You left steel on the table.'}[verdict];
  return {valid:!errors.length&&spent<=budget,verdict,spent:Math.round(spent*10)/10,budget,remaining:Math.round((budget-spent)*10)/10,errors,jonas};
 }
 
