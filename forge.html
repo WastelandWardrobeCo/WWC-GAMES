@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jonas' Forge | Lady &amp; Delilah™</title>
+  <link rel="stylesheet" href="shared/app-shell.css">
   <link rel="stylesheet" href="forge.css">
 </head>
 <body>
+  <header class="systema-app-shell">
+    <div class="systema-app-brand"><strong>Systema Obscura</strong><span>Lady &amp; Delilah™ Game Workspace</span></div>
+    <nav class="systema-app-nav" aria-label="Systema Obscura workspaces">
+      <a href="play.html">Hunt</a>
+      <a href="tools/game-studio.html">Card Studio</a>
+      <a href="tools/index.html">Trading Cards</a>
+      <a href="forge.html" aria-current="page">Jonas’ Forge</a>
+    </nav>
+  </header>
   <header class="topbar">
     <div><p class="eyebrow">LADY &amp; DELILAH™</p><h1>Jonas' Forge</h1></div>
     <nav><a href="play.html">Return to the Hunt</a><button id="vaultBtn">The Vault</button></nav>
@@ -35,7 +45,7 @@
       <label>Flavor text<textarea id="flavorText" maxlength="120" placeholder="Steel remembers every mistake."></textarea></label>
       <div class="heat"><div class="heat-label"><span>Forge heat</span><b id="heatWord">Cold</b></div><div class="heat-track"><span id="heatBar"></span></div></div>
       <button id="strikeBtn" class="strike" type="submit">Strike the Anvil</button>
-      <p id="forgeError" class="error" role="alert"></p>
+      <p id="forgeError" class="error systema-notice systema-notice--danger" role="alert"></p>
     </form>
 
     <section class="preview-panel">

@@ -1,0 +1,160 @@
+:root {
+  --systema-shell-bg: rgba(5, 8, 9, 0.96);
+  --systema-shell-panel: rgba(16, 23, 26, 0.92);
+  --systema-shell-line: rgba(139, 164, 153, 0.28);
+  --systema-shell-text: #f1ecdf;
+  --systema-shell-muted: #98a39f;
+  --systema-shell-green: #72e5a4;
+  --systema-shell-green-dim: rgba(114, 229, 164, 0.12);
+}
+
+.systema-app-shell,
+.systema-app-shell * {
+  box-sizing: border-box;
+}
+
+.systema-app-shell {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px clamp(14px, 3vw, 36px);
+  color: var(--systema-shell-text);
+  background:
+    linear-gradient(90deg, rgba(114, 229, 164, 0.045), transparent 34%),
+    var(--systema-shell-bg);
+  border-bottom: 1px solid var(--systema-shell-line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(16px);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+.systema-app-brand {
+  min-width: max-content;
+}
+
+.systema-app-brand strong,
+.systema-app-brand span {
+  display: block;
+}
+
+.systema-app-brand strong {
+  color: var(--systema-shell-green);
+  font-size: 0.7rem;
+  line-height: 1.25;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.systema-app-brand span {
+  margin-top: 2px;
+  color: var(--systema-shell-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.035em;
+}
+
+.systema-app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.systema-app-nav a {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #b8c2be;
+  background: transparent;
+  text-decoration: none;
+  font-size: 0.76rem;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.systema-app-nav a:hover,
+.systema-app-nav a:focus-visible {
+  color: var(--systema-shell-text);
+  border-color: var(--systema-shell-line);
+  background: rgba(255, 255, 255, 0.035);
+  outline: none;
+}
+
+.systema-app-nav a[aria-current="page"] {
+  color: #c9f7d9;
+  border-color: rgba(114, 229, 164, 0.4);
+  background: var(--systema-shell-green-dim);
+  box-shadow: inset 0 -2px var(--systema-shell-green);
+}
+
+/* Shared feedback treatments for safe adoption by existing message containers. */
+.systema-notice {
+  padding: 10px 13px;
+  border: 1px solid var(--systema-shell-line);
+  border-left: 3px solid var(--systema-shell-green);
+  border-radius: 6px;
+  color: #c5cfcb;
+  background: var(--systema-shell-panel);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.systema-notice:empty {
+  display: none;
+}
+
+.systema-notice--warning {
+  border-left-color: #d5a85b;
+}
+
+.systema-notice--danger {
+  border-left-color: #d75b5b;
+}
+
+/* The product shell owns the sticky position; workspace title bars remain intact below it. */
+.systema-app-shell + .topbar,
+.systema-app-shell + .studio-header,
+.systema-app-shell + .title-bar {
+  position: relative;
+  top: auto;
+}
+
+@media (max-width: 760px) {
+  .systema-app-shell {
+    position: relative;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding-block: 10px;
+  }
+
+  .systema-app-brand {
+    min-width: 0;
+  }
+
+  .systema-app-nav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .systema-app-nav a {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 430px) {
+  .systema-app-nav a {
+    flex-basis: calc(50% - 5px);
+  }
+}
