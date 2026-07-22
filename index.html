@@ -4,9 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>WWC GAMES</title>
+  <script defer src="shared/navigation/app-navigation.js"></script>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; background:#0b0f14; color:#e8eef7; }
-    .wrap { max-width: 720px; margin: 0 auto; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background:#0b0f14; color:#e8eef7; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
     h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: 1px; }
     p { margin: 0 0 18px; color:#b9c4d6; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
@@ -22,7 +23,7 @@
     code { background:#111824; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
-<body>
+<body data-workspace="wwc-games">
   <div class="wrap">
     <h1>WWC GAMES</h1>
     <p>Select a game.</p>
@@ -43,13 +44,8 @@
   <div class="sub">Pattern matching challenge</div>
 </a>
 
-<a class="card" href="./lady-delilah/">
-  <div class="title">LADY & DELILAH THE HUNT</div>
-  <div class="sub">Diabloish</div>
-</a>
-
-<a class="card" href="./lady-delilah-card-game/">
-  <div class="title">LADY & DELILAH CARD GAME</div>
+<a class="card" href="./hunt/">
+  <div class="title">LADY &amp; DELILAH™: THE HUNT</div>
   <div class="sub">Collectible tactical card battles</div>
 </a>
 

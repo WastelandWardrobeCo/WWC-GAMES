@@ -4,7 +4,7 @@ The Forge is a permanent progression system where exceptional accomplishments aw
 
 ## Runtime API
 
-`forge-core.js` exposes `window.LadyDelilahForge`.
+`forge/forge-core.js` exposes `window.LadyDelilahForge`.
 
 Core operations:
 

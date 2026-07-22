@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $port = 8787
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Any, $port)
 
 $mimeTypes = @{
@@ -38,7 +38,7 @@ function Get-SafePath {
 
   $cleanPath = [Uri]::UnescapeDataString(($RequestPath -split "\?")[0])
   if ($cleanPath -eq "/") {
-    $cleanPath = "/index.html"
+    $cleanPath = "/trading-cards/index.html"
   }
 
   $relativePath = $cleanPath.TrimStart("/") -replace "/", [System.IO.Path]::DirectorySeparatorChar

@@ -4,19 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lady & Delilah: Hunt Board</title>
-  <link rel="stylesheet" href="../shared/app-shell.css" />
   <link rel="stylesheet" href="styles.css?v=migration-sprint-1" />
+  <script defer src="../shared/navigation/app-navigation.js"></script>
 </head>
-<body>
-  <header class="systema-app-shell">
-    <div class="systema-app-brand"><strong>Systema Obscura</strong><span>Lady &amp; Delilah™ Game Workspace</span></div>
-    <nav class="systema-app-nav" aria-label="Systema Obscura workspaces">
-      <a href="index.html" aria-current="page">Hunt</a>
-      <a href="../tools/game-studio.html">Card Studio</a>
-      <a href="../forge.html">Forge</a>
-      <a href="../tools/index.html">Trading Card Maker</a>
-    </nav>
-  </header>
+<body data-workspace="hunt">
   <main class="game-shell">
     <header class="topbar">
       <div>
@@ -181,7 +172,7 @@
         <div id="relicShelf" class="relic-shelf"></div>
         <div class="studio-deck-tools">
           <button id="loadStudioCardsBtn" class="plain-btn" type="button">Load Card Studio Cards</button>
-          <a class="plain-btn" href="../tools/game-studio.html">Open Card Studio</a>
+          <a class="plain-btn" href="../card-studio/">Open Card Studio</a>
           <p id="studioImportStatus" class="systema-notice" aria-live="polite"></p>
         </div>
         <button id="startHuntBtn" class="blood-btn" type="button">Begin The Hunt</button>
@@ -410,7 +401,7 @@
 
   <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
-  <script src="../shared/deck-system.js?v=migration-sprint-1"></script>
+  <script src="../shared/js/deck-system.js?v=migration-sprint-1"></script>
   <script src="game.js?v=migration-sprint-1"></script>
 </body>
 </html>

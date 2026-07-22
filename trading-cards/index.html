@@ -4,24 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lady &amp; Delilah Card Maker</title>
-  <link rel="stylesheet" href="../shared/app-shell.css">
   <link rel="stylesheet" href="styles.css">
+  <script defer src="../shared/navigation/app-navigation.js"></script>
 </head>
-<body>
-  <header class="systema-app-shell">
-    <div class="systema-app-brand"><strong>Systema Obscura</strong><span>Lady &amp; Delilah™ Game Workspace</span></div>
-    <nav class="systema-app-nav" aria-label="Systema Obscura workspaces">
-      <a href="../lady-delilah-card-game/index.html">Hunt</a>
-      <a href="game-studio.html">Card Studio</a>
-      <a href="index.html" aria-current="page">Trading Card Maker</a>
-      <a href="../forge.html">Forge</a>
-    </nav>
-  </header>
+<body data-workspace="trading-cards">
   <header class="title-bar">
     <h1>Lady &amp; Delilah Card Maker</h1>
     <div class="title-actions">
       <span class="version-mark">Version 2.0</span>
-      <a class="mode-switch" href="game-studio.html">Open Game Studio</a>
+      <a class="mode-switch" href="../card-studio/">Open Game Studio</a>
     </div>
   </header>
 
@@ -394,6 +385,6 @@
 
   </main>
 
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
