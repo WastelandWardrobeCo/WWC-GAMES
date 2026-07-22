@@ -29,6 +29,11 @@
       <strong>Systema Obscura</strong>
       <span>Lady &amp; Delilah™ Game Workspace</span>
     </div>
+    <div class="systema-hunter-chip" data-hunter-chip hidden>
+      <span>Active Hunter</span>
+      <strong data-hunter-name>None</strong>
+      <small data-hunter-progress></small>
+    </div>
     <nav class="systema-app-nav" aria-label="Systema Obscura workspaces">
       ${destinations.map(([id, label, path]) => {
         const current = id === activeWorkspace ? ' aria-current="page"' : '';
@@ -36,4 +41,32 @@
       }).join('')}
     </nav>`;
   document.body.prepend(header);
+
+  function renderHunter(profile) {
+    const chip = header.querySelector('[data-hunter-chip]');
+    if (!chip) return;
+    if (!profile) {
+      chip.hidden = true;
+      return;
+    }
+    chip.hidden = false;
+    chip.querySelector('[data-hunter-name]').textContent = profile.hunterName || 'Unnamed Hunter';
+    chip.querySelector('[data-hunter-progress]').textContent = `Rank ${profile.rank || 1} · ${Number(profile.marks || 0).toLocaleString()} Marks`;
+    chip.title = `${profile.completedHunts?.length || 0} hunts completed · ${profile.forgedCardCount || 0} forged cards`;
+  }
+
+  function connectProfileRuntime() {
+    if (!window.SystemaHunterProfile) return;
+    renderHunter(window.SystemaHunterProfile.current());
+    window.SystemaHunterProfile.subscribe(renderHunter);
+  }
+
+  if (window.SystemaHunterProfile) {
+    connectProfileRuntime();
+  } else {
+    const profileScript = document.createElement('script');
+    profileScript.src = new URL('shared/persistence/hunter-profile.js', repositoryRoot).href;
+    profileScript.addEventListener('load', connectProfileRuntime, { once: true });
+    document.head.append(profileScript);
+  }
 })();
