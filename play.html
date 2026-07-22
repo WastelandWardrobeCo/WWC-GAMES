@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lady &amp; Delilah™: The Hunt</title>
-  <link rel="stylesheet" href="play.css">
+  <link rel="stylesheet" href="shared/app-shell.css">
+  <link rel="stylesheet" href="play.css?v=project-unity">
 </head>
 <body>
+  <header class="systema-app-shell">
+    <div class="systema-app-brand"><strong>Systema Obscura</strong><span>Lady &amp; Delilah™ Game Workspace</span></div>
+    <nav class="systema-app-nav" aria-label="Systema Obscura workspaces">
+      <a href="play.html" aria-current="page">Hunt</a>
+      <a href="tools/game-studio.html">Card Studio</a>
+      <a href="tools/index.html">Trading Cards</a>
+      <a href="forge.html">Jonas’ Forge</a>
+    </nav>
+  </header>
   <header class="topbar">
     <div><p class="eyebrow">Lady &amp; Delilah™</p><h1>The Hunt</h1></div>
     <div class="top-actions">
@@ -65,7 +75,7 @@
       <button id="loadStudioBtn">Load Cards From This Browser</button>
       <button id="starterDeckBtn">Restore Starter Deck</button>
     </div>
-    <div id="importReport" class="import-report">Card Studio cards saved in this browser can be loaded directly. JSON libraries can also be imported from another device.</div>
+    <div id="importReport" class="import-report systema-notice" aria-live="polite">Card Studio cards saved in this browser can be loaded directly. JSON libraries can also be imported from another device.</div>
     <div class="deck-name-row"><label>Deck name <input id="deckName" value="Starter Hunt"></label><span><b id="deckSize">15</b> cards selected</span></div>
     <div class="builder-grid">
       <section><h3>Card Library</h3><div id="builderLibrary" class="builder-list"></div></section>

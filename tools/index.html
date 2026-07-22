@@ -4,9 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lady &amp; Delilah Card Maker</title>
+  <link rel="stylesheet" href="../shared/app-shell.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <header class="systema-app-shell">
+    <div class="systema-app-brand"><strong>Systema Obscura</strong><span>Lady &amp; Delilah™ Game Workspace</span></div>
+    <nav class="systema-app-nav" aria-label="Systema Obscura workspaces">
+      <a href="../play.html">Hunt</a>
+      <a href="game-studio.html">Card Studio</a>
+      <a href="index.html" aria-current="page">Trading Cards</a>
+      <a href="../forge.html">Jonas’ Forge</a>
+    </nav>
+  </header>
   <header class="title-bar">
     <h1>Lady &amp; Delilah Card Maker</h1>
     <div class="title-actions">
@@ -177,7 +187,7 @@
           <input id="projectFileInput" class="is-hidden" type="file" accept="application/json,.json">
           <button id="exportPng" type="button">Export PNG</button>
           <button id="exportPdf" type="button">Export Card PDF</button>
-          <div id="libraryAddStatus" class="action-status" aria-live="polite"></div>
+          <div id="libraryAddStatus" class="action-status systema-notice" aria-live="polite"></div>
         </div>
       </div>
 
