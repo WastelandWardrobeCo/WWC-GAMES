@@ -88,6 +88,89 @@ const forgeCards = [
 
 cards.push(...forgeCards);
 
+const BUILT_IN_CARD_IDS = new Set(cards.map(c => c.id));
+const customCardRecords = new Map();
+const STUDIO_ACTIONS = new Set(['damage', 'conditionalDamage', 'block', 'armor', 'heal', 'status', 'draw', 'energy', 'execute']);
+
+function studioStatusKey(status = '') {
+  return ({ bleeding: 'bleed', bleed: 'bleed', flanked: 'flanked', terrified: 'terrified', exposed: 'exposed', rooted: 'root', root: 'root' })[String(status).toLowerCase()] || 'exposed';
+}
+
+function studioConditionMet(effect, enemy) {
+  const condition = effect.condition || 'none';
+  if (condition === 'none' || !condition) return true;
+  // Card Studio uses this marker to describe an execute rider; its base damage remains unconditional.
+  if (condition === 'target-below-40') return true;
+  if (condition === 'target-bleeding') return Boolean(enemy?.status?.bleed);
+  if (condition === 'target-flanked') return Boolean(enemy?.status?.flanked);
+  if (condition === 'bond-ready') return state.bond >= 2;
+  return true;
+}
+
+function runStudioEffect(effect, game) {
+  const action = effect.action || effect.type;
+  const amount = Math.max(0, Number(effect.amount) || 0);
+  const enemy = game?.target || target();
+  if (!studioConditionMet(effect, enemy)) return;
+  if (action === 'damage' || action === 'conditionalDamage') attack({ target: enemy }, amount);
+  else if (action === 'block' || action === 'armor') { state.guard += Math.max(1, Math.ceil(amount / 6)); log(`Lady braces against the next ${Math.max(1, Math.ceil(amount / 6))} attack${amount > 6 ? 's' : ''}.`); }
+  else if (action === 'heal') heal(effect.target === 'lady' ? 'lady' : 'delilah', amount);
+  else if (action === 'status' && enemy) addStatus(enemy, studioStatusKey(effect.status), Math.max(1, amount));
+  else if (action === 'draw') draw(amount);
+  else if (action === 'energy') gainActions(amount, 'Card Studio card');
+  else if (action === 'execute' && enemy && enemy.hp > 0 && enemy.hp / enemy.max <= (Number(effect.threshold) || .25)) { enemy.hp = 0; log('The imported card executes its target.'); }
+}
+
+function makeStudioCard(record) {
+  return {
+    id: record.id,
+    name: record.name,
+    type: record.type || 'Tactic',
+    cost: Math.max(0, Number(record.cost) || 0),
+    rarity: record.rarity || 'Common',
+    text: record.rulesText,
+    customTarget: record.target || 'enemy',
+    studioCard: true,
+    effect: game => record.effects.forEach(effect => runStudioEffect(effect, game))
+  };
+}
+
+function registerStudioCard(record) {
+  if (!record?.id || BUILT_IN_CARD_IDS.has(record.id) || !record.effects?.length) return false;
+  if (record.effects.some(effect => !STUDIO_ACTIONS.has(effect.action || effect.type))) return false;
+  const custom = makeStudioCard(record);
+  const existing = cards.findIndex(c => c.id === record.id);
+  if (existing >= 0) cards.splice(existing, 1, custom);
+  else cards.push(custom);
+  customCardRecords.set(record.id, record);
+  return true;
+}
+
+function hydrateStoredStudioCards(profileId) {
+  if (!window.SystemaDeckStorage) return;
+  window.SystemaDeckStorage.profileCustomCards(profileId).forEach(registerStudioCard);
+}
+
+function importStudioCards() {
+  if (!window.SystemaDeckStorage || !activeProfileId) return;
+  const imported = window.SystemaDeckStorage.readStudioCards();
+  let loaded = 0;
+  let conflicts = 0;
+  imported.cards.forEach(record => {
+    if (BUILT_IN_CARD_IDS.has(record.id)) { conflicts += 1; return; }
+    if (!registerStudioCard(record)) { conflicts += 1; return; }
+    state.owned[record.id] = Math.max(1, Number(state.owned[record.id]) || 0);
+    loaded += 1;
+  });
+  saveProgress();
+  renderPrep();
+  const notes = [`${loaded} Card Studio card${loaded === 1 ? '' : 's'} loaded into this profile.`];
+  if (conflicts) notes.push(`${conflicts} conflicting or unsupported card${conflicts === 1 ? '' : 's'} skipped.`);
+  if (imported.rejected.length) notes.push(`${imported.rejected.length} incomplete card${imported.rejected.length === 1 ? '' : 's'} rejected.`);
+  $('studioImportStatus').textContent = notes.join(' ');
+  showToast(notes.join(' '));
+}
+
 const forgeInventory = [
   { id: 'forge-hookline-signal', price: 75 },
   { id: 'forge-iron-vow', price: 90 },
@@ -395,9 +478,15 @@ function loadProgress() {
     profileIndex = migrateLegacySaveIfNeeded();
     activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
     if (!activeProfileId || !profileIndex.some(p => p.id === activeProfileId)) return false;
+    hydrateStoredStudioCards(activeProfileId);
     const saved = JSON.parse(localStorage.getItem(profileKey(activeProfileId)) || 'null');
     if (!saved || typeof saved !== 'object') return false;
+    (Array.isArray(saved.customCards) ? saved.customCards : []).forEach(registerStudioCard);
     Object.assign(state, sanitizeSave(saved));
+    if (window.SystemaDeckStorage) {
+      const persistent = window.SystemaDeckStorage.loadProfileDeck(activeProfileId, state.activeDeck, new Set(cards.map(c => c.id)));
+      if (persistent.cards.length === 20) state.activeDeck = [...persistent.cards];
+    }
     return true;
   } catch {
     if (activeProfileId) localStorage.removeItem(profileKey(activeProfileId));
@@ -437,10 +526,19 @@ function saveProgress(message = '') {
     unlockedHunts: state.unlockedHunts,
     difficultyProgress: state.difficultyProgress,
     settings: state.settings,
+    customCards: [...customCardRecords.values()],
     firstDeckRevealed: state.firstDeckRevealed,
     savedAt: new Date().toISOString()
   };
   localStorage.setItem(profileKey(activeProfileId), JSON.stringify(progress));
+  if (window.SystemaDeckStorage) {
+    window.SystemaDeckStorage.saveProfileDeck(
+      activeProfileId,
+      state.settings?.deckName || `${state.hunterName || 'Hunter'}'s Deck`,
+      state.activeDeck,
+      [...customCardRecords.values()]
+    );
+  }
   upsertProfileSummary();
   if (message && $('ladyNote')) $('ladyNote').textContent = message;
   if (message) showToast(message);
@@ -501,6 +599,7 @@ function bind() {
   });
   $('startHuntBtn').addEventListener('click', startHunt);
   $('saveBtn').addEventListener('click', () => saveProgress('Game saved.'));
+  $('loadStudioCardsBtn').addEventListener('click', importStudioCards);
   $('endTurnBtn').addEventListener('click', endTurn);
   $('mapReturnBtn').addEventListener('click', () => isRunActive() ? showRunMap() : showBoard());
   $('campBtn').addEventListener('click', camp);
@@ -647,6 +746,7 @@ function deleteActiveProfile() {
   const profile = profileIndex.find(p => p.id === activeProfileId);
   const name = profile ? profile.hunterName : 'this hunter';
   if (!confirm(`Delete ${name}'s local profile? This cannot be undone.`)) return;
+  if (window.SystemaDeckStorage) window.SystemaDeckStorage.deleteProfileDeck(activeProfileId);
   localStorage.removeItem(profileKey(activeProfileId));
   profileIndex = profileIndex.filter(p => p.id !== activeProfileId);
   writeProfileIndex();
@@ -686,6 +786,7 @@ function importProfileFile(event) {
       activeProfileId = id;
       localStorage.setItem(ACTIVE_PROFILE_KEY, id);
       state = freshState();
+      (Array.isArray(imported.customCards) ? imported.customCards : []).forEach(registerStudioCard);
       Object.assign(state, sanitizeSave({ ...imported, profileId: id }));
       state.profileId = id;
       saveProgress('Save imported.');
@@ -1782,6 +1883,7 @@ function target() {
 }
 
 function cardScope(c) {
+  if (c.studioCard) return c.customTarget === 'enemy' ? 'Target' : 'No Target';
   if (['rain-bolts', 'black-rain', 'shatter-rite', 'moon-hunt', 'forge-black-forge-oath'].includes(c.id)) return 'All Enemies';
   if (['snare', 'tripwire', 'funnel', 'trapline-map', 'spear-wall', 'kill-lane', 'grave-silence', 'forge-red-sermon'].includes(c.id)) return 'Battlefield';
   if (c.id === 'bandage') return 'Choose Ally';

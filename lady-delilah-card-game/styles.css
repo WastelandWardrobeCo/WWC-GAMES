@@ -3503,3 +3503,4 @@ body[data-screen="boardScreen"] .board-screen {
   86% { opacity: 1; transform: rotateY(76deg); }
   100% { opacity: 0; transform: rotateY(92deg); }
 }
+.studio-deck-tools{display:grid;gap:8px;padding:12px 0;border-top:1px solid rgba(184,155,103,.28);border-bottom:1px solid rgba(184,155,103,.18)}.studio-deck-tools .plain-btn{text-align:center;text-decoration:none}.studio-deck-tools .systema-notice{margin:0}.systema-app-shell+.game-shell .topbar{position:relative;top:auto}
