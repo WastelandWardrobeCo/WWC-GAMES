@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lady &amp; Delilah™: The Hunt</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">Lady &amp; Delilah™</p><h1>The Hunt</h1></div>
+    <div class="top-actions">
+      <a href="../../../card-studio/">Card Studio</a>
+      <a href="../../../forge/">Jonas' Forge</a>
+      <button id="deckBuilderBtn">Deck Builder</button>
+      <button id="newRunBtn">New Battle</button>
+    </div>
+  </header>
+
+  <main class="battlefield">
+    <section class="deck-banner">
+      <div><span class="eyebrow">ACTIVE DECK</span><strong id="activeDeckName">Starter Hunt</strong></div>
+      <span id="activeDeckCount">15 cards</span>
+    </section>
+
+    <section class="combatant enemy-panel">
+      <div class="portrait enemy-portrait" aria-hidden="true">☠</div>
+      <div class="combatant-copy">
+        <div class="name-line"><h2 id="enemyName">White Tree Raider</h2><span id="enemyIntent" class="intent">Planning…</span></div>
+        <div class="bar"><span id="enemyHpBar"></span></div>
+        <div class="stats"><b id="enemyHp">52 / 52</b><span id="enemyArmor">0 Armor</span></div>
+        <div id="enemyStatuses" class="status-row"></div>
+      </div>
+    </section>
+
+    <section class="turn-center">
+      <div class="round-badge">ROUND <b id="round">1</b></div>
+      <div id="battleLog" class="battle-log" aria-live="polite"></div>
+      <button id="endTurnBtn" class="end-turn">End Turn</button>
+    </section>
+
+    <section class="combatant player-panel">
+      <div class="portrait player-portrait" aria-hidden="true">🐺</div>
+      <div class="combatant-copy">
+        <div class="name-line"><h2>Delilah &amp; Lady</h2><span class="energy">Energy <b id="energy">3</b>/3</span></div>
+        <div class="bar"><span id="playerHpBar"></span></div>
+        <div class="stats"><b id="playerHp">70 / 70</b><span id="playerArmor">0 Armor</span></div>
+        <div id="playerStatuses" class="status-row"></div>
+      </div>
+    </section>
+
+    <section class="deck-strip">
+      <button id="drawPileBtn" class="pile">Draw <b id="drawCount">0</b></button>
+      <button id="discardPileBtn" class="pile">Discard <b id="discardCount">0</b></button>
+      <button id="exhaustPileBtn" class="pile">Exhaust <b id="exhaustCount">0</b></button>
+    </section>
+
+    <section><div id="hand" class="hand" aria-label="Your hand"></div><p class="hint">Tap a card to play it. Imported Card Studio effects are translated into reusable game actions.</p></section>
+  </main>
+
+  <dialog id="deckDialog" class="deck-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">ARSENAL</p><h2>Deck Builder</h2></div><button id="closeDeckBtn">Close</button></div>
+    <div class="deck-tools">
+      <label class="import-button">Import Card Library<input id="libraryImport" type="file" accept="application/json"></label>
+      <button id="loadStudioBtn">Load Cards From This Browser</button>
+      <button id="starterDeckBtn">Restore Starter Deck</button>
+    </div>
+    <div id="importReport" class="import-report systema-notice" aria-live="polite">Card Studio cards saved in this browser can be loaded directly. JSON libraries can also be imported from another device.</div>
+    <div class="deck-name-row"><label>Deck name <input id="deckName" value="Starter Hunt"></label><span><b id="deckSize">15</b> cards selected</span></div>
+    <div class="builder-grid">
+      <section><h3>Card Library</h3><div id="builderLibrary" class="builder-list"></div></section>
+      <section><h3>Current Deck</h3><div id="builderDeck" class="builder-list"></div></section>
+    </div>
+    <div class="deck-footer"><span id="deckValidation">A deck needs at least 10 cards.</span><button id="saveDeckBtn" class="end-turn">Save &amp; Use Deck</button></div>
+  </dialog>
+
+  <dialog id="pileDialog"><div class="dialog-head"><h2 id="pileTitle">Cards</h2><button id="closePileBtn">Close</button></div><div id="pileCards" class="pile-cards"></div></dialog>
+  <dialog id="resultDialog" class="result-dialog"><h2 id="resultTitle">Victory</h2><p id="resultCopy"></p><div class="top-actions"><a href="../../../forge/">Visit Jonas' Forge</a><button id="restartBtn">Fight Again</button></div></dialog>
+  <script src="../../../forge/forge-core.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

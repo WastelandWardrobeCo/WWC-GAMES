@@ -6,7 +6,7 @@ A local browser app for making dark post-apocalyptic fantasy trading cards. It u
 
 Open this file in a browser:
 
-`C:\Users\david\Documents\New project\Lady & Delilah Card Maker\index.html`
+Open `trading-cards/index.html` from the repository root.
 
 The app runs directly from the file.
 
@@ -114,5 +114,5 @@ Project saves include the Card Library entries, editable snapshots, visual setti
 
 - `index.html` - app layout and controls
 - `styles.css` - interface styling
-- `script.js` - card rendering, image movement, project save/load, and exports
+- `app.js` - card rendering, image movement, project save/load, and exports
 - `start-phone-preview.ps1` - optional local web server for phone preview

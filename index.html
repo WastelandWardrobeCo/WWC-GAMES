@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#070604" />
   <title>WWC GAMES</title>
+  <script defer src="shared/navigation/app-navigation.js"></script>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; background:#0b0f14; color:#e8eef7; }
-    .wrap { max-width: 720px; margin: 0 auto; }
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; background:#0b0f14; color:#e8eef7; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 24px; }
     h1 { margin: 0 0 10px; font-size: 28px; letter-spacing: 1px; }
     p { margin: 0 0 18px; color:#b9c4d6; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
@@ -33,13 +34,13 @@
     code { background:#111824; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
-<body>
+<body data-workspace="wwc-games">
   <div class="wrap">
     <h1>WWC GAMES</h1>
     <p>Select a game.</p>
 
     <div class="grid">
-      <a class="card featured" href="./lady-delilah-card-game/hunt.html">
+      <a class="card featured" href="./hunt/">
         <div class="badge">Official Alpha 0.1</div>
         <div class="title">LADY &amp; DELILAH™: THE HUNT</div>
         <div class="sub">Choose contracts, build your deck, survive tactical hunts, and earn permanent progression.</div>
@@ -58,11 +59,6 @@
       <a class="card" href="./game3/">
         <div class="title">MATCH GAME</div>
         <div class="sub">Pattern matching challenge</div>
-      </a>
-
-      <a class="card" href="./lady-delilah/">
-        <div class="title">LADY &amp; DELILAH ACTION PROTOTYPE</div>
-        <div class="sub">Earlier action-game experiment</div>
       </a>
 
       <a class="card" href="./atomic-americana-mini-golf/">
