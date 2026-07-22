@@ -57,6 +57,44 @@
   letter-spacing: 0.035em;
 }
 
+.systema-hunter-chip {
+  min-width: 160px;
+  padding: 5px 10px;
+  border: 1px solid rgba(114, 229, 164, 0.26);
+  border-radius: 8px;
+  background: rgba(114, 229, 164, 0.055);
+  line-height: 1.15;
+}
+
+.systema-hunter-chip[hidden] {
+  display: none;
+}
+
+.systema-hunter-chip span,
+.systema-hunter-chip strong,
+.systema-hunter-chip small {
+  display: block;
+}
+
+.systema-hunter-chip span {
+  color: var(--systema-shell-muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.systema-hunter-chip strong {
+  margin-top: 2px;
+  color: #dff8e8;
+  font-size: 0.78rem;
+}
+
+.systema-hunter-chip small {
+  margin-top: 2px;
+  color: #9db4aa;
+  font-size: 0.62rem;
+}
+
 .systema-app-nav {
   display: flex;
   align-items: center;
@@ -96,7 +134,6 @@
   box-shadow: inset 0 -2px var(--systema-shell-green);
 }
 
-/* Shared feedback treatments for safe adoption by existing message containers. */
 .systema-notice {
   padding: 10px 13px;
   border: 1px solid var(--systema-shell-line);
@@ -121,12 +158,17 @@
   border-left-color: #d75b5b;
 }
 
-/* The product shell owns the sticky position; workspace title bars remain intact below it. */
 .systema-app-shell + .topbar,
 .systema-app-shell + .studio-header,
 .systema-app-shell + .title-bar {
   position: relative;
   top: auto;
+}
+
+@media (max-width: 900px) {
+  .systema-hunter-chip {
+    margin-left: auto;
+  }
 }
 
 @media (max-width: 760px) {
@@ -140,6 +182,11 @@
 
   .systema-app-brand {
     min-width: 0;
+  }
+
+  .systema-hunter-chip {
+    width: 100%;
+    margin-left: 0;
   }
 
   .systema-app-nav {
