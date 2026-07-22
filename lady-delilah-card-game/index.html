@@ -133,12 +133,27 @@
           <span>Bond Level <i id="bondText">I</i></span>
         </div>
         <button class="dock-btn" id="deckBtn" type="button">Your Deck</button>
+        <button class="dock-btn run-dock-btn" id="runBtn" type="button">Run Map</button>
         <button class="dock-btn forge-dock-btn" id="forgeBtn" type="button">The Forge</button>
         <button class="dock-btn" id="prepBtn" type="button" hidden>Preparation</button>
         <button class="dock-btn" id="archiveBtn" type="button" hidden>Archive</button>
         <button class="dock-btn" id="journalBtn" type="button" hidden>Journal</button>
         <div class="lady-note" id="ladyNote" hidden>Lady senses weakness at Black Veil Camp.</div>
       </footer>
+    </section>
+
+    <section id="runMapScreen" class="screen run-map-screen" hidden>
+      <section class="panel run-map-panel">
+        <div class="panel-title">Run Route</div>
+        <div id="runNodeList" class="run-node-list"></div>
+      </section>
+      <aside class="panel run-side">
+        <p class="kicker">Current Run</p>
+        <h2>Black Road</h2>
+        <div id="runSummary" class="run-summary"></div>
+        <button id="startRunBtn" class="blood-btn" type="button">Start New Run</button>
+        <button id="runBackBoardBtn" class="plain-btn" type="button">Back To Board</button>
+      </aside>
     </section>
 
     <section id="prepScreen" class="screen prep-screen" hidden>
@@ -168,6 +183,8 @@
         <div class="forge-wallet">
           <span>Hunter Marks</span>
           <b id="forgeMarks">0</b>
+          <span>Forge Tokens</span>
+          <b id="forgeTokens">0</b>
         </div>
       </section>
       <section class="panel forge-inventory-panel">
@@ -260,6 +277,26 @@
     </form>
   </dialog>
 
+  <dialog id="runEventDialog" class="modal">
+    <form method="dialog">
+      <p class="kicker" id="runEventKicker">Run Node</p>
+      <h2 id="runEventTitle">The road narrows.</h2>
+      <p id="runEventText">Choose how to proceed.</p>
+      <div id="runEventActions" class="route-actions"></div>
+    </form>
+  </dialog>
+
+  <dialog id="runVictoryDialog" class="modal victory-modal">
+    <form method="dialog">
+      <p class="kicker">Run Complete</p>
+      <h2>The boss falls.</h2>
+      <p id="runVictoryText">Delilah and Lady survive the road. Jonas leaves a Forge Token in the ash.</p>
+      <div class="route-actions">
+        <button id="runVictoryMapBtn" class="blood-btn" type="button">Return To Run Map</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="victoryDialog" class="modal victory-modal">
     <form method="dialog">
       <p class="kicker">Hunt Won</p>
@@ -322,6 +359,18 @@
       <div class="route-actions">
         <button id="bandageDelilahBtn" class="blood-btn" type="button">Treat Delilah</button>
         <button id="bandageLadyBtn" class="plain-btn" type="button">Treat Lady</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="sellCardDialog" class="modal sell-card-modal">
+    <form method="dialog">
+      <p class="kicker">Archive Sale</p>
+      <h2 id="sellCardTitle">Sell this card?</h2>
+      <p id="sellCardText">This removes one copy from your collection and pays Hunter Marks.</p>
+      <div class="route-actions">
+        <button id="cancelSellCardBtn" class="plain-btn" type="button">Keep Card</button>
+        <button id="confirmSellCardBtn" class="blood-btn" type="button">Sell Card</button>
       </div>
     </form>
   </dialog>
