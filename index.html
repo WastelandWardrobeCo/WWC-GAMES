@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070604" />
   <title>WWC GAMES</title>
   <script defer src="shared/navigation/app-navigation.js"></script>
   <style>
@@ -17,8 +18,18 @@
       border: 1px solid #223044;
     }
     a.card:hover { background:#172233; }
+    a.card.featured {
+      border-color: #a72d24;
+      background: linear-gradient(135deg, rgba(167,45,36,.22), #131a24 55%);
+      box-shadow: 0 0 0 1px rgba(224,67,49,.18), 0 12px 30px rgba(0,0,0,.32);
+    }
     .title { font-weight: 700; }
     .sub { font-size: 13px; color:#b9c4d6; margin-top: 4px; }
+    .badge {
+      display: inline-block; margin-bottom: 8px; padding: 3px 7px; border-radius: 999px;
+      border: 1px solid rgba(224,67,49,.55); color:#ffb2a7; font-size: 11px;
+      font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    }
     .note { margin-top: 18px; font-size: 12px; color:#91a3bf; }
     code { background:#111824; padding: 2px 6px; border-radius: 6px; }
   </style>
@@ -29,40 +40,40 @@
     <p>Select a game.</p>
 
     <div class="grid">
-    <a class="card" href="./game1/">
-  <div class="title">ZONE 13</div>
-  <div class="sub">System allocation & power control</div>
-</a>
+      <a class="card featured" href="./hunt/">
+        <div class="badge">Official Alpha 0.1</div>
+        <div class="title">LADY &amp; DELILAH™: THE HUNT</div>
+        <div class="sub">Choose contracts, build your deck, survive tactical hunts, and earn permanent progression.</div>
+      </a>
 
-<a class="card" href="./game2/">
-  <div class="title">SLOT MACHINE</div>
-  <div class="sub">Spin reels & bonus rounds</div>
-</a>
+      <a class="card" href="./game1/">
+        <div class="title">ZONE 13</div>
+        <div class="sub">System allocation &amp; power control</div>
+      </a>
 
-<a class="card" href="./game3/">
-  <div class="title">MATCH GAME</div>
-  <div class="sub">Pattern matching challenge</div>
-</a>
+      <a class="card" href="./game2/">
+        <div class="title">SLOT MACHINE</div>
+        <div class="sub">Spin reels &amp; bonus rounds</div>
+      </a>
 
-<a class="card" href="./hunt/">
-  <div class="title">LADY &amp; DELILAH™: THE HUNT</div>
-  <div class="sub">Collectible tactical card battles</div>
-</a>
+      <a class="card" href="./game3/">
+        <div class="title">MATCH GAME</div>
+        <div class="sub">Pattern matching challenge</div>
+      </a>
 
-<a class="card" href="./atomic-americana-mini-golf/">
-  <div class="title">ATOMIC AMERICANA MINI GOLF</div>
-  <div class="sub">Neon roadside mini golf, built for touch screens</div>
-</a>
+      <a class="card" href="./atomic-americana-mini-golf/">
+        <div class="title">ATOMIC AMERICANA MINI GOLF</div>
+        <div class="sub">Neon roadside mini golf, built for touch screens</div>
+      </a>
 
-<a class="card" href="./blocklands/">
-  <div class="title">BLOCKLANDS PROTOTYPE</div>
-  <div class="sub">Explore, mine, jump, and place blocks in a small 3D voxel island</div>
-</a>
-      
+      <a class="card" href="./blocklands/">
+        <div class="title">BLOCKLANDS PROTOTYPE</div>
+        <div class="sub">Explore, mine, jump, and place blocks in a small 3D voxel island</div>
+      </a>
     </div>
 
     <div class="note">
-      Tip: each game must live in its own folder and be named <code>index.html</code>.
+      The featured Lady &amp; Delilah™ build is the current phone-playtest alpha.
     </div>
   </div>
 </body>
