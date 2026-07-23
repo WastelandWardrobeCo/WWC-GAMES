@@ -123,6 +123,14 @@ h1 {
   min-height: calc(100vh - 118px);
 }
 
+body[data-screen="combatScreen"] .game-shell {
+  min-height: 100vh;
+}
+
+body[data-screen="combatScreen"] .screen {
+  min-height: 0;
+}
+
 body[data-screen="boardScreen"] .game-shell {
   height: 100vh;
   overflow: hidden;
@@ -1651,7 +1659,7 @@ body[data-screen="boardScreen"] .board-screen {
 .combat-screen {
   display: grid;
   grid-template-columns: 250px 1fr 250px;
-  grid-template-rows: minmax(620px, 1fr) auto;
+  grid-template-rows: minmax(520px, 1fr) auto;
   gap: 12px;
 }
 
@@ -1793,7 +1801,7 @@ body[data-screen="boardScreen"] .board-screen {
 
 .battlefield {
   display: grid;
-  grid-template-rows: auto minmax(330px, 1fr) auto;
+  grid-template-rows: auto minmax(250px, .78fr) auto;
   padding: 0;
   overflow: hidden;
 }
@@ -1822,7 +1830,7 @@ body[data-screen="boardScreen"] .board-screen {
 
 .battle-scene {
   position: relative;
-  min-height: 390px;
+  min-height: 292px;
   overflow: hidden;
   background:
     radial-gradient(circle at 52% 62%, rgba(216,69,43,.12), transparent 28rem),
@@ -2193,7 +2201,7 @@ body[data-screen="boardScreen"] .board-screen {
 .status-line .instinct { color: #ffe9ae; border-color: rgba(226,195,118,.58); background: rgba(102,76,26,.62); }
 
 .hand-row {
-  min-height: 328px;
+  min-height: 278px;
   display: flex;
   gap: 10px;
   justify-content: center;
@@ -2245,7 +2253,7 @@ body[data-screen="boardScreen"] .board-screen {
 }
 
 .card:hover { transform: translateY(-10px); border-color: var(--gold); filter: brightness(1.12); }
-.card.disabled { opacity: .48; cursor: not-allowed; filter: grayscale(.5); }
+.card.disabled { opacity: 1; cursor: not-allowed; filter: none; }
 
 .card:not(.disabled):active {
   transform: translateY(-6px) scale(.985);
@@ -3525,5 +3533,188 @@ body[data-screen="boardScreen"] .board-screen {
 }
 .studio-deck-tools{display:grid;gap:8px;padding:12px 0;border-top:1px solid rgba(184,155,103,.28);border-bottom:1px solid rgba(184,155,103,.18)}.studio-deck-tools .plain-btn{text-align:center;text-decoration:none}.studio-deck-tools .systema-notice{margin:0}.systema-app-shell+.game-shell .topbar{position:relative;top:auto}
 .card.systema-card-action{width:auto;min-width:0;height:auto;min-height:0;padding:0;border:0;background:none;overflow:visible;box-shadow:none;color:inherit}.card.systema-card-action:hover{transform:translateY(-5px)}.card.systema-card-action.disabled{opacity:1}.card.systema-card-action>.systema-card{pointer-events:none}.hand-row{gap:14px;justify-content:flex-start;overflow-x:auto;padding:14px}.archive-card,.collection-card,.reveal-card{height:auto;min-height:0;padding:8px;overflow:visible}.archive-card>.systema-card,.collection-card>.systema-card,.reveal-card>.systema-card{margin:auto}.archive-grid,.all-cards-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}.reward-card-wrap>.systema-card{margin:auto}.run-reward-card>.systema-card{pointer-events:none}
-.systema-card .systema-card__header h3{position:static!important;inset:auto!important;display:block!important;min-height:0!important;padding:0!important;background:none!important;color:#fff7e6!important;font-size:clamp(.9rem,.8rem + .35vw,1.18rem)!important;font-weight:750!important;line-height:1.08!important;text-align:left!important}.systema-card .systema-card__rules p{position:static!important;inset:auto!important;display:block!important;margin:0 0 8px!important;padding:0!important;background:none!important;color:#171714!important;font-size:clamp(.78rem,.72rem + .2vw,.98rem)!important;font-weight:650!important;line-height:1.38!important;text-align:left!important}.systema-card footer{position:static!important}.systema-card .systema-card__cost{position:static!important}.systema-card .systema-card__type{position:static!important}
+
+/* Premium card rescue sprint: let the shared renderer own card visuals. */
+.card.systema-card-action,
+.archive-card:has(> .systema-card),
+.collection-card:has(> .systema-card),
+.reveal-card:has(> .systema-card),
+.reward-card-wrap {
+  background: transparent;
+}
+
+.card.systema-card-action::before,
+.card.systema-card-action::after,
+.archive-card:has(> .systema-card)::before,
+.archive-card:has(> .systema-card)::after,
+.collection-card:has(> .systema-card)::before,
+.collection-card:has(> .systema-card)::after,
+.reveal-card:has(> .systema-card)::before,
+.reveal-card:has(> .systema-card)::after,
+.reward-card-wrap::before,
+.reward-card-wrap::after {
+  content: none !important;
+}
+
+.card.systema-card-action.fresh-draw::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  border-radius: 13px;
+  background: url("assets/card-back-premium.png") center / cover;
+  animation: drawFlip 2.55s ease forwards;
+  pointer-events: none;
+}
+
+.hand-row {
+  min-height: clamp(202px, 25vh, 248px);
+  gap: clamp(14px, 1.4vw, 22px);
+  align-items: end;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 12px 18px 14px;
+}
+
+.card.systema-card-action {
+  flex: 0 0 auto;
+}
+
+.card.systema-card-action.disabled .systema-card {
+  cursor: not-allowed;
+}
+
+.archive-grid,
+.all-cards-grid {
+  grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
+  gap: clamp(16px, 1.6vw, 24px);
+  align-items: start;
+}
+
+.archive-card:has(> .systema-card),
+.collection-card:has(> .systema-card),
+.reveal-card:has(> .systema-card) {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: auto;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.archive-card.missing:has(> .systema-card),
+.collection-card.missing:has(> .systema-card) {
+  opacity: 1;
+  filter: none;
+}
+
+.archive-card.missing:has(> .systema-card) > .systema-card,
+.collection-card.missing:has(> .systema-card) > .systema-card {
+  filter: grayscale(.9) brightness(.5);
+}
+
+.deck-edit-row {
+  position: absolute;
+  z-index: 7;
+  left: 20px;
+  right: 20px;
+  bottom: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.deck-edit-row .owned-count,
+.deck-edit-row .sell-card-btn {
+  display: none;
+}
+
+.deck-edit-row .mini-btn {
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border-color: rgba(213,190,134,.58);
+  background: rgba(5,5,4,.9);
+}
+
+.combat-screen {
+  height: calc(100vh - 118px);
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.battlefield {
+  grid-template-rows: auto minmax(170px, 24vh) auto;
+  overflow: visible;
+}
+
+.battle-scene {
+  min-height: clamp(170px, 24vh, 245px);
+  background-position: center 48%;
+}
+
+.delilah-figure {
+  width: clamp(160px, 17vw, 238px);
+  height: clamp(245px, 28vw, 350px);
+}
+
+.lady-figure {
+  left: 17%;
+  bottom: -6%;
+  width: clamp(190px, 22vw, 315px);
+  height: clamp(178px, 21vw, 290px);
+}
+
+.enemy-line {
+  bottom: -9%;
+  gap: clamp(32px, 5vw, 82px);
+}
+
+.battlefield-status {
+  left: 28%;
+  right: 18%;
+  bottom: 3%;
+}
+
+.combat-dock .dock-btn,
+.combat-dock .marks-card {
+  min-height: 56px;
+  padding: 10px;
+}
+
+.combat-dock {
+  align-items: stretch;
+}
+
+@media (max-width: 1400px) {
+  .archive-grid,
+  .all-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(226px, 1fr));
+  }
+  .hand-row {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1100px) {
+  .combat-screen {
+    grid-template-columns: 220px minmax(0, 1fr) 230px;
+  }
+  .battle-scene {
+    min-height: 190px;
+  }
+}
+
+@media (max-width: 800px) {
+  .archive-grid,
+  .all-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(214px, 1fr));
+  }
+}
 .forge-card-preview>.systema-card~*,.archive-card>.systema-card+span{display:none!important}.forge-card-preview>.systema-card{margin:auto}
