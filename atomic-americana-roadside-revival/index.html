@@ -18,7 +18,7 @@
       <div class="resource-strip">
         <div class="resource"><span aria-hidden="true">🔧</span><b id="wrenchCount">0</b><small>Wrenches</small></div>
         <div class="resource"><span aria-hidden="true">◉</span><b id="capCount">0</b><small>Caps</small></div>
-        <div class="resource"><span aria-hidden="true">★</span><b id="starCount">0</b><small>Stars</small></div>
+        <div class="resource"><span aria-hidden="true">▰</span><b id="scrapCount">0</b><small>Scrap</small></div>
       </div>
       <button class="icon-button" id="settingsBtn" aria-label="Open settings">⚙</button>
     </header>
@@ -78,19 +78,19 @@
       <section class="view level-view" id="levelView" aria-labelledby="levelTitle">
         <div class="level-marquee">
           <button class="back-button" id="leaveLevelBtn">‹ Junction</button>
-          <div><p class="eyebrow">Moonbeam Diner</p><h1 id="levelTitle">Supply Run 1</h1></div>
-          <div class="reward-badge" id="levelReward">🔧 1 • ◉ 25</div>
+          <div><p class="eyebrow">Moonbeam Diner Workshop</p><h1 id="levelTitle">Earn Supplies</h1></div>
+          <div class="reward-badge" id="levelReward">Every match pays</div>
         </div>
         <div class="level-status">
           <div><small>Score</small><b id="score">0</b></div>
-          <div class="objective"><small>Objective</small><b id="objectiveText">1,500</b><span class="progress-track"><i id="scoreProgress"></i></span></div>
+          <div class="objective session-tally"><small>Session earnings</small><b><span id="sessionCaps">0</span> ◉ · <span id="sessionScrap">0</span> ▰ · <span id="sessionWrenches">0</span> 🔧</b></div>
           <div><small>Moves</small><b id="moves">25</b></div>
           <div><small>Best</small><b id="best">0</b></div>
         </div>
         <div class="board-wrap"><div id="board" aria-label="Match three game board"></div></div>
         <div class="level-controls">
           <button class="action secondary" id="hintBtn">Show Hint</button>
-          <button class="action" id="restartBtn">Restart Level</button>
+          <button class="action" id="restartBtn">New Board</button>
         </div>
         <div class="message" id="message" aria-live="polite">Swap neighboring roadside icons. Match three or more to clear them.</div>
       </section>
@@ -98,16 +98,16 @@
       <section class="view result-view" id="resultView" aria-labelledby="resultTitle">
         <div class="result-sign" id="resultSign">
           <span class="result-star">★</span>
-          <p class="eyebrow" id="resultKicker">Supply Run Complete</p>
-          <h1 id="resultTitle">Roadside Victory!</h1>
+          <p class="eyebrow" id="resultKicker">Work Session Complete</p>
+          <h1 id="resultTitle">Supplies Collected</h1>
           <p id="resultCopy"></p>
           <div class="result-score"><small>Final score</small><b id="resultScore">0</b></div>
           <div class="reward-crate" id="rewardCrate">
-            <p>Restoration supplies earned</p>
-            <div><span>🔧 <b id="rewardWrenches">0</b> Wrench</span><span>◉ <b id="rewardCaps">0</b> Bottle Caps</span><span>★ <b id="rewardStars">0</b> Star</span></div>
+            <p>Kept from this session</p>
+            <div><span>◉ <b id="rewardCaps">0</b> Bottle Caps</span><span>▰ <b id="rewardScrap">0</b> Scrap</span><span>🔧 <b id="rewardWrenches">0</b> Wrenches</span></div>
           </div>
           <div class="result-actions">
-            <button class="action secondary" id="retryBtn">Retry</button>
+            <button class="action secondary" id="retryBtn">Play Again</button>
             <button class="action" id="returnBtn">Return to Junction</button>
           </div>
         </div>
@@ -125,10 +125,10 @@
       <div class="next-task" id="nextTaskBox">
         <small>Next task</small><h3 id="nextTask"></h3><p id="taskCost"></p>
       </div>
-      <p class="panel-wallet">On hand: <b>🔧 <span id="panelWrenches">0</span></b> <b>◉ <span id="panelCaps">0</span></b></p>
+      <p class="panel-wallet">On hand: <b>◉ <span id="panelCaps">0</span></b> <b>▰ <span id="panelScrap">0</span></b> <b>🔧 <span id="panelWrenches">0</span></b></p>
       <p class="afford-note" id="affordNote" aria-live="polite"></p>
       <div class="panel-actions">
-        <button class="action secondary" id="playLevelBtn">Play Level</button>
+        <button class="action secondary" id="playLevelBtn">Earn Supplies</button>
         <button class="action" id="upgradeBtn">Upgrade Diner</button>
       </div>
     </section>

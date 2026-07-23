@@ -7,12 +7,11 @@ window.AtomicSave = (() => {
   function freshSave() {
     return {
       version: 1,
-      resources: { wrenches: 0, caps: 0, stars: 0 },
+      resources: { wrenches: 0, caps: 0, scrap: 0 },
       dinerStage: 0,
-      completedLevelCount: 0,
-      highestUnlockedLevel: 1,
+      completedSessions: 0,
+      starterSuppliesGranted: false,
       bestScore: Number(localStorage.getItem(LEGACY_BEST_KEY) || 0),
-      claimedRewards: {},
       settings: { motion: true },
       tutorialSeen: false,
       updatedAt: Date.now()
@@ -26,7 +25,6 @@ window.AtomicSave = (() => {
       ...base,
       ...raw,
       resources: { ...base.resources, ...(raw.resources || {}) },
-      claimedRewards: { ...(raw.claimedRewards || {}) },
       settings: { ...base.settings, ...(raw.settings || {}) },
       bestScore: Math.max(Number(raw.bestScore || 0), base.bestScore)
     };
