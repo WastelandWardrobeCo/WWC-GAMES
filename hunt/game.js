@@ -1478,6 +1478,7 @@ function maybeShowContractTutorialAfterSelection() {
 }
 
 function renderPrep() {
+  window.SystemaCardCatalog = Object.fromEntries(cards.map(item => [item.id, item]));
   syncProgression();
   const count = state.activeDeck.length;
   const recommended = recommendedCardIds();
@@ -1503,11 +1504,9 @@ function renderPrep() {
     const canAdd = owned && used < owned && count < 20;
     const sellMarks = scrapValue(c);
     const isRecommended = recommendationsOn && used > 0 && recommended.has(c.id);
-    return `<article class="archive-card deck-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? '' : 'missing'} ${used ? 'selected' : ''} ${isRecommended ? 'recommended' : ''}" style="${cardArtStyle(c)}">
-      <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
+    return `<article class="archive-card deck-card ${owned ? '' : 'missing'} ${used ? 'selected' : ''} ${isRecommended ? 'recommended' : ''}">
+      ${SystemaCardRenderer.html(c,{mode:'collection',selected:Boolean(used),badges:{owned,inDeck:used}})}
       <span>${c.type} · ${displayRarity(c)} · Owned ${owned}</span>
-      <span class="card-scope">${cardScope(c)}</span>
-      <p>${enrichCardText(c.text)}</p>
       <div class="deck-edit-row">
         <div class="owned-count"><b>Owned</b><span>${owned}</span></div>
         <div class="owned-count"><b>In Deck</b><span>${used}</span></div>
@@ -1557,9 +1556,8 @@ function renderForge() {
     const remaining = Math.max(0, item.price - state.marks);
     const progress = Math.min(100, Math.round((state.marks / item.price) * 100));
     return `<article class="forge-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? 'owned' : ''} ${affordable && !owned ? 'affordable' : ''} ${locked ? 'locked' : ''}" style="${cardArtStyle(c)}">
-      <div class="forge-card-preview">
+      <div class="forge-card-preview">${SystemaCardRenderer.html(c,{mode:'collection',badges:{owned}})}
         <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
-        <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
         <span class="card-scope">${cardScope(c)}</span>
         <p>${enrichCardText(c.text)}</p>
       </div>
@@ -1899,11 +1897,10 @@ function handCardId(entry) {
 function cardHtml(c, i, fresh = false) {
   const playCost = effectiveCost(c);
   const disabled = playCost > state.actions;
-  return `<button class="card rarity-${rarityKey(c)} ${cardArtClass(c)} ${disabled ? 'disabled' : ''} ${fresh ? 'fresh-draw' : ''}" style="${cardArtStyle(c)}" data-index="${i}" type="button">
-    <div class="card-top"><span class="cost">${playCost}</span><h3>${c.name}</h3></div>
+  const display={...c,cost:playCost,upgraded:Boolean(isRunActive()&&state.run.upgrades?.[c.id])};
+  return `<button class="card systema-card-action ${disabled ? 'disabled' : ''} ${fresh ? 'fresh-draw' : ''}" data-index="${i}" type="button" aria-disabled="${disabled}">
+    ${SystemaCardRenderer.html(display,{mode:'combat',playable:!disabled,tabIndex:-1})}
     <span class="card-type">${c.type} · ${displayRarity(c)}</span>
-    <span class="card-scope">${cardScope(c)}</span>
-    <p>${enrichCardText(c.text)}</p>
   </button>`;
 }
 
@@ -2630,13 +2627,8 @@ function renderGambleResult(c) {
 
 function rewardCardHtml(c) {
   return `<div class="reward-card-wrap rarity-beam rarity-${rarityKey(c)}">
-    <article class="reward-card-preview rarity-${rarityKey(c)} ${cardArtClass(c)}" style="${cardArtStyle(c)}">
-      <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
+    ${SystemaCardRenderer.html(c,{mode:'collection',badges:{owned:state.owned[c.id]||0}})}
       <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
-      <span class="card-scope">${cardScope(c)}</span>
-      <p>${enrichCardText(c.text)}</p>
-      <small>Owned: ${state.owned[c.id] || 0}</small>
-    </article>
   </div>`;
 }
 
@@ -2813,6 +2805,9 @@ function archetypeLabel(e) {
 function debugEvent(message) {
   state.debugEvents = [`[T${state.turn}] ${message}`, ...(state.debugEvents || [])].slice(0, 12);
 }
+
+revealCardHtml=function(c,order,all=false){const best=isBestRevealCard(c);return `<article class="reveal-card ${all?'reveal-all':''} ${best?'best-pull':''}" style="--reveal-order:${order}">${best?'<div class="best-pull-badge">Best Pull</div>':''}${SystemaCardRenderer.html(c,{mode:'collection'})}</article>`};
+showAllCards=function(){window.SystemaCardCatalog=Object.fromEntries(cards.map(item=>[item.id,item]));$('allCardsGrid').innerHTML=cards.map(c=>`<article class="collection-card ${state.owned[c.id]?'':'missing'}">${SystemaCardRenderer.html(c,{mode:'collection',badges:{owned:state.owned[c.id]||0}})}</article>`).join('');$('allCardsDialog').showModal()};
 
 function card(id) { return cards.find(c => c.id === id); }
 function relic(name) { return state.relics.includes(name); }

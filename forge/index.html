@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jonas' Forge | Lady &amp; Delilah™</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../shared/cards/card-renderer.css"><link rel="stylesheet" href="styles.css">
+  <style>.shared-forge-preview{display:grid;place-items:center;min-height:500px}.vault-card{display:grid;justify-items:center;gap:8px}.vault-card>.systema-card{width:min(240px,100%)}</style>
   <script defer src="../shared/navigation/app-navigation.js"></script>
 </head>
 <body data-workspace="forge">
@@ -41,7 +42,7 @@
 
     <section class="preview-panel">
       <p class="eyebrow">LIVE PREVIEW</p>
-      <article id="cardPreview" class="card-preview">
+      <article id="legacyCardPreview" class="card-preview" hidden>
         <div class="card-head"><h3 id="previewName"></h3><strong id="previewCost"></strong></div>
         <div class="card-art"><span id="previewIcon">⚔</span></div>
         <div id="previewType" class="card-type"></div>
@@ -49,6 +50,7 @@
         <p id="previewFlavor" class="flavor"></p>
         <footer>FORGED IN JONAS' FIRE</footer>
       </article>
+      <div id="cardPreview" class="shared-forge-preview"></div>
       <div class="verdict"><span>Jonas says</span><strong id="verdictText"></strong></div>
     </section>
   </main>
@@ -56,7 +58,7 @@
   <dialog id="successDialog" class="success-dialog"><div class="anvil-flash">✦</div><p class="eyebrow">THE STRIKE HOLDS</p><h2 id="forgedTitle"></h2><p id="forgedMeta"></p><button id="viewVaultBtn">Place it in the Vault</button></dialog>
   <dialog id="vaultDialog" class="vault-dialog"><div class="dialog-head"><div><p class="eyebrow">PERMANENT COLLECTION</p><h2>The Vault</h2></div><button id="closeVaultBtn">Close</button></div><div class="vault-tools"><input id="vaultSearch" placeholder="Search forged cards"><select id="vaultSort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name">Name</option></select></div><div id="vaultGrid" class="vault-grid"></div></dialog>
 
-  <script src="forge-core.js"></script>
+  <script src="../shared/cards/card-keywords.js"></script><script src="../shared/cards/card-schema.js"></script><script src="../shared/cards/card-assets.js"></script><script src="../shared/cards/card-renderer.js"></script><script src="forge-core.js"></script>
   <script src="forge.js"></script>
 </body>
 </html>

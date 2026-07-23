@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Systema Obscura Card Studio</title>
+  <link rel="stylesheet" href="../shared/cards/card-renderer.css">
   <link rel="stylesheet" href="styles.css">
   <script defer src="../shared/navigation/app-navigation.js"></script>
 </head>
@@ -48,6 +49,9 @@
       <section class="studio-section is-active" data-panel="identity">
         <div class="form-grid">
           <label>Artwork<input id="artInput" type="file" accept="image/*"></label>
+          <label>Art focal X<input id="focalX" type="range" min="0" max="100" value="50"></label>
+          <label>Art focal Y<input id="focalY" type="range" min="0" max="100" value="50"></label>
+          <label>Art zoom<input id="artZoom" type="range" min="1" max="2" step="0.05" value="1"></label>
           <label>Card ID<input id="cardId" value="done-here" maxlength="48"></label>
           <label class="span-2">Title<input id="title" value="C’mon, Lady… We’re Done Here" maxlength="60"></label>
           <label>Set<input id="setName" value="Base Set" maxlength="32"></label>
@@ -110,7 +114,7 @@
     </section>
 
     <section class="preview-panel" aria-label="Live game card preview">
-      <div id="gameCard" class="game-card rarity-legendary">
+      <div id="legacyGameCard" hidden>
         <div class="aurora"></div>
         <div class="card-top">
           <div class="cost-medallion"><small>COST</small><strong id="pCost">3</strong></div>
@@ -122,9 +126,10 @@
         <div class="rules-box"><p id="pRules"></p><div id="keywordBadges" class="keyword-row"></div></div>
         <div class="game-footer"><span id="pSet">BASE SET</span><span id="pNumber">LD-001</span></div>
       </div>
-      <div class="preview-tools"><span id="previewStatus">Unsaved changes</span><button id="resetCard">Reset Sample</button></div>
+      <div id="gameCard" class="shared-card-preview"></div>
+      <div class="preview-tools"><span id="previewStatus">Unsaved changes</span><select id="previewMode" aria-label="Preview mode"><option value="combat">Combat</option><option value="collection" selected>Collection</option><option value="expanded">Expanded</option></select><button id="inspectPreview" type="button">Inspect</button><button id="resetCard">Reset Sample</button></div>
     </section>
   </main>
-  <script src="app.js"></script>
+  <script src="../shared/cards/card-keywords.js"></script><script src="../shared/cards/card-schema.js"></script><script src="../shared/cards/card-assets.js"></script><script src="../shared/cards/card-renderer.js"></script><script src="app.js"></script>
 </body>
 </html>
