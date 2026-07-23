@@ -202,13 +202,20 @@ const encounters = [
 ];
 
 const RUN_NODES = [
-  { id: 'run-1', type: 'battle', label: 'Battle', contractId: 'black-veil', encounter: [{ key: 'cultist' }, { key: 'trapper' }] },
-  { id: 'run-2', type: 'battle', label: 'Battle', contractId: 'frozen', encounter: [{ key: 'frost-wolf' }, { key: 'ice-stalker' }] },
-  { id: 'run-3', type: 'campfire', label: 'Campfire', contractId: 'frozen' },
-  { id: 'run-4', type: 'elite', label: 'Elite', contractId: 'bone', encounter: [{ key: 'pit-brute', elite: true }, { key: 'scrap-thrower', elite: true }] },
-  { id: 'run-5', type: 'merchant', label: 'Merchant', contractId: 'sawmill' },
-  { id: 'run-6', type: 'battle', label: 'Battle', contractId: 'hollow', encounter: [{ key: 'hollow-wisp' }, { key: 'veil-touched' }] },
-  { id: 'run-7', type: 'boss', label: 'Boss', contractId: 'sawmill', encounter: [{ key: 'foreman-red', elite: true }] }
+  { id: 'trailhead', type: 'combat', label: 'Combat', act: 1, next: ['cold-camp', 'frozen-ambush'], contractId: 'black-veil', encounter: [{ key: 'cultist' }, { key: 'trapper' }] },
+  { id: 'cold-camp', type: 'camp', label: 'Camp', act: 1, next: ['road-cache'], contractId: 'frozen' },
+  { id: 'frozen-ambush', type: 'combat', label: 'Combat', act: 1, next: ['road-cache'], contractId: 'frozen', encounter: [{ key: 'frost-wolf' }, { key: 'ice-stalker' }] },
+  { id: 'road-cache', type: 'cache', label: 'Cache', act: 2, next: ['hollow-road', 'bone-elite'], contractId: 'hollow' },
+  { id: 'hollow-road', type: 'combat', label: 'Combat', act: 2, next: ['bone-elite'], contractId: 'hollow', encounter: [{ key: 'hollow-wisp' }, { key: 'veil-touched' }] },
+  { id: 'bone-elite', type: 'elite', label: 'Elite', act: 2, next: ['red-foreman'], contractId: 'bone', encounter: [{ key: 'pit-brute', elite: true }, { key: 'scrap-thrower', elite: true }] },
+  { id: 'red-foreman', type: 'boss', label: 'Boss', act: 3, next: [], contractId: 'sawmill', encounter: [{ key: 'foreman-red', elite: true }] }
+];
+
+const RUN_RELICS = [
+  { id: 'trail-dodge', name: 'Ghost-Step Spur', text: 'Begin each run combat with 1 Dodge.' },
+  { id: 'wolf-salve', name: 'Wolf Salve', text: 'Lady recovers 2 HP after each victory.' },
+  { id: 'honed-edge', name: 'Honed Edge', text: 'The first attack each combat deals +2 damage.' },
+  { id: 'elite-map', name: 'Marked Bone Map', text: 'Elite card rewards show one extra choice.' }
 ];
 
 const encounterSets = {
@@ -437,7 +444,7 @@ function sanitizeSave(saved) {
     relics: Array.isArray(saved.relics) && saved.relics.length ? saved.relics : ['Wolf Fang Charm'],
     forgeTokens: Math.max(0, Number(saved.forgeTokens) || 0),
     run: saved.run && typeof saved.run === 'object' ? sanitizeRun(saved.run) : null,
-    runHistory: Array.isArray(saved.runHistory) ? saved.runHistory : [],
+    runHistory: Array.isArray(saved.runHistory) ? saved.runHistory.slice(-20) : [],
     runCompleted: Boolean(saved.runCompleted),
     unlockedRewards: Array.isArray(saved.unlockedRewards) ? saved.unlockedRewards.filter(id => card(id)) : [],
     completed: Array.isArray(saved.completed || saved.completedHunts) ? (saved.completed || saved.completedHunts) : [],
@@ -449,16 +456,20 @@ function sanitizeSave(saved) {
 }
 
 function sanitizeRun(run) {
-  const node = Math.min(RUN_NODES.length, Math.max(0, Number(run.currentNode) || 0));
+  const legacyIndex = Math.min(RUN_NODES.length - 1, Math.max(0, Number(run.currentNode) || 0));
+  const currentNode = typeof run.currentNode === 'string' && RUN_NODES.some(n => n.id === run.currentNode)
+    ? run.currentNode : RUN_NODES[legacyIndex]?.id || RUN_NODES[0].id;
   const deck = Array.isArray(run.deck) ? run.deck.filter(id => card(id)) : [...starterDeck];
   const completedNodes = Array.isArray(run.completedNodes) ? run.completedNodes.filter(id => RUN_NODES.some(n => n.id === id)) : [];
   const upgrades = run.upgrades && typeof run.upgrades === 'object' ? Object.fromEntries(Object.entries(run.upgrades).filter(([id, value]) => card(id) && value)) : {};
+  const availableNodes = Array.isArray(run.availableNodes) ? run.availableNodes.filter(id => RUN_NODES.some(n => n.id === id)) : [];
   return {
     id: run.id || `run_${Date.now()}`,
-    currentNode: node,
+    currentNode,
+    availableNodes: availableNodes.length ? availableNodes : [currentNode],
     currentAct: Math.max(1, Number(run.currentAct) || 1),
     deck: deck.length ? deck : [...starterDeck],
-    relics: Array.isArray(run.relics) ? run.relics : ['Wolf Fang Charm'],
+    relics: Array.isArray(run.relics) ? run.relics.filter(id => RUN_RELICS.some(r => r.id === id)) : [],
     rewards: Array.isArray(run.rewards) ? run.rewards.filter(id => card(id)) : [],
     completedNodes,
     playerHp: {
@@ -466,7 +477,12 @@ function sanitizeRun(run) {
       lady: clamp(Math.round(Number(run.playerHp?.lady) || 32), 0, 32)
     },
     upgrades,
+    routeHistory: Array.isArray(run.routeHistory) ? run.routeHistory.filter(id => RUN_NODES.some(n => n.id === id)) : [...completedNodes],
+    cardsAdded: Math.max(0, Number(run.cardsAdded) || 0),
+    relicsFound: Math.max(0, Number(run.relicsFound) || 0),
+    pendingReward: run.pendingReward && typeof run.pendingReward === 'object' ? run.pendingReward : null,
     completed: Boolean(run.completed),
+    status: ['active', 'completed', 'failed', 'abandoned'].includes(run.status) ? run.status : (run.completed ? 'completed' : 'active'),
     forgeTokenAwarded: Boolean(run.forgeTokenAwarded),
     startedAt: run.startedAt || new Date().toISOString(),
     completedAt: run.completedAt || ''
@@ -489,7 +505,6 @@ function loadProgress() {
     }
     return true;
   } catch {
-    if (activeProfileId) localStorage.removeItem(profileKey(activeProfileId));
     return false;
   }
 }
@@ -572,6 +587,7 @@ function init() {
   renderResources();
   renderPrep();
   if (!state.firstDeckRevealed) showFirstDeckReveal();
+  else showBoard();
 }
 
 function bind() {
@@ -593,6 +609,8 @@ function bind() {
   $('forgeDeckBtn').addEventListener('click', () => showPrep());
   $('runBackBoardBtn').addEventListener('click', () => showBoard());
   $('startRunBtn').addEventListener('click', startNewRun);
+  $('continueRunBtn').addEventListener('click', continueRun);
+  $('abandonRunBtn').addEventListener('click', abandonRun);
   $('recommendBtn').addEventListener('click', () => {
     recommendationsOn = !recommendationsOn;
     renderPrep();
@@ -634,7 +652,7 @@ function bind() {
   });
   $('runVictoryMapBtn').addEventListener('click', () => {
     $('runVictoryDialog').close();
-    showRunMap();
+    showBoard();
   });
   $('defeatMapBtn').addEventListener('click', () => {
     const runDefeat = $('defeatDialog').dataset.runDefeat === 'true';
@@ -703,6 +721,14 @@ function renderProfileList() {
   document.querySelectorAll('[data-continue-profile]').forEach(btn => {
     btn.addEventListener('click', () => continueProfile(btn.dataset.continueProfile));
   });
+  const history = $('runHistoryList');
+  const records = state?.runHistory || [];
+  history.innerHTML = records.length ? `<div class="panel-title">Recent Campaign Runs</div>${records.slice(-20).reverse().map(run => `
+    <div class="run-history-card">
+      <b>${escapeHtml(run.result || run.outcome || (run.completedAt ? 'victory' : 'defeat'))}</b>
+      <span>${escapeHtml(run.completedAt || run.endedAt || run.failedAt || '')}</span>
+      <small>${Number(run.cardsAdded || run.rewards?.length || 0)} cards · ${Number(run.relicsFound || 0)} relics · ${run.forgeTokenAwarded ? 'Forge Token earned' : 'No Forge Token'}</small>
+    </div>`).join('')}` : '';
 }
 
 function continueProfile(id) {
@@ -1118,6 +1144,7 @@ function autoBuildDeck() {
 }
 
 function showBoard() {
+  $('runBtn').textContent = isRunActive() ? 'Continue Run' : 'Run Map';
   setScreen('boardScreen', 'Choose Your Hunt', 'Hunt Board');
   maybeShowBoardTutorial();
 }
@@ -1141,15 +1168,21 @@ function showRunMap() {
 function defaultRun() {
   return {
     id: `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    currentNode: 0,
+    currentNode: RUN_NODES[0].id,
+    availableNodes: [RUN_NODES[0].id],
     currentAct: 1,
     deck: [...state.activeDeck],
-    relics: [...state.relics],
+    relics: [],
     rewards: [],
     completedNodes: [],
     playerHp: { delilah: state.delilah.max, lady: state.lady.max },
     upgrades: {},
+    routeHistory: [],
+    cardsAdded: 0,
+    relicsFound: 0,
+    pendingReward: null,
     completed: false,
+    status: 'active',
     forgeTokenAwarded: false,
     startedAt: new Date().toISOString(),
     completedAt: ''
@@ -1157,14 +1190,18 @@ function defaultRun() {
 }
 
 function isRunActive() {
-  return Boolean(state.run && !state.run.completed && state.run.currentNode < RUN_NODES.length);
+  return Boolean(state.run && state.run.status === 'active' && !state.run.completed);
 }
 
 function currentRunNode() {
-  return state.run ? RUN_NODES[state.run.currentNode] : null;
+  return state.run ? RUN_NODES.find(node => node.id === state.run.currentNode) : null;
 }
 
 function startNewRun() {
+  if (isRunActive()) {
+    showToast('Only one campaign run can be active. Continue or abandon it first.');
+    return;
+  }
   if (state.activeDeck.length !== 20) {
     showToast('Build a 20-card deck before starting a run.');
     showPrep();
@@ -1177,14 +1214,27 @@ function startNewRun() {
   showRunMap();
 }
 
+function continueRun() {
+  if (!isRunActive()) return startNewRun();
+  showRunMap();
+  if (state.run.pendingReward) setTimeout(showPersistedRunReward, 0);
+}
+
+function abandonRun() {
+  if (!isRunActive() || !confirm('Abandon this campaign run? Temporary cards, upgrades, relics, and route progress will be lost.')) return;
+  archiveRun('abandoned', 'Run abandoned by the hunter.');
+  state.run = null;
+  saveProgress('Campaign run abandoned.');
+  showRunMap();
+}
+
 function renderRunMap() {
   renderResources();
   const run = state.run;
-  const activeIndex = run && !run.completed ? run.currentNode : 0;
   const list = $('runNodeList');
   list.innerHTML = RUN_NODES.map((node, i) => {
     const done = Boolean(run?.completedNodes?.includes(node.id));
-    const locked = !run || run.completed || i !== activeIndex;
+    const locked = !isRunActive() || !run.availableNodes.includes(node.id);
     const contract = contracts.find(c => c.id === node.contractId) || contracts[0];
     return `<button class="run-node ${done ? 'completed' : ''} ${!locked ? 'available' : ''} run-${node.type}" data-run-node="${i}" type="button" ${locked ? 'disabled' : ''}>
       <span>${i + 1}</span>
@@ -1196,23 +1246,32 @@ function renderRunMap() {
   const completed = run?.completedNodes?.length || 0;
   $('runSummary').innerHTML = run && !run.completed
     ? `<div><b>Act ${run.currentAct}</b><span>${completed} / ${RUN_NODES.length} nodes cleared</span></div>
+       <div><b>Current Node</b><span>${currentRunNode()?.label || 'Choose a route'}</span></div>
        <div><b>Delilah</b><span>${hp.delilah}/${state.delilah.max} HP</span></div>
        <div><b>Lady</b><span>${hp.lady}/${state.lady.max} HP</span></div>
        <div><b>Run Deck</b><span>${run.deck.length} cards</span></div>
+       <div><b>Run Relics</b><span>${run.relics.map(id => RUN_RELICS.find(relic => relic.id === id)?.name).filter(Boolean).join(', ') || 'None yet'}</span></div>
        <div><b>Forge Tokens</b><span>${state.forgeTokens || 0}</span></div>`
     : `<div><b>No active run</b><span>Start a run to follow the Black Road from battle to boss.</span></div>
        <div><b>Forge Tokens</b><span>${state.forgeTokens || 0}</span></div>`;
-  $('startRunBtn').textContent = run && !run.completed ? 'Restart Run' : 'Start New Run';
+  $('startRunBtn').hidden = isRunActive();
+  $('continueRunBtn').hidden = !isRunActive();
+  $('abandonRunBtn').hidden = !isRunActive();
+  $('runBtn').textContent = isRunActive() ? 'Continue Run' : 'Run Map';
   document.querySelectorAll('[data-run-node]').forEach(btn => {
     btn.addEventListener('click', () => chooseRunNode(Number(btn.dataset.runNode)));
   });
 }
 
 function chooseRunNode(index) {
-  if (!isRunActive() || index !== state.run.currentNode) return;
-  const node = currentRunNode();
-  if (node.type === 'campfire') return showCampfireNode();
-  if (node.type === 'merchant') return showMerchantNode();
+  const node = RUN_NODES[index];
+  if (!isRunActive() || !node || !state.run.availableNodes.includes(node.id)) return;
+  state.run.currentNode = node.id;
+  state.run.currentAct = node.act;
+  state.run.availableNodes = [node.id];
+  saveProgress(`Route chosen: ${node.label}.`);
+  if (node.type === 'camp') return showCampfireNode();
+  if (node.type === 'cache') return showCacheNode();
   startRunBattle(node);
 }
 
@@ -1228,9 +1287,10 @@ function startRunBattle(node) {
 function showCampfireNode() {
   $('runEventKicker').textContent = 'Campfire';
   $('runEventTitle').textContent = 'A cold fire still burns.';
-  $('runEventText').textContent = 'Rest to recover 30% health, or train one card so it costs 1 less during this run.';
+  $('runEventText').textContent = 'Recover health, remove a card, or upgrade one card for this run.';
   $('runEventActions').innerHTML = `
     <button class="plain-btn" id="runRestBtn" type="button">Rest</button>
+    <button class="plain-btn" id="runRemoveBtn" type="button">Remove Card</button>
     <button class="blood-btn" id="runTrainBtn" type="button">Train</button>
   `;
   $('runRestBtn').addEventListener('click', () => {
@@ -1238,6 +1298,34 @@ function showCampfireNode() {
     finishRunNode('Rested at the campfire.');
   });
   $('runTrainBtn').addEventListener('click', showTrainChoices);
+  $('runRemoveBtn').addEventListener('click', showRunRemoveChoices);
+  $('runEventDialog').showModal();
+}
+
+function showRunRemoveChoices() {
+  const choices = uniqueRunCards().slice(0, 6);
+  $('runEventTitle').textContent = 'Leave one card in the fire.';
+  $('runEventText').textContent = 'Remove every copy of one selected card from this run deck.';
+  $('runEventActions').innerHTML = choices.map(id => `<button class="plain-btn" data-remove-run-card="${id}" type="button">${card(id).name}</button>`).join('');
+  document.querySelectorAll('[data-remove-run-card]').forEach(btn => btn.addEventListener('click', () => {
+    state.run.deck = state.run.deck.filter(id => id !== btn.dataset.removeRunCard);
+    finishRunNode(`${card(btn.dataset.removeRunCard).name} removed from the run deck.`);
+  }));
+}
+
+function showCacheNode() {
+  const roll = Math.floor(Math.random() * 3);
+  const rewards = [
+    { title: 'Field Rations', text: 'Recover 25% health.', take: () => healRunPercent(.25) },
+    { title: 'Hunter Marks', text: 'Gain 75 Hunter Marks.', take: () => { state.marks += 75; } },
+    { title: 'Scrap Bundle', text: 'Gain 45 Scrap.', take: () => { state.scrap += 45; } }
+  ];
+  const reward = rewards[roll];
+  $('runEventKicker').textContent = 'Cache';
+  $('runEventTitle').textContent = 'A sealed field cache.';
+  $('runEventText').textContent = `${reward.title}: ${reward.text}`;
+  $('runEventActions').innerHTML = '<button class="blood-btn" id="claimCacheBtn" type="button">Claim Cache</button>';
+  $('claimCacheBtn').addEventListener('click', () => { reward.take(); finishRunNode(`${reward.title} claimed.`); });
   $('runEventDialog').showModal();
 }
 
@@ -1315,7 +1403,9 @@ function finishRunNode(message) {
   const node = currentRunNode();
   if (!node) return;
   state.run.completedNodes = [...new Set([...(state.run.completedNodes || []), node.id])];
-  state.run.currentNode = Math.min(RUN_NODES.length, state.run.currentNode + 1);
+  state.run.routeHistory.push(node.id);
+  state.run.availableNodes = [...node.next];
+  state.run.currentNode = node.next[0] || node.id;
   saveProgress(message);
   $('runEventDialog').close();
   showRunMap();
@@ -1591,6 +1681,8 @@ function startEncounter(options = {}) {
   state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.nextSyncBonus = 0; state.syncBleedBonus = 0; state.currentCardType = ''; state.freeTrapUsed = false;
   state.enemyActionText = ''; state.enemyActionPulse = ''; state.nextActionPenalty = 0; state.retaliate = 0; state.guardAll = false; state.fiveCount = false; state.killLane = false; state.silenceReinforcements = false; state.nextAttackCharges = 0; state.nextAttackChargeBonus = 0; state.syncDiscount = false;
   state.enemyActionEvents = [];
+  state.runFirstAttackReady = isRunActive() && state.run.relics.includes('honed-edge');
+  if (isRunActive() && state.run.relics.includes('trail-dodge')) state.dodge = 1;
   state.debugEvents = [];
   state.reinforcements = 0;
   state.huntLost = false;
@@ -1857,6 +1949,7 @@ function resolveCardPlay(index, c, playCost, payload) {
 function attack(g, base, status = {}, source = 'Delilah') {
   const e = g.target;
   let dmg = base + (e.status.exposed ? 2 : 0) + state.nextTurnBonus;
+  if (state.runFirstAttackReady) { dmg += 2; state.runFirstAttackReady = false; }
   const synchronized = state.currentCardType === 'Synchronized' || /Lady|Shared|Pack Angle|Synchronized/i.test(source);
   if (synchronized && e.status.bleed && state.syncBleedBonus) dmg += state.syncBleedBonus;
   if (synchronized && state.nextSyncBonus) {
@@ -2325,16 +2418,36 @@ function handleRunBattleVictory() {
   if (!node) return;
   state.run.playerHp = { delilah: state.delilah.hp, lady: state.lady.hp };
   state.run.completedNodes = [...new Set([...(state.run.completedNodes || []), node.id])];
+  state.run.routeHistory.push(node.id);
+  if (state.run.relics.includes('wolf-salve')) state.run.playerHp.lady = Math.min(state.lady.max, state.run.playerHp.lady + 2);
   if (node.type === 'boss') {
     finishRun();
     return;
   }
-  showRunCardReward();
+  if (node.type === 'elite') {
+    state.marks += 125;
+    state.scrap += 60;
+    const availableRelics = RUN_RELICS.filter(relic => !state.run.relics.includes(relic.id));
+    const found = shuffle(availableRelics)[0];
+    if (found) { state.run.relics.push(found.id); state.run.relicsFound += 1; }
+  }
+  showRunCardReward(node);
 }
 
-function showRunCardReward() {
-  const picks = Array.from({ length: 3 }, randomRewardCard);
-  state.pendingRunRewardCards = picks.map(c => c.id);
+function showRunCardReward(node = currentRunNode()) {
+  const choiceCount = node?.type === 'elite' && state.run.relics.includes('elite-map') ? 4 : 3;
+  const picks = Array.from({ length: choiceCount }, randomRewardCard);
+  state.run.pendingReward = { nodeId: node.id, cards: picks.map(c => c.id) };
+  saveProgress();
+  renderRunReward(picks);
+}
+
+function showPersistedRunReward() {
+  const picks = (state.run?.pendingReward?.cards || []).map(card).filter(Boolean);
+  if (picks.length) renderRunReward(picks);
+}
+
+function renderRunReward(picks) {
   $('rewardDialog').dataset.rewardRarity = '';
   $('rewardTitle').textContent = 'Choose one card for this run.';
   $('rewardChoices').innerHTML = `
@@ -2354,35 +2467,37 @@ function claimRunReward(id) {
   if (id && card(id)) {
     state.run.deck.push(id);
     state.run.rewards.push(id);
+    state.run.cardsAdded += 1;
     state.unlockedRewards = [...new Set([...(state.unlockedRewards || []), id])];
     log(`${card(id).name} added to the current run deck.`);
   } else {
     log('Reward skipped. The run deck stays lean.');
   }
-  state.pendingRunRewardCards = [];
+  const node = RUN_NODES.find(item => item.id === state.run.pendingReward?.nodeId) || currentRunNode();
+  state.run.pendingReward = null;
   $('rewardDialog').close();
-  state.run.currentNode = Math.min(RUN_NODES.length, state.run.currentNode + 1);
+  state.run.availableNodes = [...(node?.next || [])];
+  state.run.currentNode = node?.next?.[0] || state.run.currentNode;
   saveProgress();
   showRunMap();
 }
 
 function finishRun() {
   if (!state.run) return;
-  state.run.currentNode = RUN_NODES.length;
   state.run.completed = true;
+  state.run.status = 'completed';
   state.run.completedAt = new Date().toISOString();
   if (!state.run.forgeTokenAwarded) {
     state.run.forgeTokenAwarded = true;
     state.forgeTokens = (state.forgeTokens || 0) + 1;
   }
   state.runCompleted = true;
-  state.runHistory = [...(state.runHistory || []), {
-    id: state.run.id,
-    completedAt: state.run.completedAt,
-    rewards: [...(state.run.rewards || [])],
-    deckSize: state.run.deck.length,
-    forgeTokenAwarded: state.run.forgeTokenAwarded
-  }].slice(-20);
+  state.hunterXP += 300;
+  state.marks += 250;
+  state.scrap += 125;
+  state.rep = 'Black Road Victor';
+  archiveRun('victory', 'Foreman Red defeated.');
+  state.run = null;
   saveProgress('Run complete. Forge Token awarded.');
   playSoundCue('legendary-claim');
   $('runVictoryText').textContent = `Run complete. Forge Tokens: ${state.forgeTokens || 0}.`;
@@ -2391,16 +2506,29 @@ function finishRun() {
 
 function failRun(reason) {
   if (!state.run) return;
-  state.runHistory = [...(state.runHistory || []), {
-    id: state.run.id,
-    failedAt: new Date().toISOString(),
-    failedNode: currentRunNode()?.id || '',
-    reason,
-    rewards: [...(state.run.rewards || [])],
-    deckSize: state.run.deck.length
-  }].slice(-20);
+  archiveRun('defeat', reason);
   state.run = null;
   saveProgress();
+}
+
+function archiveRun(outcome, reason) {
+  if (!state.run) return;
+  const endedAt = new Date().toISOString();
+  state.runHistory = [...(state.runHistory || []), {
+    id: state.run.id,
+    startedAt: state.run.startedAt,
+    completedAt: endedAt,
+    result: outcome,
+    reason,
+    nodesCompleted: state.run.completedNodes?.length || 0,
+    bossDefeated: outcome === 'victory',
+    cardsAdded: state.run.cardsAdded || 0,
+    relicsFound: state.run.relicsFound || 0,
+    finalLadyHp: state.run.playerHp?.lady || 0,
+    finalDelilahHp: state.run.playerHp?.delilah || 0,
+    forgeTokenAwarded: Boolean(state.run.forgeTokenAwarded),
+    route: [...(state.run.routeHistory || [])]
+  }].slice(-20);
 }
 
 function showDefeatDialog(reason, runDefeat = false) {
