@@ -677,6 +677,26 @@ body[data-screen="boardScreen"] .board-screen {
   margin-top: 3px;
 }
 
+.run-history-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.run-history-card {
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  border: 1px solid rgba(177,139,86,.24);
+  background: rgba(0,0,0,.22);
+}
+
+.run-history-card b { color: #f5ead8; text-transform: capitalize; }
+.run-history-card span,
+.run-history-card small { color: var(--muted); }
+
 .run-dock-btn {
   border-color: rgba(226,195,118,.55);
   color: #f4dfac;

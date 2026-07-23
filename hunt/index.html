@@ -48,6 +48,7 @@
         <div>
           <div class="panel-title">Profiles</div>
           <div id="profileList" class="profile-list"></div>
+          <div id="runHistoryList" class="run-history-list" aria-live="polite"></div>
           <div class="profile-actions">
             <button id="newProfileBtn" class="plain-btn" type="button">New Profile</button>
             <button id="deleteProfileBtn" class="plain-btn danger-btn" type="button">Delete Profile</button>
@@ -153,6 +154,8 @@
         <h2>Black Road</h2>
         <div id="runSummary" class="run-summary"></div>
         <button id="startRunBtn" class="blood-btn" type="button">Start New Run</button>
+        <button id="continueRunBtn" class="blood-btn" type="button" hidden>Continue Run</button>
+        <button id="abandonRunBtn" class="plain-btn" type="button" hidden>Abandon Run</button>
         <button id="runBackBoardBtn" class="plain-btn" type="button">Back To Board</button>
       </aside>
     </section>
@@ -298,7 +301,7 @@
       <h2>The boss falls.</h2>
       <p id="runVictoryText">Delilah and Lady survive the road. Jonas leaves a Forge Token in the ash.</p>
       <div class="route-actions">
-        <button id="runVictoryMapBtn" class="blood-btn" type="button">Return To Run Map</button>
+        <button id="runVictoryMapBtn" class="blood-btn" type="button">Return To Hunt Board</button>
       </div>
     </form>
   </dialog>
@@ -402,6 +405,6 @@
   <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
   <script src="../shared/js/deck-system.js?v=migration-sprint-1"></script>
-  <script src="game.js?v=migration-sprint-1"></script>
+  <script src="game.js?v=campaign-run-progression"></script>
 </body>
 </html>
