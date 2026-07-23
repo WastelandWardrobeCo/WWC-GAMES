@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#13110f" />
+  <title>Atomic Americana: Roadside Revival</title>
+  <style>
+    :root {
+      --cream: #f5dfb3;
+      --orange: #e76f38;
+      --teal: #2f8f83;
+      --aqua: #78c4b7;
+      --brown: #4d2d20;
+      --ink: #17120f;
+      --panel: rgba(29, 21, 17, 0.94);
+      --gold: #e6b24a;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--cream);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(231,111,56,.22), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(47,143,131,.22), transparent 30%),
+        linear-gradient(180deg, #2a201a 0%, #15100d 65%, #0b0908 100%);
+      display: flex;
+      justify-content: center;
+      padding: 14px;
+      overflow-x: hidden;
+    }
+
+    .app {
+      width: min(100%, 520px);
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .marquee {
+      border: 3px solid var(--gold);
+      border-radius: 18px;
+      padding: 14px 16px 12px;
+      text-align: center;
+      background: linear-gradient(180deg, #5b261c, #2e1712);
+      box-shadow: 0 0 0 4px #1a100c, 0 12px 28px rgba(0,0,0,.42);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .marquee::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 2px dashed rgba(245,223,179,.35);
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.7rem, 7vw, 2.55rem);
+      line-height: .95;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      text-shadow: 0 3px 0 #1a0d09;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      font-weight: 800;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--aqua);
+      font-size: .76rem;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .meter {
+      background: var(--panel);
+      border: 2px solid #6b4c35;
+      border-radius: 14px;
+      padding: 9px 6px;
+      text-align: center;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.03);
+    }
+
+    .meter span {
+      display: block;
+      color: var(--aqua);
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-weight: 800;
+    }
+
+    .meter strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.28rem;
+    }
+
+    .goal {
+      background: linear-gradient(180deg, rgba(47,143,131,.28), rgba(29,21,17,.96));
+      border: 2px solid var(--teal);
+      border-radius: 14px;
+      padding: 10px 12px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .board-wrap {
+      border-radius: 20px;
+      padding: 10px;
+      background:
+        linear-gradient(135deg, rgba(245,223,179,.08), transparent),
+        #241914;
+      border: 3px solid #7a5436;
+      box-shadow: 0 18px 35px rgba(0,0,0,.45);
+      position: relative;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 5px;
+      aspect-ratio: 1 / 1;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .tile {
+      border: 0;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      font-size: clamp(1.35rem, 6vw, 2.05rem);
+      background: linear-gradient(145deg, #f4d9a8, #cda76e);
+      box-shadow:
+        inset 0 2px 2px rgba(255,255,255,.55),
+        inset 0 -4px 6px rgba(69,34,16,.28),
+        0 3px 0 #5d3825;
+      cursor: pointer;
+      transition: transform .12s ease, filter .12s ease, opacity .18s ease;
+    }
+
+    .tile:active { transform: scale(.94); }
+    .tile.selected { outline: 4px solid var(--aqua); transform: scale(.93); filter: brightness(1.15); }
+    .tile.matched { animation: pop .24s ease forwards; }
+    .tile.hint { animation: hintPulse .8s ease-in-out 2; }
+
+    @keyframes pop {
+      50% { transform: scale(1.2) rotate(5deg); filter: brightness(1.5); }
+      100% { transform: scale(.1); opacity: 0; }
+    }
+
+    @keyframes hintPulse {
+      50% { transform: scale(.88); outline: 4px solid var(--orange); }
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button.action {
+      border: 2px solid #7f5034;
+      border-radius: 999px;
+      padding: 12px 16px;
+      color: var(--cream);
+      font-weight: 900;
+      letter-spacing: .04em;
+      background: linear-gradient(180deg, #a6402c, #6b281e);
+      box-shadow: 0 5px 0 #35150f;
+      cursor: pointer;
+    }
+
+    button.action.secondary {
+      background: linear-gradient(180deg, #2f8f83, #1c5d56);
+      box-shadow: 0 5px 0 #113b36;
+    }
+
+    button.action:active { transform: translateY(3px); box-shadow: 0 2px 0 #25100c; }
+
+    .message {
+      min-height: 44px;
+      border-radius: 13px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.24);
+      border: 1px solid rgba(245,223,179,.2);
+      text-align: center;
+      display: grid;
+      place-items: center;
+      font-size: .94rem;
+    }
+
+    .landmark {
+      border-radius: 16px;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(231,111,56,.22), rgba(47,143,131,.16));
+      border: 1px solid rgba(245,223,179,.22);
+    }
+
+    .landmark strong { color: var(--gold); }
+
+    @media (max-width: 390px) {
+      body { padding: 8px; }
+      #board { gap: 4px; }
+      .board-wrap { padding: 7px; }
+      .tile { border-radius: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="marquee">
+      <h1>Atomic Americana</h1>
+      <div class="subtitle">Roadside Revival</div>
+    </header>
+
+    <section class="hud" aria-label="Game status">
+      <div class="meter"><span>Score</span><strong id="score">0</strong></div>
+      <div class="meter"><span>Moves</span><strong id="moves">25</strong></div>
+      <div class="meter"><span>Best</span><strong id="best">0</strong></div>
+    </section>
+
+    <section class="goal" id="goal">Restore the Moonbeam Diner: score 2,500 points.</section>
+
+    <section class="board-wrap">
+      <div id="board" aria-label="Match three game board"></div>
+    </section>
+
+    <section class="controls">
+      <button class="action secondary" id="hintBtn">Show Hint</button>
+      <button class="action" id="restartBtn">New Game</button>
+    </section>
+
+    <div class="message" id="message">Swap neighboring roadside icons. Match three or more to clear them.</div>
+
+    <section class="landmark">
+      <strong>Current landmark:</strong> Moonbeam Diner<br />
+      The neon is dark, the jukebox is silent, and the pie case has seen better decades.
+    </section>
+  </main>
+
+  <script>
+    const ROWS = 8;
+    const COLS = 8;
+    const STARTING_MOVES = 25;
+    const TARGET_SCORE = 2500;
+    const TYPES = ["🚗", "🎳", "📻", "🍔", "⛽", "🎸"];
+
+    const boardEl = document.getElementById("board");
+    const scoreEl = document.getElementById("score");
+    const movesEl = document.getElementById("moves");
+    const bestEl = document.getElementById("best");
+    const messageEl = document.getElementById("message");
+    const hintBtn = document.getElementById("hintBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    let board = [];
+    let selected = null;
+    let score = 0;
+    let moves = STARTING_MOVES;
+    let busy = false;
+    let pointerStart = null;
+    let best = Number(localStorage.getItem("atomicAmericanaBest") || 0);
+    bestEl.textContent = best;
+
+    function randomType() {
+      return TYPES[Math.floor(Math.random() * TYPES.length)];
+    }
+
+    function createBoard() {
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          let type;
+          do {
+            type = randomType();
+          } while (
+            (c >= 2 && board[r][c - 1] === type && board[r][c - 2] === type) ||
+            (r >= 2 && board[r - 1][c] === type && board[r - 2][c] === type)
+          );
+          board[r][c] = type;
+        }
+      }
+      if (!findPossibleMove()) createBoard();
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const tile = document.createElement("button");
+          tile.className = "tile";
+          tile.type = "button";
+          tile.dataset.row = r;
+          tile.dataset.col = c;
+          tile.textContent = board[r][c] || "";
+          tile.setAttribute("aria-label", board[r][c] ? `Tile ${board[r][c]}` : "Empty tile");
+          if (selected && selected.r === r && selected.c === c) tile.classList.add("selected");
+          tile.addEventListener("click", () => handleSelect(r, c));
+          tile.addEventListener("pointerdown", event => pointerDown(event, r, c));
+          tile.addEventListener("pointerup", event => pointerUp(event, r, c));
+          boardEl.appendChild(tile);
+        }
+      }
+      scoreEl.textContent = score;
+      movesEl.textContent = moves;
+      bestEl.textContent = best;
+    }
+
+    function pointerDown(event, r, c) {
+      pointerStart = { x: event.clientX, y: event.clientY, r, c };
+    }
+
+    function pointerUp(event) {
+      if (!pointerStart || busy || moves <= 0) return;
+      const dx = event.clientX - pointerStart.x;
+      const dy = event.clientY - pointerStart.y;
+      const distance = Math.max(Math.abs(dx), Math.abs(dy));
+      if (distance < 20) {
+        pointerStart = null;
+        return;
+      }
+      let target = { r: pointerStart.r, c: pointerStart.c };
+      if (Math.abs(dx) > Math.abs(dy)) target.c += dx > 0 ? 1 : -1;
+      else target.r += dy > 0 ? 1 : -1;
+      const from = { r: pointerStart.r, c: pointerStart.c };
+      pointerStart = null;
+      if (isInside(target.r, target.c)) attemptSwap(from, target);
+    }
+
+    function handleSelect(r, c) {
+      if (busy || moves <= 0) return;
+      if (!selected) {
+        selected = { r, c };
+        renderBoard();
+        return;
+      }
+      if (selected.r === r && selected.c === c) {
+        selected = null;
+        renderBoard();
+        return;
+      }
+      const next = { r, c };
+      if (isAdjacent(selected, next)) attemptSwap(selected, next);
+      else {
+        selected = next;
+        renderBoard();
+      }
+    }
+
+    function isInside(r, c) {
+      return r >= 0 && r < ROWS && c >= 0 && c < COLS;
+    }
+
+    function isAdjacent(a, b) {
+      return Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
+    }
+
+    function swap(a, b) {
+      [board[a.r][a.c], board[b.r][b.c]] = [board[b.r][b.c], board[a.r][a.c]];
+    }
+
+    async function attemptSwap(a, b) {
+      if (busy || !isAdjacent(a, b)) return;
+      busy = true;
+      selected = null;
+      swap(a, b);
+      renderBoard();
+      await pause(130);
+      const matches = findMatches();
+      if (!matches.length) {
+        swap(a, b);
+        renderBoard();
+        messageEl.textContent = "No match there. The highway crew puts those pieces back.";
+        busy = false;
+        return;
+      }
+      moves--;
+      await resolveBoard(matches);
+      checkGameState();
+      busy = false;
+    }
+
+    function findMatches() {
+      const found = new Set();
+
+      for (let r = 0; r < ROWS; r++) {
+        let runStart = 0;
+        for (let c = 1; c <= COLS; c++) {
+          if (c < COLS && board[r][c] && board[r][c] === board[r][runStart]) continue;
+          if (board[r][runStart] && c - runStart >= 3) {
+            for (let k = runStart; k < c; k++) found.add(`${r},${k}`);
+          }
+          runStart = c;
+        }
+      }
+
+      for (let c = 0; c < COLS; c++) {
+        let runStart = 0;
+        for (let r = 1; r <= ROWS; r++) {
+          if (r < ROWS && board[r][c] && board[r][c] === board[runStart][c]) continue;
+          if (board[runStart] && board[runStart][c] && r - runStart >= 3) {
+            for (let k = runStart; k < r; k++) found.add(`${k},${c}`);
+          }
+          runStart = r;
+        }
+      }
+
+      return [...found].map(item => {
+        const [r, c] = item.split(",").map(Number);
+        return { r, c };
+      });
+    }
+
+    async function resolveBoard(initialMatches) {
+      let matches = initialMatches;
+      let cascade = 1;
+
+      while (matches.length) {
+        animateMatches(matches);
+        await pause(230);
+        score += matches.length * 100 * cascade;
+        if (score > best) {
+          best = score;
+          localStorage.setItem("atomicAmericanaBest", best);
+        }
+        for (const { r, c } of matches) board[r][c] = null;
+        collapseBoard();
+        refillBoard();
+        renderBoard();
+        await pause(180);
+        matches = findMatches();
+        cascade++;
+      }
+
+      messageEl.textContent = cascade > 2
+        ? `Cascade x${cascade - 1}! The diner sign flickers back to life.`
+        : "Clean match. Another piece of the roadside is restored.";
+    }
+
+    function animateMatches(matches) {
+      for (const { r, c } of matches) {
+        const index = r * COLS + c;
+        boardEl.children[index]?.classList.add("matched");
+      }
+    }
+
+    function collapseBoard() {
+      for (let c = 0; c < COLS; c++) {
+        let writeRow = ROWS - 1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (board[r][c] !== null) {
+            board[writeRow][c] = board[r][c];
+            if (writeRow !== r) board[r][c] = null;
+            writeRow--;
+          }
+        }
+        while (writeRow >= 0) {
+          board[writeRow][c] = null;
+          writeRow--;
+        }
+      }
+    }
+
+    function refillBoard() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (board[r][c] === null) board[r][c] = randomType();
+        }
+      }
+    }
+
+    function findPossibleMove() {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const here = { r, c };
+          const candidates = [{ r: r + 1, c }, { r, c: c + 1 }];
+          for (const target of candidates) {
+            if (!isInside(target.r, target.c)) continue;
+            swap(here, target);
+            const works = findMatches().length > 0;
+            swap(here, target);
+            if (works) return [here, target];
+          }
+        }
+      }
+      return null;
+    }
+
+    function showHint() {
+      if (busy || moves <= 0) return;
+      const move = findPossibleMove();
+      if (!move) {
+        shuffleBoard();
+        return;
+      }
+      for (const { r, c } of move) {
+        boardEl.children[r * COLS + c]?.classList.add("hint");
+      }
+      messageEl.textContent = "The old route map points to a promising swap.";
+    }
+
+    function shuffleBoard() {
+      const flat = board.flat().sort(() => Math.random() - 0.5);
+      board = Array.from({ length: ROWS }, (_, r) => flat.slice(r * COLS, (r + 1) * COLS));
+      if (findMatches().length || !findPossibleMove()) return shuffleBoard();
+      renderBoard();
+      messageEl.textContent = "No legal moves. The board has been reshuffled.";
+    }
+
+    function checkGameState() {
+      renderBoard();
+      if (!findPossibleMove() && moves > 0) shuffleBoard();
+
+      if (score >= TARGET_SCORE) {
+        messageEl.textContent = "Moonbeam Diner restored! Neon hums, coffee pours, and Route 66 has a heartbeat again.";
+      } else if (moves <= 0) {
+        messageEl.textContent = `Out of moves. You scored ${score}. The diner still needs a little roadside magic.`;
+      }
+    }
+
+    function startGame() {
+      selected = null;
+      score = 0;
+      moves = STARTING_MOVES;
+      busy = false;
+      createBoard();
+      renderBoard();
+      messageEl.textContent = "Swap neighboring roadside icons. Match three or more to clear them.";
+    }
+
+    function pause(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    hintBtn.addEventListener("click", showHint);
+    restartBtn.addEventListener("click", startGame);
+    startGame();
+  </script>
+</body>
+</html>
