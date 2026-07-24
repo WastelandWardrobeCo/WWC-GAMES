@@ -3530,3 +3530,22 @@ body[data-screen="boardScreen"] .board-screen {
 
 /* Visual Identity Complete: tighten the existing battlefield without redesigning it. */
 .combat-screen{grid-template-rows:minmax(590px,1fr) auto}.battle-scene{min-height:310px}.battle-scene::before{height:30%}.delilah-figure{width:clamp(165px,17vw,238px);height:clamp(255px,28vw,350px)}.lady-figure{left:17%;width:clamp(205px,22vw,315px);height:clamp(190px,21vw,285px)}.enemy-line{bottom:-2%;padding-top:64px}.enemy-line::before{content:"";position:absolute;inset:0 0 auto;height:58px;pointer-events:none}.hand-row{min-height:390px;gap:14px;justify-content:flex-start;overflow-x:auto;scrollbar-gutter:stable;padding:12px 16px 16px}.card.systema-card-action:hover{transform:translateY(-3px)}
+
+/* Renderer & Battlefield Layout Rewrite: geometry only. */
+body[data-screen="combatScreen"] .topbar{grid-template-columns:minmax(240px,1fr) auto 96px;min-height:58px;padding:6px 12px}
+body[data-screen="combatScreen"] .topbar h1{font-size:clamp(1.55rem,2.2vw,2rem);line-height:.95}
+body[data-screen="combatScreen"] .topbar .resource-strip div{padding:5px 10px}
+body[data-screen="combatScreen"] .topbar .resource-strip b{margin-top:1px;font-size:.92rem}
+body[data-screen="combatScreen"] .topbar .profile-top-btn{padding:7px 9px}
+body[data-screen="combatScreen"] .screen{margin-top:6px}
+body[data-screen="combatScreen"] .combat-screen{grid-template-rows:auto auto;gap:8px}
+body[data-screen="combatScreen"] .battlefield{grid-template-rows:auto 270px auto}
+body[data-screen="combatScreen"] .battle-scene{min-height:270px}
+body[data-screen="combatScreen"] .delilah-figure{height:clamp(225px,24vw,292px)}
+body[data-screen="combatScreen"] .lady-figure{height:clamp(170px,18vw,230px)}
+body[data-screen="combatScreen"] .enemy-line{padding-top:0}
+body[data-screen="combatScreen"] .enemy-line::before{content:none}
+body[data-screen="combatScreen"] .hand-row{min-height:463px}
+.card.systema-card-action>.card-type{display:none}
+@media(min-width:801px){.hand-row .card.systema-card-action{flex:0 0 290px}}
+@media(max-width:800px){.hand-row .card.systema-card-action{flex:0 0 224px}}
