@@ -554,3 +554,31 @@
     transition: none !important;
   }
 }
+
+/* Preserve PR #16 layout geometry alongside main's premium card polish. */
+.systema-card {
+  grid-template-rows: auto minmax(88px, 25%) minmax(0, 1fr) auto;
+}
+
+.systema-card--combat {
+  width: 290px;
+  min-width: 290px;
+  grid-template-rows: auto minmax(88px, 25%) minmax(0, 1fr) auto;
+}
+
+.systema-card--combat .systema-card__header {
+  grid-template-columns: 34px minmax(0, 1fr);
+}
+
+.systema-card--combat .systema-card__cost {
+  width: 30px;
+  height: 30px;
+  font-size: 1.02rem;
+}
+
+@media (max-width: 800px) {
+  .systema-card--combat {
+    width: 224px;
+    min-width: 224px;
+  }
+}
