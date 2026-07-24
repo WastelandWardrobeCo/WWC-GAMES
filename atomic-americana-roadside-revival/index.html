@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#1b1713">
+  <title>Atomic Americana: Roadside Revival</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232f8f83'/%3E%3Cpath d='m32 7 6 19 19 6-19 6-6 19-6-19-19-6 19-6z' fill='%23f5dfb3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="game-shell">
+    <header class="top-hud" aria-label="Player resources">
+      <button class="brand-button" id="homeBtn" aria-label="Return to Moonbeam Junction">
+        <span class="atom-mark">✦</span>
+        <span><b>Atomic Americana</b><small>Roadside Revival</small></span>
+      </button>
+      <div class="resource-strip">
+        <div class="resource"><span aria-hidden="true">🔧</span><b id="wrenchCount">0</b><small>Wrenches</small></div>
+        <div class="resource"><span aria-hidden="true">◉</span><b id="capCount">0</b><small>Caps</small></div>
+        <div class="resource"><span aria-hidden="true">▰</span><b id="scrapCount">0</b><small>Scrap</small></div>
+      </div>
+      <button class="icon-button" id="settingsBtn" aria-label="Open settings">⚙</button>
+    </header>
+
+    <main>
+      <section class="view active" id="overworldView" aria-labelledby="junctionTitle">
+        <div class="map-heading">
+          <p class="eyebrow">Mojave County • Mile 66</p>
+          <h1 id="junctionTitle">Moonbeam Junction</h1>
+          <p>Bring a forgotten roadside stop humming back to life.</p>
+        </div>
+
+        <div class="junction-map">
+          <div class="sky">
+            <div class="sun"></div><div class="cloud cloud-one"></div><div class="cloud cloud-two"></div>
+            <div class="mesa mesa-back"></div><div class="mesa mesa-front"></div>
+          </div>
+          <div class="dust dust-one"></div><div class="dust dust-two"></div>
+          <div class="telephone-line"></div>
+          <div class="pole pole-one"></div><div class="pole pole-two"></div><div class="pole pole-three"></div>
+          <div class="cactus cactus-one" aria-hidden="true">🌵</div>
+          <div class="cactus cactus-two" aria-hidden="true">🌵</div>
+          <div class="fence fence-one"></div>
+          <div class="road"><span class="road-line line-one"></span><span class="road-line line-two"></span><span class="road-line line-three"></span></div>
+          <div class="passing-car" aria-hidden="true">▰</div>
+          <div class="tumbleweed" aria-hidden="true">✺</div>
+          <div class="route-sign"><small>Historic</small><b>66</b></div>
+          <div class="junk-pile junk-one" aria-label="Roadside tire pile">◉ ◉<br>◉</div>
+          <div class="junk-pile junk-two" aria-label="Abandoned vehicle">🚙</div>
+
+          <button class="landmark diner-site" id="dinerLandmark" data-landmark="moonbeamDiner" aria-label="Open Moonbeam Diner restoration panel">
+            <span class="diner-building stage-0" id="dinerBuilding">
+              <span class="diner-sign"><i>MOONBEAM</i><b>DINER</b></span>
+              <span class="diner-roof"></span>
+              <span class="diner-body"><i class="window window-a"></i><i class="door"></i><i class="window window-b"></i></span>
+              <span class="parking-lot"><i></i><i></i><span class="vintage-car car-a">▰</span><span class="vintage-car car-b">▰</span></span>
+              <span class="debris">▴ ◉ ▰</span><span class="weeds">♒ ♒ ♒</span><span class="customers">♟ ♟ ♟</span>
+            </span>
+            <span class="map-label"><b>Moonbeam Diner</b><small id="dinerMapStage">Abandoned • Tap to restore</small></span>
+          </button>
+
+          <button class="landmark locked drivein-site" data-landmark="starliteDriveIn" aria-label="Starlite Drive-In, coming soon">
+            <span class="drivein-screen">STARLITE<br><i>DRIVE-IN</i></span>
+            <span class="map-label"><b>🔒 Starlite Drive-In</b><small>Coming Soon</small></span>
+          </button>
+
+          <button class="landmark locked station-site" data-landmark="atomicService" aria-label="Atomic Service Station, coming soon">
+            <span class="station-building"><i>★</i><b>ATOMIC</b><small>SERVICE</small></span>
+            <span class="map-label"><b>🔒 Atomic Service</b><small>Coming Soon</small></span>
+          </button>
+
+          <div class="neon-arrow" aria-hidden="true">➜</div>
+          <div class="locked-zone">🔒 NEXT STOP<br><small>Road closed</small></div>
+        </div>
+      </section>
+
+      <section class="view level-view" id="levelView" aria-labelledby="levelTitle">
+        <div class="level-marquee">
+          <button class="back-button" id="leaveLevelBtn">‹ Junction</button>
+          <div><p class="eyebrow">Moonbeam Diner Workshop</p><h1 id="levelTitle">Earn Supplies</h1></div>
+          <div class="reward-badge" id="levelReward">Every match pays</div>
+        </div>
+        <div class="level-status">
+          <div><small>Score</small><b id="score">0</b></div>
+          <div class="objective session-tally"><small>Session earnings</small><b><span id="sessionCaps">0</span> ◉ · <span id="sessionScrap">0</span> ▰ · <span id="sessionWrenches">0</span> 🔧</b></div>
+          <div><small>Moves</small><b id="moves">25</b></div>
+          <div><small>Best</small><b id="best">0</b></div>
+        </div>
+        <div class="board-wrap"><div id="board" aria-label="Match three game board"></div></div>
+        <div class="level-controls">
+          <button class="action secondary" id="hintBtn">Show Hint</button>
+          <button class="action" id="restartBtn">New Board</button>
+        </div>
+        <div class="message" id="message" aria-live="polite">Swap neighboring roadside icons. Match three or more to clear them.</div>
+      </section>
+
+      <section class="view result-view" id="resultView" aria-labelledby="resultTitle">
+        <div class="result-sign" id="resultSign">
+          <span class="result-star">★</span>
+          <p class="eyebrow" id="resultKicker">Work Session Complete</p>
+          <h1 id="resultTitle">Supplies Collected</h1>
+          <p id="resultCopy"></p>
+          <div class="result-score"><small>Final score</small><b id="resultScore">0</b></div>
+          <div class="reward-crate" id="rewardCrate">
+            <p>Kept from this session</p>
+            <div><span>◉ <b id="rewardCaps">0</b> Bottle Caps</span><span>▰ <b id="rewardScrap">0</b> Scrap</span><span>🔧 <b id="rewardWrenches">0</b> Wrenches</span></div>
+          </div>
+          <div class="result-actions">
+            <button class="action secondary" id="retryBtn">Play Again</button>
+            <button class="action" id="returnBtn">Return to Junction</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="panelBackdrop" hidden>
+    <section class="building-panel" role="dialog" aria-modal="true" aria-labelledby="buildingName">
+      <button class="close-button" id="closePanelBtn" aria-label="Close restoration panel">×</button>
+      <p class="eyebrow">Restoration Project</p><h2 id="buildingName">Moonbeam Diner</h2>
+      <div class="panel-stage"><span id="panelStageNumber">Stage 0 of 5</span><b id="panelStageName">Abandoned</b></div>
+      <p id="panelDescription"></p>
+      <div class="stage-pips" id="stagePips" aria-label="Restoration progress"></div>
+      <div class="next-task" id="nextTaskBox">
+        <small>Next task</small><h3 id="nextTask"></h3><p id="taskCost"></p>
+      </div>
+      <p class="panel-wallet">On hand: <b>◉ <span id="panelCaps">0</span></b> <b>▰ <span id="panelScrap">0</span></b> <b>🔧 <span id="panelWrenches">0</span></b></p>
+      <p class="afford-note" id="affordNote" aria-live="polite"></p>
+      <div class="panel-actions">
+        <button class="action secondary" id="playLevelBtn">Earn Supplies</button>
+        <button class="action" id="upgradeBtn">Upgrade Diner</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="settingsBackdrop" hidden>
+    <section class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <button class="close-button" id="closeSettingsBtn" aria-label="Close settings">×</button>
+      <p class="eyebrow">Game Options</p><h2 id="settingsTitle">Settings</h2>
+      <label class="toggle-row"><span><b>Light animations</b><small>Dust, neon, cars, and celebrations</small></span><input type="checkbox" id="motionToggle" checked></label>
+      <button class="action danger" id="resetBtn">Reset Progress</button>
+      <div class="reset-confirm" id="resetConfirm" hidden>
+        <p>Reset all supplies, levels, scores, and diner restoration?</p>
+        <button class="action secondary" id="cancelResetBtn">Keep Progress</button>
+        <button class="action danger" id="confirmResetBtn">Yes, Reset</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="tutorial" id="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+    <div class="tutorial-card">
+      <span class="tutorial-count" id="tutorialCount">1 / 4</span>
+      <div class="tutorial-icon" id="tutorialIcon">✦</div>
+      <h2 id="tutorialTitle">Welcome to Moonbeam Junction.</h2>
+      <p id="tutorialCopy">Once a bright stop on the old highway, it needs your help.</p>
+      <button class="action" id="tutorialNextBtn">Next</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <div class="celebration" id="celebration" aria-hidden="true"></div>
+
+  <script src="data.js"></script>
+  <script src="save.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
