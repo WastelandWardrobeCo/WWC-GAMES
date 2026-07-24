@@ -3729,14 +3729,17 @@ body[data-screen="combatScreen"] .topbar .resource-strip div{padding:5px 10px}
 body[data-screen="combatScreen"] .topbar .resource-strip b{margin-top:1px;font-size:.92rem}
 body[data-screen="combatScreen"] .topbar .profile-top-btn{padding:7px 9px}
 body[data-screen="combatScreen"] .screen{margin-top:6px}
-body[data-screen="combatScreen"] .combat-screen{grid-template-rows:auto auto;gap:8px}
-body[data-screen="combatScreen"] .battlefield{grid-template-rows:auto 270px auto}
+body[data-screen="combatScreen"] .combat-screen{grid-template-rows:auto auto auto;gap:8px}
+body[data-screen="combatScreen"] .combat-left{grid-column:1;grid-row:1}
+body[data-screen="combatScreen"] .battlefield{grid-column:2;grid-row:1;grid-template-rows:auto 270px}
+body[data-screen="combatScreen"] .combat-right{grid-column:3;grid-row:1}
 body[data-screen="combatScreen"] .battle-scene{min-height:270px}
 body[data-screen="combatScreen"] .delilah-figure{height:clamp(225px,24vw,292px)}
 body[data-screen="combatScreen"] .lady-figure{height:clamp(170px,18vw,230px)}
 body[data-screen="combatScreen"] .enemy-line{padding-top:0}
 body[data-screen="combatScreen"] .enemy-line::before{content:none}
-body[data-screen="combatScreen"] .hand-row{min-height:463px}
+body[data-screen="combatScreen"] .hand-row{grid-column:1/-1;grid-row:2;min-height:0;gap:10px;justify-content:safe center}
+body[data-screen="combatScreen"] .combat-dock{grid-column:1/-1;grid-row:3}
 .card.systema-card-action>.card-type{display:none}
-@media(min-width:801px){.hand-row .card.systema-card-action{flex:0 0 290px}}
+@media(min-width:801px){.hand-row .card.systema-card-action{flex:1 1 225px;min-width:210px;max-width:243px}}
 @media(max-width:800px){.hand-row .card.systema-card-action{flex:0 0 224px}}
