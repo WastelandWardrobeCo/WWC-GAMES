@@ -3743,3 +3743,192 @@ body[data-screen="combatScreen"] .combat-dock{grid-column:1/-1;grid-row:3}
 .card.systema-card-action>.card-type{display:none}
 @media(min-width:801px){.hand-row .card.systema-card-action{flex:1 1 225px;min-width:210px;max-width:243px}}
 @media(max-width:800px){.hand-row .card.systema-card-action{flex:0 0 224px}}
+
+/* Hunt and Archive layout regression correction. */
+body[data-screen="combatScreen"] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
+}
+
+body[data-screen="combatScreen"] .game-shell {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+body[data-screen="combatScreen"] .combat-screen {
+  height: calc(100% - 68px);
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+body[data-screen="combatScreen"] .combat-left,
+body[data-screen="combatScreen"] .combat-right {
+  align-self: stretch;
+  max-height: 318px;
+  min-height: 0;
+}
+
+body[data-screen="combatScreen"] .combat-left {
+  overflow-y: auto;
+}
+
+body[data-screen="combatScreen"] .combat-right {
+  overflow: hidden;
+}
+
+body[data-screen="combatScreen"] .combat-log {
+  min-height: 0;
+  max-height: none;
+  margin-top: 8px;
+}
+
+body[data-screen="combatScreen"] .balance-debug {
+  max-height: 72px;
+  margin-top: 8px;
+  padding-top: 8px;
+  overflow: hidden;
+}
+
+body[data-screen="combatScreen"] #balanceDebug {
+  max-height: 46px;
+}
+
+body[data-screen="combatScreen"] .battlefield {
+  align-self: start;
+  height: auto;
+}
+
+body[data-screen="combatScreen"] .turn-track {
+  align-self: start;
+}
+
+body[data-screen="combatScreen"] .hand-row {
+  align-items: start;
+  overflow-y: hidden;
+  padding: 10px 16px 12px;
+}
+
+@media (min-width: 801px) {
+  body[data-screen="combatScreen"] .hand-row .card.systema-card-action {
+    flex: 1 1 220px;
+    min-width: 210px;
+    max-width: 232px;
+  }
+}
+
+.archive-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.archive-card:has(> .systema-card) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  width: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+}
+
+.archive-card:has(> .systema-card) > .systema-card {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 260px;
+}
+
+.archive-card:has(> .systema-card) .deck-edit-row {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 0 0;
+  border-top: 1px solid rgba(177,139,86,.2);
+  background: transparent;
+  pointer-events: auto;
+}
+
+.archive-card:has(> .systema-card) .deck-edit-row .owned-count {
+  display: grid;
+  grid-column: auto;
+}
+
+.archive-card:has(> .systema-card) .deck-edit-row .sell-value {
+  display: none;
+}
+
+.archive-card:has(> .systema-card) .deck-edit-row > div:last-of-type {
+  display: flex;
+  grid-column: auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.archive-card:has(> .systema-card) .deck-edit-row .mini-btn {
+  margin: 0;
+}
+
+.archive-card:has(> .systema-card) .deck-edit-row .sell-card-btn {
+  display: block;
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 30px;
+  aspect-ratio: auto;
+}
+
+@media (max-width: 1600px) {
+  .archive-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 850px) and (min-width: 801px) {
+  body[data-screen="combatScreen"] .combat-left,
+  body[data-screen="combatScreen"] .combat-right {
+    max-height: 190px;
+    padding: 10px;
+  }
+
+  body[data-screen="combatScreen"] .combat-right {
+    position: relative;
+    padding-bottom: 64px;
+  }
+
+  body[data-screen="combatScreen"] #endTurnBtn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    margin: 0;
+  }
+
+  body[data-screen="combatScreen"] .battlefield {
+    grid-template-rows: auto 142px;
+  }
+
+  body[data-screen="combatScreen"] .battle-scene {
+    min-height: 142px;
+  }
+
+  body[data-screen="combatScreen"] .balance-debug {
+    display: none;
+  }
+
+  body[data-screen="combatScreen"] .combat-log {
+    margin-top: 5px;
+  }
+
+  body[data-screen="combatScreen"] .hand-row .card.systema-card-action {
+    flex-basis: 208px;
+    min-width: 205px;
+    max-width: 218px;
+  }
+
+  body[data-screen="combatScreen"] .hand-row {
+    padding-block: 4px;
+  }
+}
