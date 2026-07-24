@@ -1505,8 +1505,7 @@ function renderPrep() {
     const sellMarks = scrapValue(c);
     const isRecommended = recommendationsOn && used > 0 && recommended.has(c.id);
     return `<article class="archive-card deck-card ${owned ? '' : 'missing'} ${used ? 'selected' : ''} ${isRecommended ? 'recommended' : ''}">
-      ${SystemaCardRenderer.html(c,{mode:'collection',selected:Boolean(used),badges:{owned,inDeck:used}})}
-      <span>${c.type} · ${displayRarity(c)} · Owned ${owned}</span>
+      ${SystemaCardRenderer.html(c,{mode:'collection',selected:Boolean(used)})}
       <div class="deck-edit-row">
         <div class="owned-count"><b>Owned</b><span>${owned}</span></div>
         <div class="owned-count"><b>In Deck</b><span>${used}</span></div>
