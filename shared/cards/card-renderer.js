@@ -7,6 +7,7 @@
   const actionTerms = ['Deal','Apply','Draw','Gain','Recover','Prevent','Execute','Reduce','Remove','Reveal','Increase'];
   const keywordLookup = new Map(keywordTerms.map(term => [term.toLowerCase(), term]));
   const actionLookup = new Set(actionTerms.map(term => term.toLowerCase()));
+  const assetBase = new URL('./', document.currentScript.src);
   const highlightPattern = new RegExp(`\\b(?:${[...keywordTerms, ...actionTerms, 'damage'].sort((a,b)=>b.length-a.length).map(escapeRegExp).join('|')})\\b|\\b\\d+(?=\\s*(?:damage|Health|HP|card|cards|Action|Actions|Bleed|Root|Dodge|Guard|Instinct|turn|turns|round|rounds|\\+|\\.|,|$))`, 'gi');
   function normalizeCard(card) { return global.SystemaCardSchema.normalize(card); }
   function keywordClass(label) {
@@ -33,6 +34,11 @@
   }
   function html(input, options={}) {
     const card=normalizeCard(input), mode=options.mode || 'collection', compact=card.rulesText.length > (mode==='combat'?78:112) || card.name.length > 23;
+    const useSnapshot = Boolean(options.preferSnapshot && card.snapshot?.src && card.snapshot?.cached);
+    if (useSnapshot) {
+      const source = new URL(card.snapshot.src, assetBase).href;
+      return `<article class="systema-card systema-card--${escape(mode)} systema-card--snapshot" data-systema-card data-card-id="${escape(card.id)}" tabindex="${options.tabIndex ?? 0}" aria-label="${escape(`${card.name}, cost ${card.cost}, ${card.type}, ${card.rarity}. ${card.rulesText}`)}"><img src="${escape(source)}" alt="" decoding="async"></article>`;
+    }
     if(card.rulesText.length>220) console.warn(`[CardRenderer] "${card.name}" exceeds the recommended rules length.`);
     const art=global.SystemaCardAssets.resolve(card); const badges=options.badges || {};
     return `<article class="systema-card systema-card--${escape(mode)} systema-card--type-${slug(card.type)} systema-card--rarity-${slug(card.rarity)} ${compact?'systema-card--compact':''} ${options.playable===false?'is-unplayable':''} ${options.selected?'is-selected':''}" data-systema-card data-card-id="${escape(card.id)}" tabindex="${options.tabIndex ?? 0}" aria-label="${escape(`${card.name}, cost ${card.cost}, ${card.type}, ${card.rarity}. ${card.rulesText}`)}">

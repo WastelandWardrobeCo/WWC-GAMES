@@ -1,0 +1,2285 @@
+{
+  "schemaVersion": 3,
+  "catalogId": "lady-delilah-hunt",
+  "cards": [
+    {
+      "schemaVersion": 3,
+      "id": "spear",
+      "name": "Spear Thrust",
+      "cost": 1,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 5 damage. Apply Exposed."
+        }
+      ],
+      "rulesText": "Deal 5 damage. Apply Exposed.",
+      "keywords": [
+        "Exposed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": {
+        "src": "snapshots/spear.png",
+        "format": "png",
+        "optional": true,
+        "cached": true
+      },
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-001"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "aimed",
+      "name": "Aimed Shot",
+      "cost": 1,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 6 damage. +2 if target has not acted this round."
+        }
+      ],
+      "rulesText": "Deal 6 damage. +2 if target has not acted this round.",
+      "keywords": [
+        "not acted"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-002"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "hamstring",
+      "name": "Hamstring Cut",
+      "cost": 2,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 4 damage. Apply Bleed 2 and Root."
+        }
+      ],
+      "rulesText": "Deal 4 damage. Apply Bleed 2 and Root.",
+      "keywords": [
+        "Bleed",
+        "Root"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-003"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "throat",
+      "name": "Through the Throat",
+      "cost": 2,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Blackmark",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 10. If target is Terrified, gain 1 Action."
+        }
+      ],
+      "rulesText": "Deal 10. If target is Terrified, gain 1 Action.",
+      "keywords": [
+        "Terrified"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-004"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "scent",
+      "name": "Scent Trail",
+      "cost": 1,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Reveal intent. Gain 2 Instinct. Lady attacks deal +1 per Instinct."
+        }
+      ],
+      "rulesText": "Reveal intent. Gain 2 Instinct. Lady attacks deal +1 per Instinct.",
+      "keywords": [
+        "Instinct"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-005"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "growl",
+      "name": "Warning Growl",
+      "cost": 1,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Apply Terrified. Also Weakened: target deals 3 less damage next attack."
+        }
+      ],
+      "rulesText": "Apply Terrified. Also Weakened: target deals 3 less damage next attack.",
+      "keywords": [
+        "Terrified",
+        "Weakened"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-006"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "pack",
+      "name": "Pack Rush",
+      "cost": 2,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Lady deals 5 damage. Apply Flanked."
+        }
+      ],
+      "rulesText": "Lady deals 5 damage. Apply Flanked.",
+      "keywords": [
+        "Flanked"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": {
+        "src": "snapshots/pack.png",
+        "format": "png",
+        "optional": true,
+        "cached": true
+      },
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-007"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "lunge",
+      "name": "Protective Lunge",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Prevent next attack against Delilah."
+        }
+      ],
+      "rulesText": "Prevent next attack against Delilah.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-008"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "snare",
+      "name": "Set Snare",
+      "cost": 2,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Place a trap. Moving enemies take 7 and Root."
+        }
+      ],
+      "rulesText": "Place a trap. Moving enemies take 7 and Root.",
+      "keywords": [
+        "trap",
+        "Moving",
+        "Root"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-009"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "step",
+      "name": "Evasive Step",
+      "cost": 0,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain Dodge. Draw 1."
+        }
+      ],
+      "rulesText": "Gain Dodge. Draw 1.",
+      "keywords": [
+        "Dodge",
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-010"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "funnel",
+      "name": "Funnel Path",
+      "cost": 1,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Enemies with Moving intent become Exposed when they move."
+        }
+      ],
+      "rulesText": "Enemies with Moving intent become Exposed when they move.",
+      "keywords": [
+        "Moving",
+        "Exposed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-011"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "poison",
+      "name": "Poison Coating",
+      "cost": 1,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Next attack applies Bleed 4."
+        }
+      ],
+      "rulesText": "Next attack applies Bleed 4.",
+      "keywords": [
+        "Bleed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-012"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "silent",
+      "name": "Silent Advance",
+      "cost": 1,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Blackmark",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "First attack next turn deals +4."
+        }
+      ],
+      "rulesText": "First attack next turn deals +4.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-013"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "bandage",
+      "name": "Bandage",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Choose Delilah or Lady. Recover 6 Health. If Delilah is chosen, remove Bleed."
+        }
+      ],
+      "rulesText": "Choose Delilah or Lady. Recover 6 Health. If Delilah is chosen, remove Bleed.",
+      "keywords": [
+        "Recover",
+        "Bleed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-014"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "sync",
+      "name": "Synchronized Kill",
+      "cost": 2,
+      "type": "Synchronized",
+      "archetype": "Synchronized",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 10. Execute below 25% if Bleeding or Flanked."
+        }
+      ],
+      "rulesText": "Deal 10. Execute below 25% if Bleeding or Flanked.",
+      "keywords": [
+        "Execute",
+        "Bleed",
+        "Flanked"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-015"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "bloodmark",
+      "name": "Blood Mark",
+      "cost": 1,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Apply Exposed 3. Draw 1."
+        }
+      ],
+      "rulesText": "Apply Exposed 3. Draw 1.",
+      "keywords": [
+        "Exposed",
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-016"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "wolf-feint",
+      "name": "Wolf Feint",
+      "cost": 1,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Apply Flanked. Gain 1 Dodge."
+        }
+      ],
+      "rulesText": "Apply Flanked. Gain 1 Dodge.",
+      "keywords": [
+        "Flanked",
+        "Dodge"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-017"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "rain-bolts",
+      "name": "Rain of Bolts",
+      "cost": 2,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Sharp",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 3 damage to all enemies."
+        }
+      ],
+      "rulesText": "Deal 3 damage to all enemies.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-018"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "tripwire",
+      "name": "Tripwire",
+      "cost": 1,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Roadworn",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Place a light trap. Draw 1."
+        }
+      ],
+      "rulesText": "Place a light trap. Draw 1.",
+      "keywords": [
+        "trap",
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-019"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "last-breath",
+      "name": "Last Breath",
+      "cost": 0,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Blackmark",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "If Delilah is below half HP, recover 5."
+        }
+      ],
+      "rulesText": "If Delilah is below half HP, recover 5.",
+      "keywords": [
+        "recover"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-020"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "obelisk",
+      "name": "Obelisk Breaker",
+      "cost": 3,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 14 damage. +4 against Ritual enemies."
+        }
+      ],
+      "rulesText": "Deal 14 damage. +4 against Ritual enemies.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-021"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "moon-ambush",
+      "name": "Moonlit Ambush",
+      "cost": 1,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Next attack deals +6 and applies Terrified."
+        }
+      ],
+      "rulesText": "Next attack deals +6 and applies Terrified.",
+      "keywords": [
+        "Terrified"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-022"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "shared-pulse",
+      "name": "Shared Pulse",
+      "cost": 2,
+      "type": "Synchronized",
+      "archetype": "Synchronized",
+      "rarity": "Legendary",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 7 damage. Heal Lady and Delilah 3."
+        }
+      ],
+      "rulesText": "Deal 7 damage. Heal Lady and Delilah 3.",
+      "keywords": [
+        "Heal"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-023"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "low-guard",
+      "name": "Low Guard",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain 1 Guard. Draw 1."
+        }
+      ],
+      "rulesText": "Gain 1 Guard. Draw 1.",
+      "keywords": [
+        "Guard",
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-024"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "clean-cut",
+      "name": "Clean Cut",
+      "cost": 1,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 4 damage. +3 if target is Exposed."
+        }
+      ],
+      "rulesText": "Deal 4 damage. +3 if target is Exposed.",
+      "keywords": [
+        "Exposed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-025"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "mud-step",
+      "name": "Mud Step",
+      "cost": 0,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Apply Root 1. Lose 1 Action next turn."
+        }
+      ],
+      "rulesText": "Apply Root 1. Lose 1 Action next turn.",
+      "keywords": [
+        "Root"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-026"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "field-dressing",
+      "name": "Field Dressing",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Heal Delilah 4. Heal Lady 2."
+        }
+      ],
+      "rulesText": "Heal Delilah 4. Heal Lady 2.",
+      "keywords": [
+        "Heal"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-027"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "wolf-glance",
+      "name": "Wolf Glance",
+      "cost": 0,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Reveal intent this turn. Gain 1 Instinct for Lady attacks."
+        }
+      ],
+      "rulesText": "Reveal intent this turn. Gain 1 Instinct for Lady attacks.",
+      "keywords": [
+        "Instinct"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-028"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "rusted-hook",
+      "name": "Rusted Hook",
+      "cost": 1,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 3 damage. Apply Bleed 1."
+        }
+      ],
+      "rulesText": "Deal 3 damage. Apply Bleed 1.",
+      "keywords": [
+        "Bleed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-029"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "ash-breath",
+      "name": "Ash Breath",
+      "cost": 1,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Next attack applies Terrified."
+        }
+      ],
+      "rulesText": "Next attack applies Terrified.",
+      "keywords": [
+        "Terrified"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-030"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "quick-cache",
+      "name": "Quick Cache",
+      "cost": 0,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Common",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Draw 1. Gain 1 Scrap."
+        }
+      ],
+      "rulesText": "Draw 1. Gain 1 Scrap.",
+      "keywords": [
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-031"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "red-thread",
+      "name": "Red Thread",
+      "cost": 1,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Apply Exposed 2 and Flanked 1."
+        }
+      ],
+      "rulesText": "Apply Exposed 2 and Flanked 1.",
+      "keywords": [
+        "Exposed",
+        "Flanked"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-032"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "spear-wall",
+      "name": "Spear Wall",
+      "cost": 2,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain 2 Guard. Deal 3 to attackers next turn."
+        }
+      ],
+      "rulesText": "Gain 2 Guard. Deal 3 to attackers next turn.",
+      "keywords": [
+        "Guard"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-033"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "black-rain",
+      "name": "Black Rain",
+      "cost": 2,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 2 damage to all enemies. Apply Bleed 1."
+        }
+      ],
+      "rulesText": "Deal 2 damage to all enemies. Apply Bleed 1.",
+      "keywords": [
+        "Bleed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-034"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "pack-angle",
+      "name": "Pack Angle",
+      "cost": 1,
+      "type": "Synchronized",
+      "archetype": "Synchronized",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 4 damage. If Flanked, draw 1."
+        }
+      ],
+      "rulesText": "Deal 4 damage. If Flanked, draw 1.",
+      "keywords": [
+        "Flanked",
+        "draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-035"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "trapline-map",
+      "name": "Trapline Map",
+      "cost": 1,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Place 2 light traps."
+        }
+      ],
+      "rulesText": "Place 2 light traps.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-036"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "bite-command",
+      "name": "Bite Command",
+      "cost": 2,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Lady deals 7 damage. Apply Terrified."
+        }
+      ],
+      "rulesText": "Lady deals 7 damage. Apply Terrified.",
+      "keywords": [
+        "Terrified"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-037"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "hard-pivot",
+      "name": "Hard Pivot",
+      "cost": 0,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain Dodge. Next attack deals +2."
+        }
+      ],
+      "rulesText": "Gain Dodge. Next attack deals +2.",
+      "keywords": [
+        "Dodge"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-038"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "blood-price",
+      "name": "Blood Price",
+      "cost": 0,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Take 3 damage. Deal 9 damage."
+        }
+      ],
+      "rulesText": "Take 3 damage. Deal 9 damage.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-039"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "fear-break",
+      "name": "Fear Break",
+      "cost": 2,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Terrify all enemies. Draw 1."
+        }
+      ],
+      "rulesText": "Terrify all enemies. Draw 1.",
+      "keywords": [
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-040"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "five-count",
+      "name": "Five Count",
+      "cost": 1,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "If you spend all 3 Actions this turn, heal 5 at end turn."
+        }
+      ],
+      "rulesText": "If you spend all 3 Actions this turn, heal 5 at end turn.",
+      "keywords": [
+        "heal"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-041"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "shatter-rite",
+      "name": "Shatter Rite",
+      "cost": 3,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 8 to all enemies. +4 to Ritual enemies."
+        }
+      ],
+      "rulesText": "Deal 8 to all enemies. +4 to Ritual enemies.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-042"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "bone-whistle",
+      "name": "Bone Whistle",
+      "cost": 1,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain 3 Instinct. Reveal intent. Draw 1."
+        }
+      ],
+      "rulesText": "Gain 3 Instinct. Reveal intent. Draw 1.",
+      "keywords": [
+        "Instinct",
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-043"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "kill-lane",
+      "name": "Kill Lane",
+      "cost": 2,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Place 1 trap. All moving enemies become Exposed 3."
+        }
+      ],
+      "rulesText": "Place 1 trap. All moving enemies become Exposed 3.",
+      "keywords": [
+        "trap",
+        "moving",
+        "Exposed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-044"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "no-mercy-left",
+      "name": "No Mercy Left",
+      "cost": 2,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 12 damage. If this kills, gain 1 Action."
+        }
+      ],
+      "rulesText": "Deal 12 damage. If this kills, gain 1 Action.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-045"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "moon-hunt",
+      "name": "Moon Hunt",
+      "cost": 3,
+      "type": "Synchronized",
+      "archetype": "Synchronized",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 8 to all enemies. Heal Lady 5."
+        }
+      ],
+      "rulesText": "Deal 8 to all enemies. Heal Lady 5.",
+      "keywords": [
+        "Heal"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-046"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "red-door",
+      "name": "Red Door",
+      "cost": 2,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Next two attacks deal +5."
+        }
+      ],
+      "rulesText": "Next two attacks deal +5.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-047"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "wolf-saint",
+      "name": "Wolf Saint",
+      "cost": 2,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Prevent all damage this enemy turn. Draw 1."
+        }
+      ],
+      "rulesText": "Prevent all damage this enemy turn. Draw 1.",
+      "keywords": [
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-048"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "grave-silence",
+      "name": "Grave Silence",
+      "cost": 2,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Cancel all Reinforcements. Terrify all enemies."
+        }
+      ],
+      "rulesText": "Cancel all Reinforcements. Terrify all enemies.",
+      "keywords": [],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-049"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "done-here",
+      "name": "C'mon, Lady... We're Done Here",
+      "cost": 3,
+      "type": "Synchronized",
+      "archetype": "Synchronized",
+      "rarity": "Legendary",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 18 damage. Execute if Bleeding, Flanked, or Terrified below 40%."
+        }
+      ],
+      "rulesText": "Deal 18 damage. Execute if Bleeding, Flanked, or Terrified below 40%.",
+      "keywords": [
+        "Execute",
+        "Bleed",
+        "Flanked",
+        "Terrified"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": {
+        "src": "snapshots/done-here.png",
+        "format": "png",
+        "optional": true,
+        "cached": true
+      },
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-050"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "black-road-myth",
+      "name": "Black Road Myth",
+      "cost": 2,
+      "type": "Legend",
+      "archetype": "Legend",
+      "rarity": "Legendary",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Draw 3. This turn, Synchronized cards cost 1 less."
+        }
+      ],
+      "rulesText": "Draw 3. This turn, Synchronized cards cost 1 less.",
+      "keywords": [
+        "Draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "base",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Base Set",
+      "cardNumber": "LD-051"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-iron-vow",
+      "name": "Iron Vow",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain 1 Guard. If Delilah is below half HP, draw 1."
+        }
+      ],
+      "rulesText": "Gain 1 Guard. If Delilah is below half HP, draw 1.",
+      "keywords": [
+        "Guard",
+        "draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-052"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-hookline-signal",
+      "name": "Hookline Signal",
+      "cost": 1,
+      "type": "Instinct",
+      "archetype": "Instinct",
+      "rarity": "Uncommon",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Apply Flanked. Gain 1 Instinct."
+        }
+      ],
+      "rulesText": "Apply Flanked. Gain 1 Instinct.",
+      "keywords": [
+        "Flanked",
+        "Instinct"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-053"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-counter-cut",
+      "name": "Counter-Cut",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Gain Dodge. Your next attack deals +3."
+        }
+      ],
+      "rulesText": "Gain Dodge. Your next attack deals +3.",
+      "keywords": [
+        "Dodge"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-054"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-cornered-animal",
+      "name": "Cornered Animal",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Rare",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "If Delilah is below 40% HP, next attack deals +8 and gain Dodge. Otherwise next attack deals +3."
+        }
+      ],
+      "rulesText": "If Delilah is below 40% HP, next attack deals +8 and gain Dodge. Otherwise next attack deals +3.",
+      "keywords": [
+        "Dodge"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-055"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-blood-trail",
+      "name": "Blood Trail",
+      "cost": 2,
+      "type": "Preparation",
+      "archetype": "Preparation",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "For this combat, Synchronized attacks deal +3 to Bleeding enemies."
+        }
+      ],
+      "rulesText": "For this combat, Synchronized attacks deal +3 to Bleeding enemies.",
+      "keywords": [
+        "Bleed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-056"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-last-light-stance",
+      "name": "Last Light Stance",
+      "cost": 1,
+      "type": "Survival",
+      "archetype": "Survival",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "If Delilah is below half HP, heal both 5 and gain 2 Guard. Otherwise gain 1 Guard and draw 1."
+        }
+      ],
+      "rulesText": "If Delilah is below half HP, heal both 5 and gain 2 Guard. Otherwise gain 1 Guard and draw 1.",
+      "keywords": [
+        "heal",
+        "Guard",
+        "draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-057"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-red-sermon",
+      "name": "Red Sermon",
+      "cost": 2,
+      "type": "Tactic",
+      "archetype": "Tactic",
+      "rarity": "Epic",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Terrify all enemies. Bleeding enemies become Exposed 2."
+        }
+      ],
+      "rulesText": "Terrify all enemies. Bleeding enemies become Exposed 2.",
+      "keywords": [
+        "Bleed",
+        "Exposed"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-058"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-black-forge-oath",
+      "name": "Black Forge Oath",
+      "cost": 3,
+      "type": "Synchronized",
+      "archetype": "Synchronized",
+      "rarity": "Legendary",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 12 to all enemies. Bleeding or Flanked enemies take +5."
+        }
+      ],
+      "rulesText": "Deal 12 to all enemies. Bleeding or Flanked enemies take +5.",
+      "keywords": [
+        "Bleed",
+        "Flanked"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-059"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-mercy-blade",
+      "name": "Mercy Is A Blade",
+      "cost": 2,
+      "type": "Attack",
+      "archetype": "Attack",
+      "rarity": "Legendary",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Deal 9 damage. If this kills, draw 1 and gain 1 Action."
+        }
+      ],
+      "rulesText": "Deal 9 damage. If this kills, draw 1 and gain 1 Action.",
+      "keywords": [
+        "draw"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-060"
+    },
+    {
+      "schemaVersion": 3,
+      "id": "forge-last-door",
+      "name": "The Last Door Opens",
+      "cost": 3,
+      "type": "Legend",
+      "archetype": "Legend",
+      "rarity": "Legendary",
+      "artwork": {
+        "src": "",
+        "focalX": 50,
+        "focalY": 50,
+        "zoom": 1
+      },
+      "rules": [
+        {
+          "kind": "text",
+          "text": "Heal both 6. Next Synchronized card costs 1 less and deals +6."
+        }
+      ],
+      "rulesText": "Heal both 6. Next Synchronized card costs 1 less and deals +6.",
+      "keywords": [
+        "Heal"
+      ],
+      "layout": {
+        "template": "premium-v1"
+      },
+      "snapshot": null,
+      "source": "forge",
+      "game": {
+        "target": "enemy",
+        "effects": []
+      },
+      "metadata": {},
+      "set": "Jonas Forge",
+      "cardNumber": "LD-061"
+    }
+  ]
+}

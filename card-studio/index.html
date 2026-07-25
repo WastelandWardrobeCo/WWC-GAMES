@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Systema Obscura Card Studio</title>
-  <link rel="stylesheet" href="../shared/cards/card-renderer.css?v=hand-size-correction-2">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../shared/cards/card-renderer.css?v=card-data-mobile-v1">
+  <link rel="stylesheet" href="styles.css?v=card-data-mobile-v1">
   <script defer src="../shared/navigation/app-navigation.js"></script>
 </head>
 <body data-workspace="card-studio">
@@ -67,7 +67,7 @@
         <div class="form-grid">
           <label>Cost<input id="cost" type="number" min="0" max="9" value="3"></label>
           <label>Type
-            <select id="type"><option>Attack</option><option>Guard</option><option>Precision</option><option>Companion</option><option>Trap</option><option>Survival</option><option>Relic</option><option>Event</option></select>
+            <select id="type"><option>Attack</option><option>Instinct</option><option>Tactic</option><option>Preparation</option><option>Trap</option><option>Survival</option><option>Synchronized</option><option>Guard</option><option>Precision</option><option>Companion</option><option>Relic</option><option>Event</option></select>
           </label>
           <label>Target
             <select id="target"><option value="enemy">Enemy</option><option value="self">Self</option><option value="all-enemies">All Enemies</option><option value="ally">Ally</option><option value="none">None</option></select>
@@ -105,6 +105,8 @@
       <section class="studio-section" data-panel="export">
         <div class="export-grid">
           <button id="downloadJson" class="primary">Export Game JSON</button>
+          <button id="importJson">Import Normalized JSON</button>
+          <input id="importJsonFile" type="file" accept="application/json,.json" hidden>
           <button id="copyJson">Copy JSON</button>
           <button id="exportLibrary">Export Library JSON</button>
           <button id="clearLibrary" class="danger">Clear Local Library</button>
@@ -130,6 +132,6 @@
       <div class="preview-tools"><span id="previewStatus">Unsaved changes</span><select id="previewMode" aria-label="Preview mode"><option value="combat">Combat</option><option value="collection" selected>Collection</option><option value="expanded">Expanded</option></select><button id="inspectPreview" type="button">Inspect</button><button id="resetCard">Reset Sample</button></div>
     </section>
   </main>
-  <script src="../shared/cards/card-keywords.js"></script><script src="../shared/cards/card-schema.js"></script><script src="../shared/cards/card-assets.js"></script><script src="../shared/cards/card-renderer.js"></script><script src="app.js"></script>
+  <script src="../shared/cards/card-keywords.js?v=card-data-mobile-v1"></script><script src="../shared/cards/card-schema.js?v=card-data-mobile-v1"></script><script src="../shared/cards/card-assets.js?v=card-data-mobile-v1"></script><script src="../shared/cards/card-renderer.js?v=card-data-mobile-v1"></script><script src="app.js?v=card-data-mobile-v1"></script>
 </body>
 </html>

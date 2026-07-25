@@ -3932,3 +3932,202 @@ body[data-screen="combatScreen"] .hand-row {
     padding-block: 4px;
   }
 }
+
+.mobile-card-inspect {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body[data-screen="combatScreen"] {
+    display: block;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body[data-screen="combatScreen"] .game-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    padding: 8px;
+  }
+
+  body[data-screen="combatScreen"] .topbar {
+    position: relative;
+    grid-template-columns: 1fr auto;
+    min-height: 0;
+    padding: 8px;
+  }
+
+  body[data-screen="combatScreen"] .topbar .resource-strip {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  body[data-screen="combatScreen"] .topbar .resource-strip div {
+    min-width: 0;
+    padding: 5px;
+  }
+
+  body[data-screen="combatScreen"] .topbar .resource-strip span {
+    font-size: .5rem;
+    letter-spacing: .04em;
+  }
+
+  body[data-screen="combatScreen"] .combat-screen {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  body[data-screen="combatScreen"] .battlefield,
+  body[data-screen="combatScreen"] .combat-left,
+  body[data-screen="combatScreen"] .combat-right,
+  body[data-screen="combatScreen"] .hand-row,
+  body[data-screen="combatScreen"] .combat-dock {
+    grid-column: auto;
+    grid-row: auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body[data-screen="combatScreen"] .battlefield {
+    order: 1;
+    grid-template-rows: auto 220px;
+  }
+
+  body[data-screen="combatScreen"] .battle-scene {
+    min-height: 220px;
+  }
+
+  body[data-screen="combatScreen"] .turn-track {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  body[data-screen="combatScreen"] .hand-row {
+    order: 2;
+    min-height: 385px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 14px 48px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 14px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-screen="combatScreen"] .hand-row .card.systema-card-action {
+    flex: 0 0 min(76vw, 284px);
+    min-width: min(76vw, 284px);
+    max-width: 284px;
+    scroll-snap-align: center;
+  }
+
+  body[data-screen="combatScreen"] .hand-row .systema-card--combat {
+    width: 100%;
+    max-width: none;
+  }
+
+  body[data-screen="combatScreen"] .card.systema-card-action:hover,
+  body[data-screen="combatScreen"] .systema-card:hover {
+    transform: none;
+  }
+
+  .mobile-card-inspect {
+    position: absolute;
+    top: calc(100% + 7px);
+    right: 0;
+    left: 0;
+    z-index: 30;
+    min-height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(226,195,118,.5);
+    border-radius: 5px;
+    background: rgba(8,7,5,.96);
+    color: #f4e6cf;
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    font-size: .7rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    pointer-events: auto;
+  }
+
+  body[data-screen="combatScreen"] .combat-right {
+    order: 3;
+    position: relative;
+    max-height: none;
+    min-height: 190px;
+    padding: 12px 12px 76px;
+    overflow: visible;
+  }
+
+  body[data-screen="combatScreen"] .combat-log {
+    max-height: 120px;
+  }
+
+  body[data-screen="combatScreen"] .balance-debug {
+    display: none;
+  }
+
+  body[data-screen="combatScreen"] #endTurnBtn {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    z-index: 90;
+    width: auto;
+    min-height: 52px;
+    margin: 0;
+    box-shadow: 0 12px 32px rgba(0,0,0,.82), 0 0 0 1px rgba(255,220,180,.16);
+  }
+
+  body[data-screen="combatScreen"] .combat-left {
+    order: 4;
+    max-height: none;
+    overflow: visible;
+  }
+
+  body[data-screen="combatScreen"] .combat-dock {
+    order: 5;
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 74px;
+  }
+
+  .prep-screen,
+  .profile-panel,
+  .forge-screen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .archive-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .archive-card:has(> .systema-card) {
+    max-width: 310px;
+    margin-inline: auto;
+  }
+
+  dialog {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+}
