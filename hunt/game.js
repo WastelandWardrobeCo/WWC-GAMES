@@ -1574,11 +1574,7 @@ function renderForge() {
     const remaining = Math.max(0, item.price - state.marks);
     const progress = Math.min(100, Math.round((state.marks / item.price) * 100));
     return `<article class="forge-card rarity-${rarityKey(c)} ${cardArtClass(c)} ${owned ? 'owned' : ''} ${affordable && !owned ? 'affordable' : ''} ${locked ? 'locked' : ''}" style="${cardArtStyle(c)}">
-      <div class="forge-card-preview">${SystemaCardRenderer.html(c,{mode:'collection',badges:{owned}})}
-        <div class="card-top"><span class="cost">${c.cost}</span><h3>${c.name}</h3></div>
-        <span class="card-scope">${cardScope(c)}</span>
-        <p>${enrichCardText(c.text)}</p>
-      </div>
+      <div class="forge-card-preview">${SystemaCardRenderer.html(c,{mode:'collection',badges:{owned}})}</div>
       <div class="forge-card-meta">
         <span>${displayRarity(c)}</span>
         <b>${item.price.toLocaleString()} Marks</b>
@@ -1932,7 +1928,6 @@ function cardHtml(c, i, fresh = false) {
   return `<button class="card systema-card-action ${disabled ? 'disabled' : ''} ${fresh ? 'fresh-draw' : ''}" data-index="${i}" type="button" aria-disabled="${disabled}">
     ${SystemaCardRenderer.html(display,{mode:'combat',playable:!disabled,tabIndex:-1})}
     <span class="mobile-card-inspect" data-mobile-inspect-card="${c.id}" role="button" tabindex="0">Inspect</span>
-    <span class="card-type">${c.type} · ${displayRarity(c)}</span>
   </button>`;
 }
 
@@ -2660,7 +2655,6 @@ function renderGambleResult(c) {
 function rewardCardHtml(c) {
   return `<div class="reward-card-wrap rarity-beam rarity-${rarityKey(c)}">
     ${SystemaCardRenderer.html(c,{mode:'collection',badges:{owned:state.owned[c.id]||0}})}
-      <span class="card-type">${c.type} Â· ${displayRarity(c)}</span>
   </div>`;
 }
 
