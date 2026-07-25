@@ -1833,9 +1833,9 @@
       "rarity": "Legendary",
       "artwork": {
         "src": "",
-        "focalX": 50,
-        "focalY": 50,
-        "zoom": 1
+        "focalX": 37,
+        "focalY": 61,
+        "zoom": 1.2
       },
       "rules": [
         {
