@@ -92,6 +92,27 @@ const BUILT_IN_CARD_IDS = new Set(cards.map(c => c.id));
 const customCardRecords = new Map();
 const STUDIO_ACTIONS = new Set(['damage', 'conditionalDamage', 'block', 'armor', 'heal', 'status', 'draw', 'energy', 'execute']);
 
+function applyCanonicalCardCatalog(records) {
+  const definitions = new Map((records || []).map(record => {
+    const normalized = SystemaCardSchema.normalize(record);
+    return [normalized.id, normalized];
+  }));
+  cards.forEach(cardRecord => {
+    const definition = definitions.get(cardRecord.id);
+    if (!definition) return;
+    const mechanics = {
+      effect: cardRecord.effect,
+      forgeOnly: cardRecord.forgeOnly,
+      customTarget: cardRecord.customTarget
+    };
+    Object.assign(cardRecord, definition, {
+      text: definition.rulesText,
+      ...mechanics
+    });
+  });
+  window.SystemaCardCatalog = Object.fromEntries(cards.map(cardRecord => [cardRecord.id, cardRecord]));
+}
+
 function studioStatusKey(status = '') {
   return ({ bleeding: 'bleed', bleed: 'bleed', flanked: 'flanked', terrified: 'terrified', exposed: 'exposed', rooted: 'root', root: 'root' })[String(status).toLowerCase()] || 'exposed';
 }
@@ -122,27 +143,25 @@ function runStudioEffect(effect, game) {
 }
 
 function makeStudioCard(record) {
+  const normalized = SystemaCardSchema.normalize(record);
   return {
-    id: record.id,
-    name: record.name,
-    type: record.type || 'Tactic',
-    cost: Math.max(0, Number(record.cost) || 0),
-    rarity: record.rarity || 'Common',
-    text: record.rulesText,
-    customTarget: record.target || 'enemy',
+    ...normalized,
+    text: normalized.rulesText,
+    customTarget: normalized.game.target || 'enemy',
     studioCard: true,
-    effect: game => record.effects.forEach(effect => runStudioEffect(effect, game))
+    effect: game => normalized.game.effects.forEach(effect => runStudioEffect(effect, game))
   };
 }
 
 function registerStudioCard(record) {
-  if (!record?.id || BUILT_IN_CARD_IDS.has(record.id) || !record.effects?.length) return false;
-  if (record.effects.some(effect => !STUDIO_ACTIONS.has(effect.action || effect.type))) return false;
-  const custom = makeStudioCard(record);
+  const normalized = SystemaCardSchema.normalize(record);
+  if (!normalized.id || BUILT_IN_CARD_IDS.has(normalized.id) || !normalized.game.effects.length) return false;
+  if (normalized.game.effects.some(effect => !STUDIO_ACTIONS.has(effect.action || effect.type || effect.kind))) return false;
+  const custom = makeStudioCard(normalized);
   const existing = cards.findIndex(c => c.id === record.id);
   if (existing >= 0) cards.splice(existing, 1, custom);
   else cards.push(custom);
-  customCardRecords.set(record.id, record);
+  customCardRecords.set(normalized.id, normalized);
   return true;
 }
 
@@ -1505,7 +1524,7 @@ function renderPrep() {
     const sellMarks = scrapValue(c);
     const isRecommended = recommendationsOn && used > 0 && recommended.has(c.id);
     return `<article class="archive-card deck-card ${owned ? '' : 'missing'} ${used ? 'selected' : ''} ${isRecommended ? 'recommended' : ''}">
-      ${SystemaCardRenderer.html(c,{mode:'collection',selected:Boolean(used)})}
+      ${SystemaCardRenderer.html(c,{mode:'collection',selected:Boolean(used),preferSnapshot:true})}
       <div class="deck-edit-row">
         <div class="owned-count"><b>Owned</b><span>${owned}</span></div>
         <div class="owned-count"><b>In Deck</b><span>${used}</span></div>
@@ -1770,11 +1789,24 @@ function renderCombat() {
   $('enemyLine').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => enemyHtml(e)).join('');
   $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card intent-${e.archetype || 'aggressive'}"><b>${e.name}</b><span>${archetypeLabel(e)}</span><br>${intentText(e)}</div>`).join('');
   $('hand').innerHTML = state.hand.map((entry, i) => cardHtml(runCard(handCardId(entry)), i, Boolean(entry && entry.fresh))).join('');
+  window.SystemaCardCatalog = Object.fromEntries(cards.map(cardRecord => [cardRecord.id, cardRecord]));
   state.hand.forEach(entry => { if (entry && typeof entry === 'object') entry.fresh = false; });
   $('combatLog').innerHTML = state.log.slice(0, 8).map(l => `<div class="log-line">${l}</div>`).join('');
   renderBalanceDebug();
   document.querySelectorAll('.enemy').forEach(el => el.addEventListener('click', () => { state.targetId = el.dataset.id; renderCombat(); }));
   document.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => playCard(Number(el.dataset.index))));
+  document.querySelectorAll('[data-mobile-inspect-card]').forEach(control => {
+    const inspect = event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const record = card(control.dataset.mobileInspectCard);
+      if (record) SystemaCardRenderer.openPreview(record);
+    };
+    control.addEventListener('click', inspect);
+    control.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') inspect(event);
+    });
+  });
 }
 
 function renderBattlefieldStatus() {
@@ -1899,6 +1931,7 @@ function cardHtml(c, i, fresh = false) {
   const display={...c,cost:playCost,upgraded:Boolean(isRunActive()&&state.run.upgrades?.[c.id])};
   return `<button class="card systema-card-action ${disabled ? 'disabled' : ''} ${fresh ? 'fresh-draw' : ''}" data-index="${i}" type="button" aria-disabled="${disabled}">
     ${SystemaCardRenderer.html(display,{mode:'combat',playable:!disabled,tabIndex:-1})}
+    <span class="mobile-card-inspect" data-mobile-inspect-card="${c.id}" role="button" tabindex="0">Inspect</span>
     <span class="card-type">${c.type} · ${displayRarity(c)}</span>
   </button>`;
 }
@@ -2813,4 +2846,15 @@ function relic(name) { return state.relics.includes(name); }
 function shuffle(arr) { return [...arr].sort(() => Math.random() - .5); }
 function log(msg) { state.log.unshift(msg); state.log = state.log.slice(0, 12); }
 
-init();
+async function bootstrap() {
+  try {
+    const catalog = await SystemaCardSchema.loadCatalog('../shared/cards/cards.json');
+    applyCanonicalCardCatalog(catalog.cards);
+  } catch (error) {
+    console.warn('[CardCatalog] Using bundled mechanics metadata fallback.', error);
+    applyCanonicalCardCatalog(cards);
+  }
+  init();
+}
+
+bootstrap();

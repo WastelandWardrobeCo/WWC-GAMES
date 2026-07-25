@@ -98,6 +98,7 @@
   }
 
   function normalizeStudioCard(card) {
+    if (global.SystemaCardSchema) return global.SystemaCardSchema.normalize(card);
     const target = card?.game?.target || 'enemy';
     const effects = card?.game?.effects || card?.effects || [];
     const supportedTypes = new Set(['Attack', 'Instinct', 'Tactic', 'Preparation', 'Survival', 'Synchronized', 'Legend']);
@@ -105,15 +106,20 @@
     return {
       schemaVersion: Number(card?.schemaVersion) || 1,
       id: String(card?.id || '').trim(),
-      name: safeText(String(card?.name || '').trim()),
+      name: String(card?.name || '').trim(),
       cost: Math.max(0, Number(card?.cost) || 0),
       type: supportedTypes.has(card?.type) ? card.type : 'Tactic',
       rarity: supportedRarities.has(card?.rarity) ? card.rarity : 'Common',
-      rulesText: safeText(card?.rulesText),
+      rulesText: String(card?.rulesText || ''),
       keywords: Array.isArray(card?.keywords) ? card.keywords.filter(Boolean) : [],
       target,
       exhaust: Boolean(card?.exhaust ?? card?.game?.exhaust),
-      effects: effects.map(effect => normalizeStudioEffect(effect, target))
+      effects: effects.map(effect => normalizeStudioEffect(effect, target)),
+      game: {
+        target,
+        exhaust: Boolean(card?.exhaust ?? card?.game?.exhaust),
+        effects: effects.map(effect => normalizeStudioEffect(effect, target))
+      }
     };
   }
 
@@ -123,7 +129,8 @@
     const valid = [];
     const rejected = [];
     source.map(normalizeStudioCard).forEach(card => {
-      if (!/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(card.id) || !card.name || !card.rulesText || !card.effects.length) rejected.push(card.name || card.id || 'Untitled card');
+      const effects = card.game?.effects || card.effects || [];
+      if (!/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(card.id) || !card.name || !card.rulesText || !effects.length) rejected.push(card.name || card.id || 'Untitled card');
       else valid.push(card);
     });
     return { cards: valid, rejected };
