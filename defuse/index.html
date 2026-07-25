@@ -10,24 +10,35 @@
     * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     html,body { margin:0; min-height:100%; background:var(--bg); color:var(--text); font-family:Arial,Helvetica,sans-serif; }
     body { background:radial-gradient(circle at 50% 0,#202328 0,#0a0c0e 46%,#050607 100%); }
+    body.critical { animation:screenShake .12s infinite; }
     button { font:inherit; touch-action:manipulation; }
     .app { width:min(100%,720px); margin:0 auto; padding:14px 14px 30px; }
     .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
     .back { color:#c9ced2; text-decoration:none; font-size:14px; }
     .title { letter-spacing:.24em; font-weight:900; font-size:14px; }
-    .bomb { border:1px solid #3a3f43; border-radius:18px; padding:15px; background:linear-gradient(145deg,#252a2e,#111417 52%,#1b1f22); box-shadow:inset 0 0 0 2px #090b0d,0 18px 45px rgba(0,0,0,.55); }
+    .mission-strip { border:1px solid #343a3f; border-radius:10px; background:#0b0e10; padding:9px 11px; margin-bottom:10px; display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:11px; letter-spacing:.08em; }
+    .mission-strip strong { color:var(--text); display:block; margin-top:3px; font-size:13px; }
+    .bomb { border:1px solid #3a3f43; border-radius:18px; padding:15px; background:linear-gradient(145deg,#252a2e,#111417 52%,#1b1f22); box-shadow:inset 0 0 0 2px #090b0d,0 18px 45px rgba(0,0,0,.55); transition:filter .2s,box-shadow .2s; }
+    .bomb.low-power { filter:brightness(.74); box-shadow:inset 0 0 24px #000,0 18px 45px rgba(0,0,0,.7); }
+    .id-plate { display:grid; grid-template-columns:1.4fr 1fr; gap:8px; margin-bottom:12px; border:1px solid #5a5648; border-radius:8px; background:linear-gradient(135deg,#343329,#181914); padding:10px; font-family:"Courier New",monospace; color:#d8d1b8; box-shadow:inset 0 0 0 2px #0c0d0b; }
+    .id-plate .maker { font-weight:900; letter-spacing:.08em; font-size:13px; }
+    .id-plate .small { font-size:10px; color:#aaa58f; line-height:1.45; }
     .display-wrap { background:#030303; border:6px solid #34393d; border-radius:10px; padding:9px 10px 7px; box-shadow:inset 0 0 18px #000; text-align:center; margin-bottom:13px; }
     .timer { color:var(--red); font-family:"Courier New",monospace; font-size:clamp(50px,16vw,86px); line-height:.9; font-weight:900; letter-spacing:.04em; text-shadow:0 0 5px #ff211e,0 0 18px rgba(255,35,32,.55); font-variant-numeric:tabular-nums; }
-    .timer.danger { animation:pulse .55s infinite alternate; }
-    @keyframes pulse { from{opacity:1} to{opacity:.62} }
+    .timer.danger { animation:pulse .45s infinite alternate; }
+    @keyframes pulse { from{opacity:1} to{opacity:.55} }
+    @keyframes screenShake { 0%{transform:translate(0,0)} 25%{transform:translate(-1px,1px)} 50%{transform:translate(1px,0)} 75%{transform:translate(0,-1px)} 100%{transform:translate(0,0)} }
     .meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
     .meta div { background:#0d1012; border:1px solid #333a40; border-radius:8px; padding:8px; font-size:12px; color:var(--muted); }
     .meta strong { display:block; color:var(--text); margin-top:3px; font-size:15px; letter-spacing:.1em; }
-    .status { min-height:44px; border:1px solid #3d4449; background:#0b0e10; border-radius:9px; padding:10px; margin-bottom:12px; color:#d6dadc; font-size:14px; line-height:1.35; }
+    .status { min-height:48px; border:1px solid #3d4449; background:#0b0e10; border-radius:9px; padding:10px; margin-bottom:12px; color:#d6dadc; font-size:14px; line-height:1.35; }
+    .status::before { content:"FIELD COMMS // "; color:var(--amber); font-size:10px; letter-spacing:.08em; }
     .modules { display:grid; grid-template-columns:1fr; gap:12px; }
-    .module { background:linear-gradient(#242a2f,#171b1f); border:1px solid #485057; border-radius:12px; padding:13px; }
-    .module.locked { opacity:.45; filter:grayscale(.6); pointer-events:none; }
+    .module { background:linear-gradient(#242a2f,#171b1f); border:1px solid #485057; border-radius:12px; padding:13px; transition:opacity .25s,filter .25s,box-shadow .25s,transform .25s; }
+    .module.locked { opacity:.38; filter:grayscale(.7); pointer-events:none; }
+    .module.unlocked { animation:unlock .35s ease-out; }
     .module.solved { border-color:#4e9b5e; box-shadow:inset 0 0 0 1px rgba(101,212,123,.25); }
+    @keyframes unlock { from{transform:translateY(5px);opacity:.35} to{transform:none;opacity:1} }
     .module-head { display:flex; justify-content:space-between; gap:10px; margin-bottom:10px; }
     .module h2 { margin:0; font-size:15px; letter-spacing:.12em; }
     .lamp { width:13px; height:13px; border-radius:50%; background:#381615; border:1px solid #79514f; box-shadow:inset 0 0 4px #000; }
@@ -54,54 +65,69 @@
     .primary,.secondary { flex:1; min-height:48px; border-radius:10px; font-weight:900; letter-spacing:.08em; }
     .primary { background:#9d2522; border:1px solid #ee5652; color:white; }
     .secondary { background:#242a2f; border:1px solid #555e65; color:#dbe0e3; }
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.88); display:none; align-items:center; justify-content:center; padding:22px; z-index:10; }
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.91); display:none; align-items:center; justify-content:center; padding:22px; z-index:10; }
     .overlay.show { display:flex; }
     .result { width:min(100%,430px); background:#161a1d; border:1px solid #555d63; border-radius:16px; padding:22px; text-align:center; }
     .result h1 { margin:0 0 8px; font-size:34px; letter-spacing:.08em; }
     .result p { color:#b8bec2; line-height:1.45; }
     .result.win h1 { color:var(--green); }
     .result.lose h1 { color:var(--red); }
+    .briefing { text-align:left; }
+    .briefing .eyebrow { color:var(--amber); letter-spacing:.16em; font-size:11px; font-weight:900; }
+    .briefing h1 { font-size:28px; margin:7px 0 14px; }
+    .brief-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+    .brief-grid div { background:#0d1012; border:1px solid #343a3f; border-radius:8px; padding:9px; color:var(--muted); font-size:11px; }
+    .brief-grid strong { display:block; color:var(--text); margin-top:4px; font-size:14px; }
     @media (min-width:640px) { .modules { grid-template-columns:1fr 1fr; } .module:last-child { grid-column:1/-1; } }
   </style>
 </head>
 <body>
   <main class="app">
     <div class="topbar"><a class="back" href="../">← WWC GAMES</a><div class="title">DEFUSE // FIELD UNIT</div></div>
-    <section class="bomb" aria-label="Bomb defusal game">
+    <div class="mission-strip"><div>MISSION<strong id="missionNumber">#001</strong></div><div>LOCATION<strong id="location">WAREHOUSE 12</strong></div></div>
+    <section id="bomb" class="bomb" aria-label="Bomb defusal game">
+      <div class="id-plate"><div><div class="maker" id="manufacturer">BLACK SUN INDUSTRIES</div><div class="small">ORDNANCE DIVISION<br>AUTHORIZED TECHNICIANS ONLY</div></div><div class="small">MODEL: <span id="model">MK-IV THUNDER</span><br>YIELD: CLASSIFIED<br>LOT: <span id="lot">88-041</span></div></div>
       <div class="display-wrap"><div id="timer" class="timer">01:30</div></div>
       <div class="meta"><div>SERIAL<strong id="serial">----</strong></div><div>BATTERIES<strong id="batteries">0</strong></div></div>
-      <div id="status" class="status" aria-live="polite">Press ARM DEVICE to begin.</div>
+      <div id="status" class="status" aria-live="polite">Awaiting mission authorization.</div>
       <div class="modules">
         <section id="wireModule" class="module locked"><div class="module-head"><h2>MODULE 1: POWER ROUTE</h2><span class="lamp"></span></div><div id="wireRule" class="rule">Read the field rule and cut one wire.</div><div id="wireBank" class="wire-bank"></div></section>
         <section id="codeModule" class="module locked"><div class="module-head"><h2>MODULE 2: CODE CRACKER</h2><span class="lamp"></span></div><div id="codeRule" class="rule">Route power here, then run the brute-force program.</div><div id="codeDisplay" class="code-display">000</div><div id="keypad" class="keypad"></div></section>
         <section id="switchModule" class="module locked"><div class="module-head"><h2>MODULE 3: FIRING CIRCUIT</h2><span class="lamp"></span></div><div id="switchRule" class="rule">Switch sequence encrypted. Crack the access code first.</div><div id="switches" class="switches"></div><div class="controls"><button id="verify" class="secondary" type="button">VERIFY CIRCUIT</button></div></section>
       </div>
-      <div class="controls"><button id="start" class="primary" type="button">ARM DEVICE</button><button id="reset" class="secondary" type="button">NEW DEVICE</button></div>
+      <div class="controls"><button id="start" class="primary" type="button">VIEW BRIEFING</button><button id="reset" class="secondary" type="button">NEW DEVICE</button></div>
     </section>
   </main>
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true"><div id="result" class="result"><h1 id="resultTitle">DEVICE SAFE</h1><p id="resultText"></p><button id="again" class="primary" type="button">PLAY AGAIN</button></div></div>
+  <div id="briefOverlay" class="overlay" role="dialog" aria-modal="true"><div class="result briefing"><div class="eyebrow">FIELD MISSION</div><h1 id="briefTitle">WAREHOUSE 12</h1><div class="brief-grid"><div>MISSION<strong id="briefMission">#001</strong></div><div>DEVICE<strong id="briefModel">MK-IV THUNDER</strong></div><div>TIME LIMIT<strong>90 SECONDS</strong></div><div>THREAT<strong>ACTIVE ORDNANCE</strong></div></div><p id="briefText">A live device has been located. Establish a safe route, decrypt the firing circuit, and shut it down.</p><button id="begin" class="primary" type="button">BEGIN DEFUSAL</button></div></div>
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true"><div id="result" class="result"><h1 id="resultTitle">DEVICE SAFE</h1><p id="resultText"></p><button id="again" class="primary" type="button">NEXT MISSION</button></div></div>
 <script>
 (() => {
   const colors=[{name:'RED',hex:'#c83232'},{name:'BLUE',hex:'#2869bd'},{name:'YELLOW',hex:'#d1aa28'},{name:'GREEN',hex:'#2d9a58'},{name:'WHITE',hex:'#dedede'}];
+  const locations=['WAREHOUSE 12','BANK SUBLEVEL','SUBWAY SERVICE TUNNEL','RESEARCH ANNEX','FREIGHT TERMINAL','ABANDONED ARCADE'];
+  const manufacturers=['BLACK SUN INDUSTRIES','VANGUARD ORDNANCE','CINDERLINE SYSTEMS','NORTHSTAR DEFENSE'];
+  const models=['MK-IV THUNDER','MANTICORE-3','RAVEN FIELD UNIT','TITAN 88','VEX-9'];
   const $=id=>document.getElementById(id);
-  const state={running:false,seconds:90,timer:null,strikes:0,stage:0,cracker:null,crackNumber:0,routeColor:'',switchState:[false,false,false]};
+  const state={running:false,seconds:90,timer:null,strikes:0,stage:0,cracker:null,crackNumber:0,routeColor:'',switchState:[false,false,false],lastBeep:-1,audio:null};
   function rand(n){return Math.floor(Math.random()*n)}
   function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
   function serial(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ';return chars[rand(chars.length)]+(1+rand(9))+chars[rand(chars.length)]+(10+rand(90))}
-  function setup(){clearInterval(state.timer);clearInterval(state.cracker);Object.assign(state,{running:false,seconds:90,timer:null,strikes:0,stage:0,cracker:null,crackNumber:0,routeColor:'',switchState:[false,false,false]});$('overlay').classList.remove('show');$('timer').classList.remove('danger');$('timer').textContent='01:30';$('status').textContent='Press ARM DEVICE to begin.';$('start').disabled=false;$('start').textContent='ARM DEVICE';state.serial=serial();state.batteries=1+rand(4);$('serial').textContent=state.serial;$('batteries').textContent=state.batteries;buildWires();buildCode();buildSwitches();['wireModule','codeModule','switchModule'].forEach(id=>$(id).className='module locked')}
+  function beep(freq=700,duration=.06,volume=.035){try{state.audio=state.audio||new(window.AudioContext||window.webkitAudioContext)();const o=state.audio.createOscillator(),g=state.audio.createGain();o.frequency.value=freq;g.gain.value=volume;o.connect(g);g.connect(state.audio.destination);o.start();o.stop(state.audio.currentTime+duration)}catch(e){}}
+  function unlock(id){const el=$(id);el.classList.remove('locked');el.classList.add('unlocked');setTimeout(()=>el.classList.remove('unlocked'),400)}
+  function setup(){clearInterval(state.timer);clearInterval(state.cracker);Object.assign(state,{running:false,seconds:90,timer:null,strikes:0,stage:0,cracker:null,crackNumber:0,routeColor:'',switchState:[false,false,false],lastBeep:-1});document.body.classList.remove('critical');$('bomb').classList.remove('low-power');$('overlay').classList.remove('show');$('briefOverlay').classList.remove('show');$('timer').classList.remove('danger');$('timer').textContent='01:30';$('status').textContent='Awaiting mission authorization.';$('start').disabled=false;$('start').textContent='VIEW BRIEFING';state.serial=serial();state.batteries=1+rand(4);state.location=locations[rand(locations.length)];state.model=models[rand(models.length)];state.manufacturer=manufacturers[rand(manufacturers.length)];state.mission=String(1+rand(999)).padStart(3,'0');$('serial').textContent=state.serial;$('batteries').textContent=state.batteries;$('location').textContent=state.location;$('missionNumber').textContent='#'+state.mission;$('manufacturer').textContent=state.manufacturer;$('model').textContent=state.model;$('lot').textContent=`${70+rand(29)}-${String(1+rand(999)).padStart(3,'0')}`;$('briefTitle').textContent=state.location;$('briefMission').textContent='#'+state.mission;$('briefModel').textContent=state.model;buildWires();buildCode();buildSwitches();['wireModule','codeModule','switchModule'].forEach(id=>$(id).className='module locked')}
   function buildWires(){state.wires=shuffle(colors).slice(0,4);const serialDigit=Number(state.serial[state.serial.length-1]);if(serialDigit%2===0){state.correctWire=state.wires.findIndex(w=>w.name==='BLUE');if(state.correctWire<0)state.correctWire=state.wires.length-1;$('wireRule').textContent='Serial ends EVEN: cut BLUE. If no blue wire exists, cut the LAST wire.'}else{state.correctWire=state.wires.findIndex(w=>w.name==='RED');if(state.correctWire<0)state.correctWire=0;$('wireRule').textContent='Serial ends ODD: cut RED. If no red wire exists, cut the FIRST wire.'}$('wireBank').innerHTML='';state.wires.forEach((wire,i)=>{const b=document.createElement('button');b.className='wire';b.type='button';b.style.setProperty('--wire',wire.hex);b.setAttribute('aria-label',`Cut ${wire.name} wire`);b.innerHTML='<span></span>';b.addEventListener('click',()=>cutWire(i,b));$('wireBank').appendChild(b)})}
   function buildCode(){const serialNums=state.serial.match(/\d/g).map(Number);state.code=`${state.batteries}${serialNums[0]}${serialNums[serialNums.length-1]}`;state.crackNumber=0;$('codeRule').textContent='Waiting for a stable power route.';$('codeDisplay').textContent='000';$('keypad').innerHTML='';const b=document.createElement('button');b.type='button';b.id='crackerButton';b.className='key';b.textContent='START CRACKER';b.addEventListener('click',startCracker);$('keypad').appendChild(b)}
-  function buildSwitches(){$('switchRule').textContent='Switch sequence encrypted. Crack the access code first.';$('switches').innerHTML='';state.switchState=[false,false,false];['A','B','C'].forEach((label,i)=>{const b=document.createElement('button');b.type='button';b.className='switch';b.innerHTML=`<div class="toggle"></div>${label}`;b.addEventListener('click',()=>{if(!state.running||state.stage!==2)return;state.switchState[i]=!state.switchState[i];b.classList.toggle('on',state.switchState[i])});$('switches').appendChild(b)})}
-  function start(){if(state.running)return;state.running=true;state.stage=0;$('start').disabled=true;$('start').textContent='DEVICE ARMED';$('wireModule').classList.remove('locked');$('status').textContent='Device armed. Establish a safe power route before the clock expires.';state.timer=setInterval(()=>{state.seconds--;renderTime();if(state.seconds<=0)finish(false,'The countdown reached zero.')},1000)}
-  function renderTime(){const m=Math.floor(state.seconds/60),s=state.seconds%60;$('timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;$('timer').classList.toggle('danger',state.seconds<=20)}
-  function strike(msg){state.strikes++;state.seconds=Math.max(1,state.seconds-15);renderTime();if(navigator.vibrate)navigator.vibrate([100,60,180]);$('status').textContent=`STRIKE ${state.strikes}/2: ${msg} Fifteen seconds removed.`;if(state.strikes>=2)finish(false,'Two dangerous mistakes triggered the device.')}
-  function cutWire(i,button){if(!state.running||state.stage!==0||button.classList.contains('cut'))return;button.classList.add('cut');if(i===state.correctWire){state.routeColor=state.wires[i].name;solve('wireModule',`${state.routeColor} power route stable. Code cracker is online.`);state.stage=1;$('codeRule').textContent=`${state.routeColor} route connected. Run brute force to decrypt the firing circuit.`;$('codeModule').classList.remove('locked')}else strike('Wrong power route.')}
-  function startCracker(){if(!state.running||state.stage!==1||state.cracker)return;const button=$('crackerButton');button.disabled=true;button.textContent='CRACKING...';$('status').textContent=`BRUTE FORCE RUNNING through the ${state.routeColor} route. Decrypting circuit data...`;state.cracker=setInterval(()=>{if(!state.running||state.stage!==1){clearInterval(state.cracker);state.cracker=null;return}const attempt=String(state.crackNumber).padStart(3,'0');$('codeDisplay').textContent=attempt;if(attempt===state.code){clearInterval(state.cracker);state.cracker=null;button.textContent='CODE FOUND';decodeSwitches(attempt);solve('codeModule',`Code ${attempt} accepted. Firing-circuit sequence decrypted.`);state.stage=2;$('switchModule').classList.remove('locked');if(navigator.vibrate)navigator.vibrate([60,40,120]);return}state.crackNumber++},18)}
+  function buildSwitches(){$('switchRule').textContent='Switch sequence encrypted. Crack the access code first.';$('switches').innerHTML='';state.switchState=[false,false,false];['A','B','C'].forEach((label,i)=>{const b=document.createElement('button');b.type='button';b.className='switch';b.innerHTML=`<div class="toggle"></div>${label}`;b.addEventListener('click',()=>{if(!state.running||state.stage!==2)return;state.switchState[i]=!state.switchState[i];b.classList.toggle('on',state.switchState[i]);beep(state.switchState[i]?520:380,.035,.02)});$('switches').appendChild(b)})}
+  function showBrief(){if(state.running)return;$('briefOverlay').classList.add('show')}
+  function start(){if(state.running)return;$('briefOverlay').classList.remove('show');state.running=true;state.stage=0;$('start').disabled=true;$('start').textContent='DEVICE ARMED';unlock('wireModule');$('status').textContent=`Control to technician: live device confirmed at ${state.location}. Establish a safe power route.`;beep(920,.12,.05);state.timer=setInterval(()=>{state.seconds--;renderTime();if(state.seconds<=0)finish(false,'The countdown reached zero.')},1000)}
+  function renderTime(){const m=Math.floor(state.seconds/60),s=state.seconds%60;$('timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;$('timer').classList.toggle('danger',state.seconds<=20);document.body.classList.toggle('critical',state.seconds<=5);$('bomb').classList.toggle('low-power',state.seconds<=1);let cadence=0;if(state.seconds<=10)cadence=1;else if(state.seconds<=20)cadence=2;else if(state.seconds<=30)cadence=5;if(cadence&&state.seconds%cadence===0&&state.lastBeep!==state.seconds){state.lastBeep=state.seconds;beep(state.seconds<=5?1100:760,state.seconds<=5?.08:.045,state.seconds<=5?.055:.03)}if(state.seconds===30)$('status').textContent='Control: thirty seconds. Keep moving.';if(state.seconds===15)$('status').textContent='Control: fifteen seconds. Final circuit must be isolated now.';if(state.seconds===5)$('status').textContent='Control: five seconds. Do not stop.'}
+  function strike(msg){state.strikes++;state.seconds=Math.max(1,state.seconds-15);renderTime();beep(170,.25,.07);if(navigator.vibrate)navigator.vibrate([100,60,180]);$('status').textContent=`STRIKE ${state.strikes}/2: ${msg} Fifteen seconds removed.`;if(state.strikes>=2)finish(false,'Two dangerous mistakes triggered the device.')}
+  function cutWire(i,button){if(!state.running||state.stage!==0||button.classList.contains('cut'))return;button.classList.add('cut');if(i===state.correctWire){state.routeColor=state.wires[i].name;solve('wireModule',`${state.routeColor} power route stable. Code cracker is online.`);state.stage=1;$('codeRule').textContent=`${state.routeColor} route connected. Run brute force to decrypt the firing circuit.`;unlock('codeModule')}else strike('Wrong power route.')}
+  function startCracker(){if(!state.running||state.stage!==1||state.cracker)return;const button=$('crackerButton');button.disabled=true;button.textContent='CRACKING...';$('status').textContent=`Brute force running through the ${state.routeColor} route. Decrypting circuit data.`;state.cracker=setInterval(()=>{if(!state.running||state.stage!==1){clearInterval(state.cracker);state.cracker=null;return}const attempt=String(state.crackNumber).padStart(3,'0');$('codeDisplay').textContent=attempt;if(attempt===state.code){clearInterval(state.cracker);state.cracker=null;button.textContent='CODE FOUND';decodeSwitches(attempt);solve('codeModule',`Code ${attempt} accepted. Firing-circuit sequence decrypted.`);state.stage=2;unlock('switchModule');beep(880,.08,.04);if(navigator.vibrate)navigator.vibrate([60,40,120]);return}state.crackNumber++},18)}
   function decodeSwitches(code){const codeEven=Number(code[2])%2===0;if(state.routeColor==='BLUE')state.switchTarget=codeEven?[true,false,true]:[true,true,false];else if(state.routeColor==='RED')state.switchTarget=codeEven?[false,true,false]:[false,false,true];else state.switchTarget=codeEven?[true,false,false]:[false,true,true];const words=state.switchTarget.map(v=>v?'UP':'DOWN');$('switchRule').textContent=`DECRYPTED: ${state.routeColor} route + code ${code}. Set ${words.join(' / ')}.`}
   function verify(){if(!state.running||state.stage!==2)return;const good=state.switchState.every((v,i)=>v===state.switchTarget[i]);if(good){solve('switchModule','Firing circuit isolated. Device disarmed.');finish(true,'You rerouted power, cracked the code, and isolated the firing circuit.')}else strike('Firing-circuit pattern rejected.')}
-  function solve(id,msg){$(id).classList.add('solved');$(id).classList.remove('locked');$('status').textContent=msg;if(navigator.vibrate)navigator.vibrate(80)}
-  function finish(win,msg){if(!state.running)return;state.running=false;clearInterval(state.timer);clearInterval(state.cracker);state.cracker=null;$('result').className='result '+(win?'win':'lose');$('resultTitle').textContent=win?'DEVICE SAFE':'DETONATED';$('resultText').textContent=win?`${msg} Remaining time: ${$('timer').textContent}. Strikes: ${state.strikes}.`:msg;$('overlay').classList.add('show');if(navigator.vibrate)navigator.vibrate(win?[80,50,80]:[250,80,250,80,400])}
-  $('start').addEventListener('click',start);$('reset').addEventListener('click',setup);$('verify').addEventListener('click',verify);$('again').addEventListener('click',setup);setup();
+  function solve(id,msg){$(id).classList.add('solved');$(id).classList.remove('locked');$('status').textContent=msg;beep(640,.07,.035);if(navigator.vibrate)navigator.vibrate(80)}
+  function finish(win,msg){if(!state.running)return;state.running=false;clearInterval(state.timer);clearInterval(state.cracker);state.cracker=null;document.body.classList.remove('critical');$('bomb').classList.remove('low-power');$('result').className='result '+(win?'win':'lose');$('resultTitle').textContent=win?'DEVICE SAFE':'DETONATED';$('resultText').textContent=win?`${msg} Remaining time: ${$('timer').textContent}. Strikes: ${state.strikes}.`:msg;$('overlay').classList.add('show');beep(win?980:95,win?.18:.55,win?.05:.09);if(navigator.vibrate)navigator.vibrate(win?[80,50,80]:[250,80,250,80,400])}
+  $('start').addEventListener('click',showBrief);$('begin').addEventListener('click',start);$('reset').addEventListener('click',setup);$('verify').addEventListener('click',verify);$('again').addEventListener('click',setup);setup();
 })();
 </script>
 </body>
