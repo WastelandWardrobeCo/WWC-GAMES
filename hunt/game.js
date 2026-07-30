@@ -17,28 +17,28 @@ const contracts = [
 ];
 
 const cards = [
-  { id: 'spear', name: 'Spear Thrust', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 5 damage. Apply Exposed.', effect: g => attack(g, 5, { exposed: 2 }) },
-  { id: 'aimed', name: 'Aimed Shot', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 6 damage. +2 if target has not acted this round.', effect: g => attack(g, 6 + (g.target.acted ? 0 : 2)) },
-  { id: 'hamstring', name: 'Hamstring Cut', type: 'Attack', cost: 2, rarity: 'Sharp', text: 'Deal 4 damage. Apply Bleed 2 and Root.', effect: g => attack(g, 4, { bleed: 2, root: 1 }) },
+  { id: 'spear', name: 'Spear Thrust', actor: 'delilah', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 5 damage. If the target is Exposed, deal +3.', effect: g => attack(g, 5 + (g.target.status.exposed ? 3 : 0)) },
+  { id: 'aimed', name: 'Aimed Shot', actor: 'delilah', type: 'Attack', cost: 1, rarity: 'Roadworn', text: 'Deal 6 damage. If the target has not acted, deal +3 and apply Exposed.', effect: g => { const opening = !g.target.acted; attack(g, 6 + (opening ? 3 : 0), opening ? { exposed: 2 } : {}); } },
+  { id: 'hamstring', name: 'Hamstring Cut', actor: 'delilah', type: 'Attack', cost: 2, rarity: 'Sharp', text: 'Deal 4 damage. Apply Bleed 2 and Root. If the target was Moving, draw 1.', effect: g => { const moving = movingIntent(g.target); attack(g, 4, { bleed: 2, root: 1 }); if (moving) draw(1); } },
   { id: 'throat', name: 'Through the Throat', type: 'Attack', cost: 2, rarity: 'Blackmark', text: 'Deal 10. If target is Terrified, gain 1 Action.', effect: g => { attack(g, 10); if (g.target.status.terrified) gainActions(1, 'terror opening'); } },
-  { id: 'scent', name: 'Scent Trail', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Reveal intent. Gain 2 Instinct. Lady attacks deal +1 per Instinct.', effect: () => { state.ladyInstinct += 2; state.intentClear = true; log('Lady reads the camp. Enemy intent is clear.'); } },
-  { id: 'growl', name: 'Warning Growl', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Apply Terrified. Also Weakened: target deals 3 less damage next attack.', effect: g => { addStatus(g.target, 'terrified', 2); addStatus(g.target, 'weakened', 1); log(`${g.target.name} falters under Lady's growl.`); } },
-  { id: 'pack', name: 'Pack Rush', type: 'Instinct', cost: 2, rarity: 'Sharp', text: 'Lady deals 5 damage. Apply Flanked.', effect: g => attack(g, 5 + state.ladyInstinct, { flanked: 2 }, 'Lady') },
-  { id: 'lunge', name: 'Protective Lunge', type: 'Survival', cost: 1, rarity: 'Sharp', text: 'Prevent next attack against Delilah.', effect: () => { state.guard += 1; state.ladyInstinct += 1; log('Lady interposes herself. Next hit is guarded.'); } },
-  { id: 'snare', name: 'Set Snare', type: 'Tactic', cost: 2, rarity: 'Roadworn', text: 'Place a trap. Moving enemies take 7 and Root.', effect: () => { state.traps += relic('Rusted Trap Kit') && !state.freeTrapUsed ? 2 : 1; state.freeTrapUsed = true; log('Delilah sets wire low in the mud.'); } },
-  { id: 'step', name: 'Evasive Step', type: 'Survival', cost: 0, rarity: 'Roadworn', text: 'Gain Dodge. Draw 1.', effect: () => { state.dodge += 1; draw(1); log('Delilah changes the angle.'); } },
-  { id: 'funnel', name: 'Funnel Path', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Enemies with Moving intent become Exposed when they move.', effect: () => { state.funnel = true; log('The only clean path is the one Delilah chose.'); } },
-  { id: 'poison', name: 'Poison Coating', type: 'Preparation', cost: 1, rarity: 'Sharp', text: 'Next attack applies Bleed 4.', effect: () => { state.nextBleed += 4; log('The spear darkens with poison.'); } },
-  { id: 'silent', name: 'Silent Advance', type: 'Preparation', cost: 1, rarity: 'Blackmark', text: 'First attack next turn deals +4.', effect: () => { state.nextTurnBonus += 4; log('Delilah and Lady disappear into the rain.'); } },
-  { id: 'bandage', name: 'Bandage', type: 'Survival', cost: 1, rarity: 'Roadworn', text: 'Choose Delilah or Lady. Recover 6 Health. If Delilah is chosen, remove Bleed.', effect: g => { const ally = g?.ally === 'lady' ? 'lady' : 'delilah'; heal(ally, 6); if (ally === 'delilah') state.bleed = 0; log(ally === 'lady' ? 'Lady settles under clean bandages.' : 'Bandages, teeth, breath. Still alive.'); } },
-  { id: 'sync', name: 'Synchronized Kill', type: 'Synchronized', cost: 2, rarity: 'Rare', text: 'Deal 10. Execute below 25% if Bleeding or Flanked.', effect: g => { attack(g, 10 + (relic('Wolf Fang Charm') ? 2 : 0), {}, 'Delilah and Lady'); if ((g.target.status.bleed || g.target.status.flanked) && g.target.hp <= g.target.max * .25) { g.target.hp = 0; log('Synchronized execution. The hunt is already over.'); } } },
+  { id: 'scent', name: 'Scent Trail', actor: 'lady', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: "Reveal enemy intent. Lady's next card this turn deals +3.", effect: () => { state.intentClear = true; state.ladyNextDamage += 3; synergyFeedback('SCENT LOCK', "Lady's next card deals +3"); } },
+  { id: 'growl', name: 'Warning Growl', actor: 'lady', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Apply Terrified. Target deals 3 less damage next action. If Lady acted earlier this turn, draw 1.', effect: g => { const followUp = state.combo.ladyCardsThisTurn > 0; addStatus(g.target, 'terrified', 2); addStatus(g.target, 'weakened', 1); if (followUp) draw(1); log(`${g.target.name} falters under Lady's growl.`); } },
+  { id: 'pack', name: 'Pack Rush', actor: 'lady', type: 'Instinct', cost: 1, rarity: 'Sharp', text: 'Lady deals 5 damage. Apply Flanked. Your next Delilah Attack costs 1 less.', effect: g => { attack(g, 5 + state.ladyInstinct, { flanked: 2 }, 'Lady'); state.nextDelilahAttackDiscount = Math.max(1, state.nextDelilahAttackDiscount); synergyFeedback('PACK FOLLOW-UP', 'Next Delilah Attack costs 1 less'); } },
+  { id: 'lunge', name: 'Protective Lunge', actor: 'lady', type: 'Survival', cost: 1, rarity: 'Sharp', text: 'Prevent the next attack against Delilah. Lady applies Flanked to that attacker.', effect: () => { state.guard += 1; state.protectiveFlank = true; log('Lady interposes herself and waits to turn the attacker.'); } },
+  { id: 'snare', name: 'Set Snare', actor: 'delilah', type: 'Tactic', cost: 1, rarity: 'Roadworn', text: 'Trap the target. When it acts or moves, deal 7 damage, Root it, and reduce its damage.', effect: g => { state.targetedTraps[g.target.id] = { damage: 7, weaken: 2, cardId: 'snare' }; log(`Delilah sets wire in ${g.target.name}'s path.`); } },
+  { id: 'step', name: 'Evasive Step', actor: 'delilah', type: 'Survival', cost: 0, rarity: 'Roadworn', text: 'Gain Dodge. Draw 1. Your next Attack deals +2.', effect: () => { state.dodge += 1; state.nextAttackBonus += 2; draw(1); log('Delilah changes the angle without losing tempo.'); } },
+  { id: 'funnel', name: 'Funnel Path', actor: 'neutral', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Moving enemies become Exposed. The next time a Moving enemy acts, draw 1.', effect: () => { state.funnel = true; state.funnelDraw = true; log('The only clean path now belongs to the hunters.'); } },
+  { id: 'poison', name: 'Poison Coating', actor: 'delilah', type: 'Preparation', cost: 1, rarity: 'Sharp', text: 'The next two Attacks apply Bleed 2. Against a Bleeding target, deal +2.', effect: () => { state.poisonCharges = 2; synergyFeedback('POISON READY', 'Next two Attacks apply Bleed 2'); } },
+  { id: 'silent', name: 'Silent Advance', actor: 'neutral', type: 'Preparation', cost: 1, rarity: 'Blackmark', text: 'The next two Attacks deal +2. Draw 1.', effect: () => { state.nextAttackCharges += 2; state.nextAttackChargeBonus = Math.max(state.nextAttackChargeBonus, 2); draw(1); synergyFeedback('SILENT ADVANCE', 'Next two Attacks gain +2'); } },
+  { id: 'bandage', name: 'Bandage', actor: 'neutral', type: 'Survival', cost: 1, rarity: 'Roadworn', text: 'Recover 6 Health. Remove Bleed. If Bleed was removed, draw 1.', effect: g => { const ally = g?.ally === 'lady' ? 'lady' : 'delilah'; const removed = ally === 'delilah' && state.bleed > 0; heal(ally, 6); if (ally === 'delilah') state.bleed = 0; if (removed) draw(1); log(removed ? 'Bandage clears the Bleed and keeps the hunt moving.' : `${ally === 'lady' ? 'Lady' : 'Delilah'} recovers 6.`); } },
+  { id: 'sync', name: 'Synchronized Kill', actor: 'both', type: 'Synchronized', cost: 2, rarity: 'Rare', text: 'Deal 10. Deal +6 if Lady and Delilah acted this turn. Execute below 25% if Bleeding or Flanked.', effect: g => { const coordinated = coordinatedThisTurn(); attack(g, 10 + (coordinated ? 6 : 0) + (relic('Wolf Fang Charm') ? 2 : 0), {}, 'Delilah and Lady'); if (coordinated) synergyFeedback('SYNCHRONIZED', 'Lady and Delilah acted this turn'); if ((g.target.status.bleed || g.target.status.flanked) && g.target.hp <= g.target.max * .25) { g.target.hp = 0; log('Synchronized execution. The hunt is already over.'); } } },
   { id: 'bloodmark', name: 'Blood Mark', type: 'Tactic', cost: 1, rarity: 'Sharp', text: 'Apply Exposed 3. Draw 1.', effect: g => { addStatus(g.target, 'exposed', 3); draw(1); log(`${g.target.name} is marked in blood.`); } },
   { id: 'wolf-feint', name: 'Wolf Feint', type: 'Instinct', cost: 1, rarity: 'Roadworn', text: 'Apply Flanked. Gain 1 Dodge.', effect: g => { addStatus(g.target, 'flanked', 2); state.dodge += 1; log('Lady pulls the enemy off balance.'); } },
   { id: 'rain-bolts', name: 'Rain of Bolts', type: 'Attack', cost: 2, rarity: 'Sharp', text: 'Deal 3 damage to all enemies.', effect: () => { state.enemies.filter(e => e.hp > 0).forEach(e => e.hp = Math.max(0, e.hp - 3)); log('Bolts rake the whole line for 3.'); } },
   { id: 'tripwire', name: 'Tripwire', type: 'Tactic', cost: 1, rarity: 'Roadworn', text: 'Place a light trap. Draw 1.', effect: () => { state.traps += 1; draw(1); log('A light trap waits under wet leaves.'); } },
   { id: 'last-breath', name: 'Last Breath', type: 'Survival', cost: 0, rarity: 'Blackmark', text: 'If Delilah is below half HP, recover 5.', effect: () => { if (state.delilah.hp < state.delilah.max / 2) heal('delilah', 5); log('Delilah forces one more breath.'); } },
   { id: 'obelisk', name: 'Obelisk Breaker', type: 'Attack', cost: 3, rarity: 'Rare', text: 'Deal 14 damage. +4 against Ritual enemies.', effect: g => attack(g, 14 + (g.target.key === 'acolyte' || g.target.key === 'leader' ? 4 : 0)) },
-  { id: 'moon-ambush', name: 'Moonlit Ambush', type: 'Preparation', cost: 1, rarity: 'Rare', text: 'Next attack deals +6 and applies Terrified.', effect: () => { state.nextTurnBonus += 6; state.nextTerror += 1; log('The moon gives Delilah one clean angle.'); } },
+  { id: 'moon-ambush', name: 'Moonlit Ambush', actor: 'neutral', type: 'Preparation', cost: 1, rarity: 'Rare', text: 'Your next Attack costs 0 and applies Terrified.', effect: () => { state.nextAttackFree = true; state.nextTerror = Math.max(2, state.nextTerror); synergyFeedback('AMBUSH READY', 'Next Attack costs 0'); } },
   { id: 'shared-pulse', name: 'Shared Pulse', type: 'Synchronized', cost: 2, rarity: 'Legendary', text: 'Deal 7 damage. Heal Lady and Delilah 3.', effect: g => { attack(g, 7 + (relic('Wolf Fang Charm') ? 2 : 0), {}, 'Shared Pulse'); heal('delilah', 3); heal('lady', 3); } }
 ];
 
@@ -69,7 +69,7 @@ cards.push(
   { id: 'red-door', name: 'Red Door', type: 'Preparation', cost: 2, rarity: 'Epic', text: 'Next two attacks deal +5.', effect: () => { state.nextAttackCharges = (state.nextAttackCharges || 0) + 2; state.nextAttackChargeBonus = 5; log('The red door opens. Two attacks get teeth.'); } },
   { id: 'wolf-saint', name: 'Wolf Saint', type: 'Instinct', cost: 2, rarity: 'Epic', text: 'Prevent all damage this enemy turn. Draw 1.', effect: () => { state.guardAll = true; draw(1); log('Lady becomes a wall no ritual can cross.'); } },
   { id: 'grave-silence', name: 'Grave Silence', type: 'Tactic', cost: 2, rarity: 'Epic', text: 'Cancel all Reinforcements. Terrify all enemies.', effect: () => { state.silenceReinforcements = true; state.enemies.filter(e => e.hp > 0).forEach(e => addStatus(e, 'terrified', 2)); log('The camp tries to call out. Nothing answers.'); } },
-  { id: 'done-here', name: "C'mon, Lady... We're Done Here", type: 'Synchronized', cost: 3, rarity: 'Legendary', text: 'Deal 18 damage. Execute if Bleeding, Flanked, or Terrified below 40%.', effect: g => { attack(g, 18 + (relic('Wolf Fang Charm') ? 2 : 0), {}, 'Delilah and Lady'); if ((g.target.status.bleed || g.target.status.flanked || g.target.status.terrified) && g.target.hp <= g.target.max * .4) { g.target.hp = 0; log("Nothing survives when they're already leaving."); } } },
+  { id: 'done-here', name: "C'mon, Lady... We're Done Here", actor: 'both', type: 'Synchronized', cost: 3, rarity: 'Legendary', text: 'Deal 18 damage. Execute below 40% if both hunters acted and the target has at least two negative statuses.', effect: g => { const coordinated = coordinatedThisTurn(); const statuses = negativeStatusCount(g.target); attack(g, 18 + (relic('Wolf Fang Charm') ? 2 : 0), {}, 'Delilah and Lady'); if (coordinated && statuses >= 2 && g.target.hp <= g.target.max * .4) { g.target.hp = 0; synergyFeedback('THE HUNT ENDS', 'Coordinated execution'); log("Nothing survives when they're already leaving."); } } },
   { id: 'black-road-myth', name: 'Black Road Myth', type: 'Legend', cost: 2, rarity: 'Legendary', text: 'Draw 3. This turn, Synchronized cards cost 1 less.', effect: () => { draw(3); state.syncDiscount = true; log('The Black Road remembers their names.'); } }
 );
 
@@ -88,6 +88,16 @@ const forgeCards = [
 
 cards.push(...forgeCards);
 
+function defaultCardActor(cardRecord) {
+  if (cardRecord.actor) return cardRecord.actor;
+  if (cardRecord.type === 'Instinct') return 'lady';
+  if (cardRecord.type === 'Synchronized' || cardRecord.type === 'Legend') return 'both';
+  if (cardRecord.type === 'Attack') return 'delilah';
+  return 'neutral';
+}
+
+cards.forEach(cardRecord => { cardRecord.actor = defaultCardActor(cardRecord); });
+
 const BUILT_IN_CARD_IDS = new Set(cards.map(c => c.id));
 const customCardRecords = new Map();
 const STUDIO_ACTIONS = new Set(['damage', 'conditionalDamage', 'block', 'armor', 'heal', 'status', 'draw', 'energy', 'execute']);
@@ -102,6 +112,7 @@ function applyCanonicalCardCatalog(records) {
     if (!definition) return;
     const mechanics = {
       effect: cardRecord.effect,
+      actor: cardRecord.actor,
       forgeOnly: cardRecord.forgeOnly,
       customTarget: cardRecord.customTarget
     };
@@ -380,7 +391,34 @@ function freshState() {
     enemies: [], targetId: null, log: [],
     enemyActionEvents: [], debugEvents: [],
       guard: 0, dodge: 0, traps: 0, ladyInstinct: 0, intentClear: false, funnel: false, nextBleed: 0, nextTurnBonus: 0, nextTerror: 0, nextSyncBonus: 0, syncBleedBonus: 0, bleed: 0, freeTrapUsed: false,
+    combo: freshTurnCombo(),
+    nextDelilahAttackDiscount: 0, nextAttackBonus: 0, nextAttackFree: false, ladyNextDamage: 0,
+    poisonCharges: 0, funnelDraw: false, protectiveFlank: false, targetedTraps: {},
+    combatTelemetry: freshCombatTelemetry(),
     reinforcements: 0, huntLost: false, pendingRewardCard: null, pendingFinal: false, pendingRunRewardCards: []
+  };
+}
+
+function freshTurnCombo() {
+  return {
+    lastCardType: null,
+    lastActor: null,
+    ladyCardsThisTurn: 0,
+    delilahCardsThisTurn: 0,
+    preparationPlayedThisTurn: false,
+    statusesAppliedThisTurn: [],
+    cardsPlayedThisTurn: []
+  };
+}
+
+function freshCombatTelemetry() {
+  return {
+    startedAt: new Date().toISOString(),
+    cards: {},
+    damagePrevented: 0,
+    healing: 0,
+    result: 'active',
+    rounds: 0
   };
 }
 
@@ -1690,8 +1728,12 @@ function startEncounter(options = {}) {
   state.deck = shuffle([...activeCombatDeck()]);
   state.discard = [];
   state.hand = [];
-  state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.nextSyncBonus = 0; state.syncBleedBonus = 0; state.currentCardType = ''; state.freeTrapUsed = false;
+  state.guard = 0; state.dodge = 0; state.traps = 0; state.ladyInstinct = 0; state.intentClear = false; state.funnel = false; state.nextBleed = 0; state.nextTurnBonus = 0; state.nextTerror = 0; state.nextSyncBonus = 0; state.syncBleedBonus = 0; state.currentCardType = ''; state.currentCardId = ''; state.currentCardActor = ''; state.freeTrapUsed = false;
   state.enemyActionText = ''; state.enemyActionPulse = ''; state.nextActionPenalty = 0; state.retaliate = 0; state.guardAll = false; state.fiveCount = false; state.killLane = false; state.silenceReinforcements = false; state.nextAttackCharges = 0; state.nextAttackChargeBonus = 0; state.syncDiscount = false;
+  state.combo = freshTurnCombo();
+  state.nextDelilahAttackDiscount = 0; state.nextAttackBonus = 0; state.nextAttackFree = false; state.ladyNextDamage = 0; state.poisonCharges = 0;
+  state.funnelDraw = false; state.protectiveFlank = false; state.targetedTraps = {};
+  state.combatTelemetry = freshCombatTelemetry();
   state.enemyActionEvents = [];
   state.runFirstAttackReady = isRunActive() && state.run.relics.includes('honed-edge');
   if (isRunActive() && state.run.relics.includes('trail-dodge')) state.dodge = 1;
@@ -1761,7 +1803,11 @@ function draw(n) {
       state.discard = [];
     }
     const next = state.deck.pop();
-    if (next) state.hand.push({ id: next, fresh: true, drawId: `${Date.now()}-${Math.random()}` });
+    if (next) {
+      state.hand.push({ id: next, fresh: true, drawId: `${Date.now()}-${Math.random()}` });
+      telemetryCard(next).drawn += 1;
+      if (state.currentCardId) telemetryCard(state.currentCardId).createdDraw += 1;
+    }
   }
 }
 
@@ -1954,13 +2000,22 @@ function resolveBandageChoice(ally) {
 
 function resolveCardPlay(index, c, playCost, payload) {
   playSoundCue(c.type === 'Synchronized' ? 'synchronized' : c.type === 'Tactic' ? 'tactic' : 'play-card');
+  const usedFreeAttack = c.type === 'Attack' && state.nextAttackFree;
   state.actions -= playCost;
   state.hand.splice(index, 1);
   state.discard.push(c.id);
   const before = target();
   state.currentCardType = c.type;
+  state.currentCardId = c.id;
+  state.currentCardActor = defaultCardActor(c);
+  recordCardPlay(c, playCost);
+  if (usedFreeAttack) state.nextAttackFree = false;
+  else if (c.type === 'Attack' && state.currentCardActor === 'delilah' && state.nextDelilahAttackDiscount) state.nextDelilahAttackDiscount = 0;
   c.effect({ ...payload, target: payload?.target || before });
+  recordComboPlay(c);
   state.currentCardType = '';
+  state.currentCardId = '';
+  state.currentCardActor = '';
   cleanupDead();
   const after = target();
   if (before && before.hp <= 0 && after && before.id !== after.id && cardScope(c) === 'Target') {
@@ -1972,7 +2027,17 @@ function resolveCardPlay(index, c, playCost, payload) {
 
 function attack(g, base, status = {}, source = 'Delilah') {
   const e = g.target;
-  let dmg = base + (e.status.exposed ? 2 : 0) + state.nextTurnBonus;
+  const hpBefore = e.hp;
+  let dmg = base + (e.status.exposed ? 2 : 0) + state.nextTurnBonus + state.nextAttackBonus;
+  if (state.currentCardActor === 'lady' && state.ladyNextDamage) {
+    dmg += state.ladyNextDamage;
+    state.ladyNextDamage = 0;
+  }
+  if (state.poisonCharges > 0) {
+    if (e.status.bleed) dmg += 2;
+    status.bleed = Math.max(status.bleed || 0, 2);
+    state.poisonCharges -= 1;
+  }
   if (state.runFirstAttackReady) { dmg += 2; state.runFirstAttackReady = false; }
   const synchronized = state.currentCardType === 'Synchronized' || /Lady|Shared|Pack Angle|Synchronized/i.test(source);
   if (synchronized && e.status.bleed && state.syncBleedBonus) dmg += state.syncBleedBonus;
@@ -1988,8 +2053,10 @@ function attack(g, base, status = {}, source = 'Delilah') {
   if (state.nextTerror) status.terrified = (status.terrified || 0) + state.nextTerror;
   state.nextBleed = 0;
   state.nextTurnBonus = 0;
+  state.nextAttackBonus = 0;
   state.nextTerror = 0;
   e.hp = Math.max(0, e.hp - dmg);
+  if (state.currentCardId) telemetryCard(state.currentCardId).damage += hpBefore - e.hp;
   Object.entries(status).forEach(([k, v]) => addStatus(e, k, v));
   log(`<b>${source}</b> hits ${e.name} for ${dmg}.`);
   playSoundCue(source === 'Lady' ? 'lady-attack' : 'attack');
@@ -2009,8 +2076,11 @@ function cardScope(c) {
 }
 
 function effectiveCost(c) {
-  if (state.syncDiscount && c.type === 'Synchronized') return Math.max(0, c.cost - 1);
-  return c.cost;
+  let cost = c.cost;
+  if (state.syncDiscount && c.type === 'Synchronized') cost -= 1;
+  if (c.type === 'Attack' && state.nextAttackFree) return 0;
+  if (c.type === 'Attack' && defaultCardActor(c) === 'delilah' && state.nextDelilahAttackDiscount) cost -= state.nextDelilahAttackDiscount;
+  return Math.max(0, cost);
 }
 
 function normalizedRarity(rarity) {
@@ -2102,8 +2172,72 @@ function syncProgression() {
   state.rep = reputationForRank(state.rank);
 }
 
+function coordinatedThisTurn() {
+  return state.combo.ladyCardsThisTurn > 0 && state.combo.delilahCardsThisTurn > 0;
+}
+
+function negativeStatusCount(enemy) {
+  return ['bleed', 'exposed', 'flanked', 'terrified', 'root', 'weakened'].filter(key => enemy.status[key] > 0).length;
+}
+
+function recordComboPlay(cardRecord) {
+  const actor = defaultCardActor(cardRecord);
+  if (actor === 'lady' || actor === 'both') state.combo.ladyCardsThisTurn += 1;
+  if (actor === 'delilah' || actor === 'both') state.combo.delilahCardsThisTurn += 1;
+  state.combo.lastCardType = cardRecord.type;
+  state.combo.lastActor = actor;
+  state.combo.preparationPlayedThisTurn ||= cardRecord.type === 'Preparation';
+  state.combo.cardsPlayedThisTurn.push(cardRecord.id);
+}
+
+function synergyFeedback(title, detail) {
+  log(`<b>${title}</b> - ${detail}.`);
+  showToast(`${title} · ${detail}`);
+}
+
+function telemetryCard(id) {
+  state.combatTelemetry ||= freshCombatTelemetry();
+  state.combatTelemetry.cards[id] ||= {
+    drawn: 0,
+    played: 0,
+    damage: 0,
+    healing: 0,
+    createdDraw: 0,
+    reducedCost: 0,
+    turns: []
+  };
+  return state.combatTelemetry.cards[id];
+}
+
+function recordCardPlay(cardRecord, paidCost) {
+  const entry = telemetryCard(cardRecord.id);
+  entry.played += 1;
+  entry.turns.push(state.turn);
+  if (paidCost < cardRecord.cost) entry.reducedCost += cardRecord.cost - paidCost;
+}
+
+function finalizeCombatTelemetry(result) {
+  if (!state.combatTelemetry || state.combatTelemetry.result !== 'active') return;
+  state.combatTelemetry.result = result;
+  state.combatTelemetry.rounds = state.turn;
+  state.combatTelemetry.completedAt = new Date().toISOString();
+  const cardsSummary = Object.entries(state.combatTelemetry.cards)
+    .map(([id, value]) => ({ id, ...value, neverPlayed: Math.max(0, value.drawn - value.played) }))
+    .sort((a, b) => b.played - a.played || b.drawn - a.drawn);
+  const summary = { ...state.combatTelemetry, cards: cardsSummary };
+  try {
+    const key = 'ladyDelilahCombatTelemetry.v1';
+    const history = JSON.parse(localStorage.getItem(key) || '[]');
+    localStorage.setItem(key, JSON.stringify([...(Array.isArray(history) ? history : []), summary].slice(-20)));
+  } catch {}
+  console.groupCollapsed(`Combat Summary: ${result} in ${state.turn} rounds`);
+  cardsSummary.forEach(item => console.log(`${card(item.id)?.name || item.id}: drawn ${item.drawn}, played ${item.played}, damage ${item.damage}`));
+  console.groupEnd();
+}
+
 function addStatus(e, k, v) {
   e.status[k] = Math.max(e.status[k] || 0, v);
+  if (v > 0 && state.currentCardId && !state.combo.statusesAppliedThisTurn.includes(k)) state.combo.statusesAppliedThisTurn.push(k);
 }
 
 function gainActions(n, why) {
@@ -2113,7 +2247,10 @@ function gainActions(n, why) {
 
 function heal(who, n) {
   const h = state[who];
+  const before = h.hp;
   h.hp = Math.min(h.max, h.hp + n);
+  if (state.currentCardId) telemetryCard(state.currentCardId).healing += h.hp - before;
+  if (state.combatTelemetry) state.combatTelemetry.healing += h.hp - before;
   playSoundCue('heal');
 }
 
@@ -2145,6 +2282,8 @@ function endTurn() {
   state.nextActionPenalty = 0;
   state.guard = 0;
   state.dodge = 0;
+  state.combo = freshTurnCombo();
+  state.ladyNextDamage = 0;
   state.fiveCount = false;
   state.syncDiscount = false;
   draw(Math.max(0, 5 - state.hand.length));
@@ -2158,14 +2297,37 @@ function enemiesAct() {
   state.enemyActionPulse = '';
   state.enemyActionEvents = [];
   state.enemies.filter(e => e.hp > 0).forEach(e => {
-    if (e.status.root) { log(`${e.name} is rooted and loses position.`); return; }
+    const moving = movingIntent(e);
+    let trapTriggered = false;
+    const targetedTrap = state.targetedTraps[e.id];
+    if (targetedTrap) {
+      delete state.targetedTraps[e.id];
+      const before = e.hp;
+      e.hp = Math.max(0, e.hp - targetedTrap.damage);
+      telemetryCard(targetedTrap.cardId || 'snare').damage += before - e.hp;
+      addStatus(e, 'root', 1);
+      addStatus(e, 'weakened', targetedTrap.weaken || 2);
+      trapTriggered = true;
+      announceEnemy(e, 'triggers Delilah\'s targeted snare', `${before - e.hp} damage, Root, Weakened`, 'enemy-trap');
+      synergyFeedback('Snare sprung', `${e.name} is caught and its counterattack loses force.`);
+      if (e.hp <= 0) return;
+    }
+    if (moving && state.funnel) {
+      addStatus(e, 'exposed', 2);
+      if (state.funnelDraw) {
+        state.funnelDraw = false;
+        draw(1);
+        synergyFeedback('Funnel read', `${e.name}'s movement reveals an opening.`);
+      }
+    }
+    if (e.status.root && !trapTriggered) { log(`${e.name} is rooted and loses position.`); return; }
     if (state.traps && movingIntent(e)) {
       state.traps -= 1;
+      const before = e.hp;
       e.hp = Math.max(0, e.hp - 7);
       addStatus(e, 'root', 1);
       announceEnemy(e, 'triggers Delilah\'s snare', '7 damage and Root', 'enemy-trap');
       log(`${e.name} triggers a snare for 7.`);
-      if (state.funnel) addStatus(e, 'exposed', 2);
       return;
     }
     resolveEnemyBehavior(e);
@@ -2201,9 +2363,21 @@ function resolveIntent(e) {
   if (e.intent.includes('Trap')) { state.bleed += 1; announceEnemy(e, 'opens a poison trap', 'Bleed +1 to Delilah', 'enemy-trap'); log(`${e.name} opens a poison trap. Delilah gains Bleed.`); return; }
   if (e.intent.includes('Ritual') || e.intent.includes('Obelisk')) { applyDamage('delilah', 3, e, e.intent); applyDamage('lady', 3, e, e.intent); log(`${e.name}'s ritual hurts both hunters.`); return; }
   let dmg = Math.max(0, e.dmg - (e.status.weakened ? 3 : 0));
-  if (state.guardAll) { announceEnemy(e, e.intent, 'Blocked', 'enemy-block'); log(`Wolf Saint blocks ${e.name}.`); return; }
-  if (state.dodge) { state.dodge -= 1; announceEnemy(e, e.intent, 'Dodged', 'enemy-block'); log(`Delilah dodges ${e.name}.`); return; }
-  if (state.guard) { state.guard -= 1; applyDamage('lady', Math.ceil(dmg / 2), e, e.intent); log(`Lady absorbs the strike for ${Math.ceil(dmg / 2)}.`); return; }
+  if (state.guardAll) { if (state.combatTelemetry) state.combatTelemetry.damagePrevented += dmg; announceEnemy(e, e.intent, 'Blocked', 'enemy-block'); log(`Wolf Saint blocks ${e.name}.`); return; }
+  if (state.dodge) { if (state.combatTelemetry) state.combatTelemetry.damagePrevented += dmg; state.dodge -= 1; announceEnemy(e, e.intent, 'Dodged', 'enemy-block'); log(`Delilah dodges ${e.name}.`); return; }
+  if (state.guard) {
+    const absorbed = Math.ceil(dmg / 2);
+    if (state.combatTelemetry) state.combatTelemetry.damagePrevented += dmg - absorbed;
+    state.guard -= 1;
+    applyDamage('lady', absorbed, e, e.intent);
+    if (state.protectiveFlank) {
+      state.protectiveFlank = false;
+      addStatus(e, 'flanked', 2);
+      synergyFeedback('Protective flank', `Lady turns ${e.name}'s strike into an opening.`);
+    }
+    log(`Lady absorbs the strike for ${absorbed}.`);
+    return;
+  }
   const target = enemyDamageTarget(e);
   applyDamage(target, dmg, e, e.intent);
   if (state.retaliate) {
@@ -2318,9 +2492,21 @@ function resolveEnemyBehavior(e) {
 
 function enemyStrike(e, dmg, action) {
   const amount = Math.max(0, dmg - (e.status.weakened ? 3 : 0));
-  if (state.guardAll) { announceEnemy(e, action, 'Blocked', 'enemy-block'); log(`Wolf Saint blocks ${e.name}.`); return; }
-  if (state.dodge) { state.dodge -= 1; announceEnemy(e, action, 'Dodged', 'enemy-block'); log(`Delilah dodges ${e.name}.`); return; }
-  if (state.guard) { state.guard -= 1; applyDamage('lady', Math.ceil(amount / 2), e, action); log(`Lady absorbs the strike for ${Math.ceil(amount / 2)}.`); return; }
+  if (state.guardAll) { if (state.combatTelemetry) state.combatTelemetry.damagePrevented += amount; announceEnemy(e, action, 'Blocked', 'enemy-block'); log(`Wolf Saint blocks ${e.name}.`); return; }
+  if (state.dodge) { if (state.combatTelemetry) state.combatTelemetry.damagePrevented += amount; state.dodge -= 1; announceEnemy(e, action, 'Dodged', 'enemy-block'); log(`Delilah dodges ${e.name}.`); return; }
+  if (state.guard) {
+    const absorbed = Math.ceil(amount / 2);
+    if (state.combatTelemetry) state.combatTelemetry.damagePrevented += amount - absorbed;
+    state.guard -= 1;
+    applyDamage('lady', absorbed, e, action);
+    if (state.protectiveFlank) {
+      state.protectiveFlank = false;
+      addStatus(e, 'flanked', 2);
+      synergyFeedback('Protective flank', `Lady turns ${e.name}'s strike into an opening.`);
+    }
+    log(`Lady absorbs the strike for ${absorbed}.`);
+    return;
+  }
   const target = enemyDamageTarget(e);
   applyDamage(target, amount, e, action);
   if (state.retaliate) {
@@ -2404,6 +2590,7 @@ function encounterCleared() {
 
 function winEncounter() {
   debugEvent(`Victory in ${state.turn} rounds. Delilah ${state.delilah.hp}/${state.delilah.max}, Lady ${state.lady.hp}/${state.lady.max}.`);
+  finalizeCombatTelemetry('victory');
   state.battlesWon += 1;
   state.hunterXP += 80 + (selectedContract.threat || 1) * 25 + state.encounter * 15;
   state.scrap += 10 + state.encounter * 5;
@@ -2428,6 +2615,7 @@ function winEncounter() {
 
 function loseHunt(reason = 'Return to the board and rebuild.') {
   debugEvent(`Defeat on round ${state.turn}. Reason: ${reason}`);
+  finalizeCombatTelemetry('defeat');
   log(`<b>The hunt fails.</b> ${reason}`);
   const runDefeat = isRunActive();
   if (runDefeat) failRun(reason);
