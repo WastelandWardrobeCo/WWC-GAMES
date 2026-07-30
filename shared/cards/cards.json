@@ -19,10 +19,10 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Deal 5 damage. Apply Exposed."
+          "text": "Deal 5 damage. Deal 3 more if the target is Exposed."
         }
       ],
-      "rulesText": "Deal 5 damage. Apply Exposed.",
+      "rulesText": "Deal 5 damage. Deal 3 more if the target is Exposed.",
       "keywords": [
         "Exposed"
       ],
@@ -42,7 +42,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-001"
+      "cardNumber": "LD-001",
+      "actor": "delilah"
     },
     {
       "schemaVersion": 3,
@@ -61,12 +62,12 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Deal 6 damage. +2 if target has not acted this round."
+          "text": "Deal 6 damage. If the target has not acted this round, deal 3 more and apply Exposed."
         }
       ],
-      "rulesText": "Deal 6 damage. +2 if target has not acted this round.",
+      "rulesText": "Deal 6 damage. If the target has not acted this round, deal 3 more and apply Exposed.",
       "keywords": [
-        "not acted"
+        "Exposed"
       ],
       "layout": {
         "template": "premium-v1"
@@ -79,7 +80,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-002"
+      "cardNumber": "LD-002",
+      "actor": "delilah"
     },
     {
       "schemaVersion": 3,
@@ -98,13 +100,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Deal 4 damage. Apply Bleed 2 and Root."
+          "text": "Deal 4 damage. Apply Bleed 2 and Root. Draw 1 if the target intends to move."
         }
       ],
-      "rulesText": "Deal 4 damage. Apply Bleed 2 and Root.",
+      "rulesText": "Deal 4 damage. Apply Bleed 2 and Root. Draw 1 if the target intends to move.",
       "keywords": [
         "Bleed",
-        "Root"
+        "Root",
+        "Draw"
       ],
       "layout": {
         "template": "premium-v1"
@@ -117,7 +120,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-003"
+      "cardNumber": "LD-003",
+      "actor": "delilah"
     },
     {
       "schemaVersion": 3,
@@ -173,11 +177,12 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Reveal intent. Gain 2 Instinct. Lady attacks deal +1 per Instinct."
+          "text": "Reveal intent. Gain 2 Instinct. Lady's next card this turn deals 3 more damage."
         }
       ],
-      "rulesText": "Reveal intent. Gain 2 Instinct. Lady attacks deal +1 per Instinct.",
+      "rulesText": "Reveal intent. Gain 2 Instinct. Lady's next card this turn deals 3 more damage.",
       "keywords": [
+        "Intent",
         "Instinct"
       ],
       "layout": {
@@ -191,7 +196,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-005"
+      "cardNumber": "LD-005",
+      "actor": "lady"
     },
     {
       "schemaVersion": 3,
@@ -210,13 +216,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Apply Terrified. Also Weakened: target deals 3 less damage next attack."
+          "text": "Apply Terrified and Weakened. Draw 1 if Lady acted earlier this turn."
         }
       ],
-      "rulesText": "Apply Terrified. Also Weakened: target deals 3 less damage next attack.",
+      "rulesText": "Apply Terrified and Weakened. Draw 1 if Lady acted earlier this turn.",
       "keywords": [
         "Terrified",
-        "Weakened"
+        "Weakened",
+        "Draw"
       ],
       "layout": {
         "template": "premium-v1"
@@ -229,13 +236,14 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-006"
+      "cardNumber": "LD-006",
+      "actor": "lady"
     },
     {
       "schemaVersion": 3,
       "id": "pack",
       "name": "Pack Rush",
-      "cost": 2,
+      "cost": 1,
       "type": "Instinct",
       "archetype": "Instinct",
       "rarity": "Sharp",
@@ -248,12 +256,13 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Lady deals 5 damage. Apply Flanked."
+          "text": "Lady deals 5 damage. Apply Flanked. Your next Delilah Attack costs 1 less."
         }
       ],
-      "rulesText": "Lady deals 5 damage. Apply Flanked.",
+      "rulesText": "Lady deals 5 damage. Apply Flanked. Your next Delilah Attack costs 1 less.",
       "keywords": [
-        "Flanked"
+        "Flanked",
+        "Discount"
       ],
       "layout": {
         "template": "premium-v1"
@@ -271,7 +280,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-007"
+      "cardNumber": "LD-007",
+      "actor": "lady"
     },
     {
       "schemaVersion": 3,
@@ -290,11 +300,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Prevent next attack against Delilah."
+          "text": "Prevent the next attack against Delilah. When Lady intercepts it, apply Flanked to the attacker."
         }
       ],
-      "rulesText": "Prevent next attack against Delilah.",
-      "keywords": [],
+      "rulesText": "Prevent the next attack against Delilah. When Lady intercepts it, apply Flanked to the attacker.",
+      "keywords": [
+        "Guard",
+        "Flanked"
+      ],
       "layout": {
         "template": "premium-v1"
       },
@@ -306,13 +319,14 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-008"
+      "cardNumber": "LD-008",
+      "actor": "lady"
     },
     {
       "schemaVersion": 3,
       "id": "snare",
       "name": "Set Snare",
-      "cost": 2,
+      "cost": 1,
       "type": "Tactic",
       "archetype": "Tactic",
       "rarity": "Roadworn",
@@ -325,14 +339,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Place a trap. Moving enemies take 7 and Root."
+          "text": "Trap the target. When it acts or moves, deal 7 damage, Root it, and reduce its damage."
         }
       ],
-      "rulesText": "Place a trap. Moving enemies take 7 and Root.",
+      "rulesText": "Trap the target. When it acts or moves, deal 7 damage, Root it, and reduce its damage.",
       "keywords": [
-        "trap",
-        "Moving",
-        "Root"
+        "Trap",
+        "Root",
+        "Weakened"
       ],
       "layout": {
         "template": "premium-v1"
@@ -345,7 +359,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-009"
+      "cardNumber": "LD-009",
+      "actor": "delilah"
     },
     {
       "schemaVersion": 3,
@@ -364,10 +379,10 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Gain Dodge. Draw 1."
+          "text": "Gain Dodge. Draw 1. Your next Attack deals 2 more damage."
         }
       ],
-      "rulesText": "Gain Dodge. Draw 1.",
+      "rulesText": "Gain Dodge. Draw 1. Your next Attack deals 2 more damage.",
       "keywords": [
         "Dodge",
         "Draw"
@@ -383,7 +398,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-010"
+      "cardNumber": "LD-010",
+      "actor": "delilah"
     },
     {
       "schemaVersion": 3,
@@ -402,13 +418,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Enemies with Moving intent become Exposed when they move."
+          "text": "Moving enemies become Exposed. The next moving enemy also draws you 1 card."
         }
       ],
-      "rulesText": "Enemies with Moving intent become Exposed when they move.",
+      "rulesText": "Moving enemies become Exposed. The next moving enemy also draws you 1 card.",
       "keywords": [
         "Moving",
-        "Exposed"
+        "Exposed",
+        "Draw"
       ],
       "layout": {
         "template": "premium-v1"
@@ -421,7 +438,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-011"
+      "cardNumber": "LD-011",
+      "actor": "neutral"
     },
     {
       "schemaVersion": 3,
@@ -440,10 +458,10 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Next attack applies Bleed 4."
+          "text": "Your next 2 Attacks apply Bleed 2. They deal 2 more damage to a target already Bleeding."
         }
       ],
-      "rulesText": "Next attack applies Bleed 4.",
+      "rulesText": "Your next 2 Attacks apply Bleed 2. They deal 2 more damage to a target already Bleeding.",
       "keywords": [
         "Bleed"
       ],
@@ -458,7 +476,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-012"
+      "cardNumber": "LD-012",
+      "actor": "delilah"
     },
     {
       "schemaVersion": 3,
@@ -477,11 +496,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "First attack next turn deals +4."
+          "text": "Your next 2 Attacks deal 2 more damage. Draw 1."
         }
       ],
-      "rulesText": "First attack next turn deals +4.",
-      "keywords": [],
+      "rulesText": "Your next 2 Attacks deal 2 more damage. Draw 1.",
+      "keywords": [
+        "Preparation",
+        "Draw"
+      ],
       "layout": {
         "template": "premium-v1"
       },
@@ -493,7 +515,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-013"
+      "cardNumber": "LD-013",
+      "actor": "neutral"
     },
     {
       "schemaVersion": 3,
@@ -512,13 +535,14 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Choose Delilah or Lady. Recover 6 Health. If Delilah is chosen, remove Bleed."
+          "text": "Choose Delilah or Lady. Recover 6 Health. Remove Bleed from Delilah; draw 1 if Bleed was removed."
         }
       ],
-      "rulesText": "Choose Delilah or Lady. Recover 6 Health. If Delilah is chosen, remove Bleed.",
+      "rulesText": "Choose Delilah or Lady. Recover 6 Health. Remove Bleed from Delilah; draw 1 if Bleed was removed.",
       "keywords": [
-        "Recover",
-        "Bleed"
+        "Heal",
+        "Bleed",
+        "Draw"
       ],
       "layout": {
         "template": "premium-v1"
@@ -531,7 +555,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-014"
+      "cardNumber": "LD-014",
+      "actor": "neutral"
     },
     {
       "schemaVersion": 3,
@@ -550,14 +575,13 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Deal 10. Execute below 25% if Bleeding or Flanked."
+          "text": "Deal 10 damage, plus 6 if Lady and Delilah both acted this turn. Execute below 25% if Bleeding or Flanked."
         }
       ],
-      "rulesText": "Deal 10. Execute below 25% if Bleeding or Flanked.",
+      "rulesText": "Deal 10 damage, plus 6 if Lady and Delilah both acted this turn. Execute below 25% if Bleeding or Flanked.",
       "keywords": [
-        "Execute",
-        "Bleed",
-        "Flanked"
+        "Synchronized",
+        "Execute"
       ],
       "layout": {
         "template": "premium-v1"
@@ -570,7 +594,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-015"
+      "cardNumber": "LD-015",
+      "actor": "both"
     },
     {
       "schemaVersion": 3,
@@ -810,11 +835,12 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Next attack deals +6 and applies Terrified."
+          "text": "Your next Attack costs 0 and applies Terrified."
         }
       ],
-      "rulesText": "Next attack deals +6 and applies Terrified.",
+      "rulesText": "Your next Attack costs 0 and applies Terrified.",
       "keywords": [
+        "Preparation",
         "Terrified"
       ],
       "layout": {
@@ -828,7 +854,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-022"
+      "cardNumber": "LD-022",
+      "actor": "neutral"
     },
     {
       "schemaVersion": 3,
@@ -1840,15 +1867,13 @@
       "rules": [
         {
           "kind": "text",
-          "text": "Deal 18 damage. Execute if Bleeding, Flanked, or Terrified below 40%."
+          "text": "Deal 18 damage. Execute below 40% if both hunters acted and the target has at least two negative statuses."
         }
       ],
-      "rulesText": "Deal 18 damage. Execute if Bleeding, Flanked, or Terrified below 40%.",
+      "rulesText": "Deal 18 damage. Execute below 40% if both hunters acted and the target has at least two negative statuses.",
       "keywords": [
-        "Execute",
-        "Bleed",
-        "Flanked",
-        "Terrified"
+        "Synchronized",
+        "Execute"
       ],
       "layout": {
         "template": "premium-v1"
@@ -1866,7 +1891,8 @@
       },
       "metadata": {},
       "set": "Base Set",
-      "cardNumber": "LD-050"
+      "cardNumber": "LD-050",
+      "actor": "both"
     },
     {
       "schemaVersion": 3,
