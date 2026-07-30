@@ -22,6 +22,14 @@
     document.head.append(stylesheet);
   }
 
+  if (activeWorkspace === 'hunt' && !document.querySelector('[data-hunt-mobile-rescue]')) {
+    const mobileStylesheet = document.createElement('link');
+    mobileStylesheet.rel = 'stylesheet';
+    mobileStylesheet.href = new URL('hunt/mobile-rescue.css?v=mobile-scroll-rescue-v1', repositoryRoot).href;
+    mobileStylesheet.dataset.huntMobileRescue = '';
+    document.head.append(mobileStylesheet);
+  }
+
   const header = document.createElement('header');
   header.className = 'systema-app-shell';
   header.innerHTML = `
