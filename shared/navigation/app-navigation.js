@@ -22,6 +22,27 @@
     document.head.append(stylesheet);
   }
 
+  if (activeWorkspace === 'hunt' && !document.querySelector('[data-hunt-mobile-rescue]')) {
+    const mobileStylesheet = document.createElement('link');
+    mobileStylesheet.rel = 'stylesheet';
+    mobileStylesheet.href = new URL('hunt/mobile-rescue.css?v=mobile-scroll-rescue-v1', repositoryRoot).href;
+    mobileStylesheet.dataset.huntMobileRescue = '';
+    document.head.append(mobileStylesheet);
+  }
+
+  if (activeWorkspace === 'hunt' && !document.querySelector('[data-hunt-board-polish]')) {
+    const boardStylesheet = document.createElement('link');
+    boardStylesheet.rel = 'stylesheet';
+    boardStylesheet.href = new URL('hunt/board-polish.css?v=board-proportion-v1', repositoryRoot).href;
+    boardStylesheet.dataset.huntBoardPolish = '';
+    document.head.append(boardStylesheet);
+
+    const canonScript = document.createElement('script');
+    canonScript.src = new URL('hunt/book-canon.js?v=white-tree-v1', repositoryRoot).href;
+    canonScript.defer = true;
+    document.head.append(canonScript);
+  }
+
   const header = document.createElement('header');
   header.className = 'systema-app-shell';
   header.innerHTML = `
