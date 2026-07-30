@@ -30,6 +30,19 @@
     document.head.append(mobileStylesheet);
   }
 
+  if (activeWorkspace === 'hunt' && !document.querySelector('[data-hunt-board-polish]')) {
+    const boardStylesheet = document.createElement('link');
+    boardStylesheet.rel = 'stylesheet';
+    boardStylesheet.href = new URL('hunt/board-polish.css?v=board-proportion-v1', repositoryRoot).href;
+    boardStylesheet.dataset.huntBoardPolish = '';
+    document.head.append(boardStylesheet);
+
+    const canonScript = document.createElement('script');
+    canonScript.src = new URL('hunt/book-canon.js?v=white-tree-v1', repositoryRoot).href;
+    canonScript.defer = true;
+    document.head.append(canonScript);
+  }
+
   const header = document.createElement('header');
   header.className = 'systema-app-shell';
   header.innerHTML = `
