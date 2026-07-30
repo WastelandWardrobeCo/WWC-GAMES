@@ -1,0 +1,166 @@
+/* Mobile Hunt rescue: restore scrolling and touch interaction without changing desktop. */
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100%;
+    min-height: 100%;
+    height: auto !important;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-screen] {
+    display: block !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  body[data-screen] .systema-app-shell {
+    position: relative !important;
+    inset: auto !important;
+  }
+
+  body[data-screen] .game-shell {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+    padding: 8px !important;
+  }
+
+  body[data-screen] .screen,
+  body[data-screen] .board-screen,
+  body[data-screen] .combat-screen,
+  body[data-screen] .prep-screen,
+  body[data-screen] .run-map-screen,
+  body[data-screen] .profile-screen,
+  body[data-screen] .reveal-screen,
+  body[data-screen] .forge-screen {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body[data-screen="combatScreen"] .combat-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  body[data-screen="combatScreen"] .battlefield,
+  body[data-screen="combatScreen"] .combat-left,
+  body[data-screen="combatScreen"] .combat-right,
+  body[data-screen="combatScreen"] .hand-row,
+  body[data-screen="combatScreen"] .combat-dock {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body[data-screen="combatScreen"] .battlefield { order: 1 !important; }
+  body[data-screen="combatScreen"] .hand-row { order: 2 !important; }
+  body[data-screen="combatScreen"] .combat-right { order: 3 !important; }
+  body[data-screen="combatScreen"] .combat-left { order: 4 !important; }
+  body[data-screen="combatScreen"] .combat-dock { order: 5 !important; }
+
+  body[data-screen="combatScreen"] .battlefield {
+    display: grid !important;
+    grid-template-rows: auto minmax(190px, 46vw) !important;
+  }
+
+  body[data-screen="combatScreen"] .battle-scene {
+    min-height: 190px !important;
+    height: min(46vw, 250px) !important;
+    overflow: hidden !important;
+  }
+
+  body[data-screen="combatScreen"] .hand-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 10px 14px 54px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 14px;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-screen="combatScreen"] .hand-row .card.systema-card-action {
+    flex: 0 0 min(78vw, 286px) !important;
+    width: min(78vw, 286px) !important;
+    min-width: min(78vw, 286px) !important;
+    max-width: 286px !important;
+    scroll-snap-align: center;
+    touch-action: manipulation;
+  }
+
+  body[data-screen="combatScreen"] .hand-row .systema-card--combat {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body[data-screen="combatScreen"] .combat-right,
+  body[data-screen="combatScreen"] .combat-left {
+    padding: 12px !important;
+  }
+
+  body[data-screen="combatScreen"] .combat-log,
+  body[data-screen="combatScreen"] #combatLog,
+  body[data-screen="combatScreen"] #intentList {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body[data-screen="combatScreen"] .balance-debug {
+    display: none !important;
+  }
+
+  body[data-screen="combatScreen"] #endTurnBtn {
+    position: sticky !important;
+    right: auto !important;
+    bottom: 8px !important;
+    left: auto !important;
+    z-index: 90 !important;
+    width: 100% !important;
+    min-height: 52px !important;
+    margin: 12px 0 0 !important;
+    touch-action: manipulation;
+  }
+
+  body[data-screen="combatScreen"] .combat-dock {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+
+  body[data-screen="combatScreen"] button,
+  body[data-screen="combatScreen"] .card.systema-card-action,
+  body[data-screen="combatScreen"] .enemy {
+    touch-action: manipulation;
+  }
+
+  dialog[open] {
+    max-height: calc(100dvh - 20px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
