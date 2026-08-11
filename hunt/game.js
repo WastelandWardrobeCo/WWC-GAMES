@@ -346,6 +346,25 @@ const behaviorPools = {
   ]
 };
 
+const enemyCardDecks = {
+  cultist: [
+    { id: 'cultist-ritual-stab', name: 'Ritual Stab', behaviorId: 'quick-strike', telegraph: 'Fast pressure', counter: 'Dodge, Root, and traps can stop this moving strike.' },
+    { id: 'cultist-red-rush', name: 'Red Rush', behaviorId: 'heavy-strike', telegraph: 'Heavy attack incoming', counter: 'Root or trap this before it lands.' },
+    { id: 'cultist-cut-off', name: 'Cut Off Escape', behaviorId: 'dodge-punish', telegraph: 'Punishes Dodge', counter: 'Better to Root, weaken, or finish the Cultist.' },
+    { id: 'cultist-blood-chant', name: 'Blood Chant', behaviorId: 'blood-combo', telegraph: 'Aggressive combo', counter: 'Avoid leaving enemies Bleeding, Flanked, or Exposed.' },
+    { id: 'cultist-press-line', name: 'Press The Line', behaviorId: 'pressure', telegraph: 'Tempo pressure', counter: 'Preparation-heavy turns are safest after this resolves.' },
+    { id: 'cultist-hostile-march', name: 'Hostile March', behaviorId: 'quick-strike', telegraph: 'Moving strike', counter: 'Funnel Path, Root, and traps punish this.' }
+  ],
+  trapper: [
+    { id: 'trapper-knife-rush', name: 'Knife Rush', behaviorId: 'control-hit', telegraph: 'Controlled strike', counter: 'Dodge and Guard handle the damage cleanly.', moving: true },
+    { id: 'trapper-sweep-ground', name: 'Sweep The Ground', behaviorId: 'snare-break', telegraph: 'Counters traps', counter: 'Root or Terrify the Trapper before it clears snares.' },
+    { id: 'trapper-disrupt-setup', name: 'Disrupt Setup', behaviorId: 'disrupt-setup', telegraph: 'Interrupts Preparation', counter: 'Spend prepared bonuses before this resolves.' },
+    { id: 'trapper-blind-angle', name: 'Blind Angle', behaviorId: 'blind-angle', telegraph: 'Reduces next Action', counter: 'Dodge softens the hit, but the tempo tax still matters.' },
+    { id: 'trapper-cleanse-wounds', name: 'Cleanse Wounds', behaviorId: 'cleanse', telegraph: 'Cleansing debuffs', counter: 'Use finishers before statuses are removed.' },
+    { id: 'trapper-wire-low', name: 'Wire Low', behaviorId: 'control-hit', telegraph: 'Measured cut', counter: 'Root does not stop this unless the card shows Moving.' }
+  ]
+};
+
 const statusHelp = {
   bleed: { label: 'Bleed', text: 'Takes that much damage at the end of each round.' },
   exposed: { label: 'Exposed', text: 'Takes +2 damage from Delilah and Lady attacks.' },
@@ -1777,7 +1796,8 @@ function makeEnemy(key, i, elite = false, summoned = false) {
   const max = summoned ? 10 + state.encounter * 2 + Math.floor(hpScale / 2) : base.max + state.encounter * 2 + hpScale + (elite ? 8 + risk * 2 : 0);
   const archetype = enemyArchetypes[key] || 'aggressive';
   const enemy = { id: `${key}-${Date.now()}-${i}`, key, name: base.name, max, hp: max, dmg: base.dmg + Math.floor(state.encounter / 2) + dmgScale + (elite ? 1 : 0), intent: '', behavior: null, archetype, escalation: 0, status: {}, acted: false, elite, summoned };
-  enemy.behavior = chooseEnemyBehavior(enemy);
+  initEnemyCardDeck(enemy);
+  enemy.behavior = nextEnemyBehavior(enemy);
   enemy.intent = enemy.behavior.label;
   return enemy;
 }
@@ -1829,7 +1849,7 @@ function renderCombat() {
   renderStatusGlossary();
   renderEnemyActionBanner();
   $('enemyLine').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => enemyHtml(e)).join('');
-  $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(e => `<div class="intent-card intent-${e.archetype || 'aggressive'}"><b>${e.name}</b><span>${archetypeLabel(e)}</span><br>${intentText(e)}</div>`).join('');
+  $('intentList').innerHTML = state.enemies.filter(e => e.hp > 0).map(enemyIntentHtml).join('');
   $('hand').innerHTML = state.hand.map((entry, i) => cardHtml(runCard(handCardId(entry)), i, Boolean(entry && entry.fresh))).join('');
   window.SystemaCardCatalog = Object.fromEntries(cards.map(cardRecord => [cardRecord.id, cardRecord]));
   state.hand.forEach(entry => { if (entry && typeof entry === 'object') entry.fresh = false; });
@@ -2297,6 +2317,11 @@ function enemiesAct() {
   state.enemyActionPulse = '';
   state.enemyActionEvents = [];
   state.enemies.filter(e => e.hp > 0).forEach(e => {
+    revealEnemyCard(e);
+    const finishEnemyCard = () => {
+      discardEnemyCard(e);
+      e.acted = true;
+    };
     const moving = movingIntent(e);
     let trapTriggered = false;
     const targetedTrap = state.targetedTraps[e.id];
@@ -2310,7 +2335,7 @@ function enemiesAct() {
       trapTriggered = true;
       announceEnemy(e, 'triggers Delilah\'s targeted snare', `${before - e.hp} damage, Root, Weakened`, 'enemy-trap');
       synergyFeedback('Snare sprung', `${e.name} is caught and its counterattack loses force.`);
-      if (e.hp <= 0) return;
+      if (e.hp <= 0) { finishEnemyCard(); return; }
     }
     if (moving && state.funnel) {
       addStatus(e, 'exposed', 2);
@@ -2320,7 +2345,7 @@ function enemiesAct() {
         synergyFeedback('Funnel read', `${e.name}'s movement reveals an opening.`);
       }
     }
-    if (e.status.root && !trapTriggered) { log(`${e.name} is rooted and loses position.`); return; }
+    if (e.status.root && !trapTriggered) { log(`${e.name} is rooted and loses position.`); finishEnemyCard(); return; }
     if (state.traps && movingIntent(e)) {
       state.traps -= 1;
       const before = e.hp;
@@ -2328,10 +2353,11 @@ function enemiesAct() {
       addStatus(e, 'root', 1);
       announceEnemy(e, 'triggers Delilah\'s snare', '7 damage and Root', 'enemy-trap');
       log(`${e.name} triggers a snare for 7.`);
+      finishEnemyCard();
       return;
     }
     resolveEnemyBehavior(e);
-    e.acted = true;
+    finishEnemyCard();
   });
   state.guardAll = false;
   state.retaliate = 0;
@@ -2960,9 +2986,23 @@ function camp() {
 }
 
 function nextIntent(e) {
-  e.behavior = chooseEnemyBehavior(e);
-  debugEvent(`${e.name} selected ${e.behavior.label} (${e.archetype}).`);
+  e.behavior = nextEnemyBehavior(e);
+  debugEvent(`${e.name} selected ${e.behavior.label}${e.enemyCard ? ` from ${e.enemyCard.name}` : ''} (${e.archetype}).`);
   return e.behavior.label;
+}
+
+function enemyIntentHtml(e) {
+  const upcoming = e.enemyCard ? `
+    <div class="enemy-intent-card ${e.enemyCardRevealed ? 'is-revealed' : ''}">
+      <div class="enemy-intent-card-kicker">${e.enemyCardRevealed ? 'Played Card' : 'Upcoming Card'}</div>
+      <b>${escapeHtml(e.enemyCard.name)}</b>
+      <p>${escapeHtml(e.enemyCard.counter || e.enemyCard.telegraph || '')}</p>
+    </div>
+  ` : '';
+  return `<div class="intent-card intent-${e.archetype || 'aggressive'}">
+    <b>${escapeHtml(e.name)}</b><span>${archetypeLabel(e)}</span><br>${intentText(e)}
+    ${upcoming}
+  </div>`;
 }
 
 function intentText(e) {
@@ -2993,6 +3033,69 @@ function chooseEnemyBehavior(e) {
     if (roll <= 0) return b;
   }
   return weighted[0] || pool[0];
+}
+
+function initEnemyCardDeck(enemy) {
+  if (enemy.summoned || !enemyCardDecks[enemy.key]) return;
+  enemy.enemyDeck = shuffle(enemyCardDecks[enemy.key].map(cardRecord => cardRecord.id));
+  enemy.enemyDiscard = [];
+  enemy.enemyCard = null;
+  enemy.enemyCardRevealed = false;
+}
+
+function nextEnemyBehavior(enemy) {
+  const enemyCard = drawEnemyCard(enemy);
+  if (!enemyCard) return chooseEnemyBehavior(enemy);
+  return behaviorForEnemyCard(enemy, enemyCard);
+}
+
+function drawEnemyCard(enemy) {
+  if (!enemyCardDecks[enemy.key]) return null;
+  if (!Array.isArray(enemy.enemyDeck)) initEnemyCardDeck(enemy);
+  if (!enemy.enemyDeck.length && enemy.enemyDiscard?.length) {
+    enemy.enemyDeck = shuffle(enemy.enemyDiscard);
+    enemy.enemyDiscard = [];
+  }
+  if (!enemy.enemyDeck.length) return null;
+  const cardId = enemy.enemyDeck.pop();
+  const enemyCard = enemyCardDecks[enemy.key].find(cardRecord => cardRecord.id === cardId) || null;
+  enemy.enemyCard = enemyCard;
+  enemy.enemyCardRevealed = false;
+  return enemyCard;
+}
+
+function discardEnemyCard(enemy) {
+  if (!enemy.enemyCard) return;
+  enemy.enemyDiscard = Array.isArray(enemy.enemyDiscard) ? enemy.enemyDiscard : [];
+  enemy.enemyDiscard.push(enemy.enemyCard.id);
+  enemy.enemyCard = null;
+  enemy.enemyCardRevealed = false;
+}
+
+function behaviorForEnemyCard(enemy, enemyCard) {
+  const pool = behaviorPools[enemy.archetype] || behaviorPools.aggressive;
+  const base = pool.find(behavior => behavior.id === enemyCard.behaviorId)
+    || Object.values(behaviorPools).flat().find(behavior => behavior.id === enemyCard.behaviorId)
+    || chooseEnemyBehavior(enemy);
+  const behavior = {
+    ...base,
+    label: enemyCard.name,
+    telegraph: enemyCard.telegraph || base.telegraph,
+    moving: typeof enemyCard.moving === 'boolean' ? enemyCard.moving : base.moving,
+    enemyCardId: enemyCard.id
+  };
+  if (enemy.status.terrified && Math.random() < .35 && ['damage', 'punishDodge', 'combo', 'disrupt', 'breakTrap', 'actionTax'].includes(behavior.kind)) {
+    const panic = behaviorPools.aggressive.find(item => item.id === 'quick-strike') || behavior;
+    return { ...panic, label: 'Panicked Swing', telegraph: 'Fear-shortened strike', moving: true, enemyCardId: enemyCard.id };
+  }
+  return behavior;
+}
+
+function revealEnemyCard(enemy) {
+  if (!enemy.enemyCard || enemy.enemyCardRevealed) return;
+  enemy.enemyCardRevealed = true;
+  announceEnemy(enemy, `plays ${enemy.enemyCard.name}`, enemy.enemyCard.telegraph || enemy.behavior?.telegraph || 'Intent revealed', 'enemy-card-reveal');
+  log(`${enemy.name} reveals ${enemy.enemyCard.name}.`);
 }
 
 function behaviorWeight(e, behavior) {
