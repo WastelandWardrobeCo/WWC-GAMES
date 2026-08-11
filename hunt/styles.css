@@ -1894,12 +1894,14 @@ body[data-screen="boardScreen"] .board-screen {
 .enemy-action-line.enemy-hit-lady { color: #b9d5e5; }
 .enemy-action-line.enemy-block { color: #e4c790; }
 .enemy-action-line.enemy-summon { color: #edb66d; }
+.enemy-action-line.enemy-card-reveal { color: #f2c18e; }
 
 .enemy-action-banner.enemy-hit-delilah { border-color: rgba(224,67,49,.95); }
 .enemy-action-banner.enemy-hit-lady { border-color: rgba(109,155,184,.95); }
 .enemy-action-banner.enemy-heal { border-color: rgba(74,178,105,.88); }
 .enemy-action-banner.enemy-summon { border-color: rgba(236,137,35,.9); }
 .enemy-action-banner.enemy-block { border-color: rgba(189,145,84,.9); }
+.enemy-action-banner.enemy-card-reveal { border-color: rgba(224,67,49,.9); }
 
 .delilah-figure,
 .lady-figure {
@@ -2432,6 +2434,44 @@ body[data-screen="boardScreen"] .board-screen {
   font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+
+.enemy-intent-card {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid rgba(177,139,86,.32);
+  background:
+    linear-gradient(135deg, rgba(18,14,12,.96), rgba(42,20,16,.78)),
+    radial-gradient(circle at 18% 20%, rgba(224,67,49,.18), transparent 34%);
+  color: #efe2c8;
+  box-shadow: inset 0 0 18px rgba(0,0,0,.55);
+}
+
+.enemy-intent-card.is-revealed {
+  border-color: rgba(224,67,49,.72);
+}
+
+.enemy-intent-card-kicker {
+  color: #c9995a;
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-size: .56rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.enemy-intent-card b {
+  display: block;
+  margin-top: 2px;
+  color: #fff3df;
+  font-size: .85rem;
+}
+
+.enemy-intent-card p {
+  margin: 4px 0 0;
+  color: #cdbb9f;
+  font-size: .72rem;
+  line-height: 1.25;
 }
 
 .intent-aggressive { border-left: 2px solid rgba(224,67,49,.72); }
