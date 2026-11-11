@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DEFUSE // Field Unit</title>
+<style>
+/* ═══════════════ DEFUSE — device/case art system ═══════════════ */
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --case:#23262b; --case-edge:#101215; --panel:#2e3238; --panel-hi:#3a3f47; --panel-lo:#1d2024;
+  --ink:#d8d3c3; --ink-dim:#8f8b7d; --amber:#ffb02e; --red:#ff3b30; --green:#37e08b; --lcd:#0a0f0a;
+  --wire-red:#c83232; --wire-blue:#2f6fd0; --wire-yellow:#d9a928; --wire-green:#2f9e5f; --wire-white:#d8d8d8; --wire-black:#3c4046;
+}
+html,body{margin:0;padding:0;background:#0b0c0e;color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;}
+button{font-family:inherit;touch-action:manipulation}
+#app{max-width:520px;margin:0 auto;padding:6px;}
+
+/* ── THE CASE ─────────────────────────────── */
+#case{
+  position:relative;border-radius:18px;padding:12px 12px 8px;
+  background:
+    linear-gradient(160deg,#2b2f36 0%,#22252b 45%,#1b1e23 100%);
+  border:2px solid var(--case-edge);
+  box-shadow:0 0 0 3px #34383f, 0 0 0 5px #131518, 0 18px 50px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.07);
+}
+.case-lip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 10px;color:#6d6a5e;font-size:9px;letter-spacing:.28em;font-weight:700}
+.case-lip .latch{width:34px;height:12px;border-radius:3px;background:linear-gradient(180deg,#484d56,#26292f);border:1px solid #101215;box-shadow:inset 0 1px 0 rgba(255,255,255,.15)}
+.case-lip.bottom{padding:10px 4px 2px}
+.hazard{flex:1;height:10px;border-radius:2px;opacity:.5;background:repeating-linear-gradient(45deg,#8a6d1d 0 12px,#15161a 12px 24px)}
+
+#device-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.head-title{font-weight:900;letter-spacing:.42em;font-size:15px;color:var(--ink);text-indent:.42em}
+.head-btn{background:linear-gradient(180deg,#3a3f47,#24272d);color:var(--ink-dim);border:1px solid #101215;border-radius:7px;padding:7px 10px;font-size:10px;font-weight:800;letter-spacing:.12em;box-shadow:0 2px 0 #101215, inset 0 1px 0 rgba(255,255,255,.12);cursor:pointer}
+.head-btn:active{transform:translateY(2px);box-shadow:0 0 0 #101215}
+
+/* screws */
+.screw{position:absolute;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9aa0a8,#565b63 60%,#2c2f35);box-shadow:inset 0 -1px 2px rgba(0,0,0,.6),0 1px 1px rgba(0,0,0,.5)}
+.screw::after{content:"";position:absolute;left:1px;right:1px;top:50%;height:1.6px;margin-top:-1px;background:#22242a;transform:rotate(38deg)}
+.screw.tl{top:6px;left:6px}.screw.tr{top:6px;right:6px}.screw.bl{bottom:6px;left:6px}.screw.br{bottom:6px;right:6px}
+
+/* ── MAKER PLATE ──────────────────────────── */
+#plate{position:relative;display:flex;gap:12px;border-radius:8px;padding:12px 14px;margin-bottom:10px;
+  background:linear-gradient(155deg,#4a4636,#35321f 55%,#2a2819);
+  border:1px solid #171708;box-shadow:inset 0 1px 0 rgba(255,235,180,.18), inset 0 -8px 18px rgba(0,0,0,.35), 0 2px 6px rgba(0,0,0,.5);
+  color:#e8e0bd;font-family:"Courier New",monospace}
+#plate .maker{font-size:17px;font-weight:900;letter-spacing:.14em}
+#plate .plate-sub{font-size:9px;letter-spacing:.3em;opacity:.75;margin-top:2px}
+#plate .plate-note{font-size:11.5px;margin-top:8px;line-height:1.45;color:#ffd98a;white-space:pre-line}
+.plate-specs{display:flex;flex-direction:column;gap:3px;margin-left:auto;text-align:right;font-size:10px}
+.plate-specs span{opacity:.6;letter-spacing:.14em;margin-right:6px}
+.plate-specs b{letter-spacing:.06em}
+
+/* ── TIMER BAY ────────────────────────────── */
+#timer-bay{position:relative;border-radius:10px;padding:10px 12px 8px;margin-bottom:10px;text-align:center;
+  background:linear-gradient(180deg,#15171a,#0c0d0f);border:1px solid #000;
+  box-shadow:inset 0 2px 12px rgba(0,0,0,.9), inset 0 0 0 3px #23262b, 0 1px 0 rgba(255,255,255,.05)}
+#timer{font-family:"Courier New",monospace;font-size:56px;font-weight:900;letter-spacing:.08em;color:var(--red);line-height:1;
+  text-shadow:0 0 14px rgba(255,45,30,.75),0 0 42px rgba(255,45,30,.35)}
+#timer.safe{color:var(--green);text-shadow:0 0 14px rgba(55,224,139,.7)}
+#timer.dead{color:#5a130e;text-shadow:none}
+#timer-state{font-size:9px;letter-spacing:.4em;color:var(--ink-dim);margin-top:4px}
+#strikes{position:absolute;top:10px;right:12px;display:flex;gap:5px}
+#strikes i{width:10px;height:10px;border-radius:50%;background:#2c2f35;border:1px solid #101215}
+#strikes i.hit{background:var(--red);box-shadow:0 0 8px rgba(255,59,48,.9)}
+body.critical #case{animation:shake .5s infinite}
+@keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(1px,-1px)}75%{transform:translate(-1px,1px)}}
+
+/* ── COMMS + INTEL ────────────────────────── */
+#comms{display:flex;align-items:center;gap:8px;border-radius:8px;padding:9px 11px;margin-bottom:10px;background:linear-gradient(180deg,#101812,#0a0e0b);border:1px solid #060806;box-shadow:inset 0 1px 8px rgba(0,0,0,.8);font-size:12.5px;line-height:1.4}
+.comms-tag{color:var(--amber);font-size:9px;font-weight:900;letter-spacing:.14em;white-space:nowrap}
+#comms-text{flex:1;color:#cfe8cf}
+#btn-hint{flex:none;background:#1d2a1d;color:#9fd69f;border:1px solid #2e442e;border-radius:6px;padding:6px 8px;font-size:10px;font-weight:800;letter-spacing:.06em;cursor:pointer}
+#btn-hint:disabled{opacity:.35}
+#intel-tray{display:flex;gap:8px;align-items:flex-start;border-radius:8px;padding:8px 11px;margin-bottom:12px;background:#1a1c1f;border:1px dashed #3a3e45}
+.tray-tag{font-size:9px;font-weight:900;letter-spacing:.22em;color:var(--ink-dim);padding-top:3px}
+#intel-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.chip{background:#26221a;border:1px solid #57492a;color:#ffd98a;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;letter-spacing:.03em}
+.chip b{color:#fff}
+.tray-empty{font-size:11px;color:var(--ink-dim);font-style:italic;padding-top:2px}
+
+/* ── MODULE BAYS ──────────────────────────── */
+#board{display:flex;flex-direction:column;gap:12px}
+.module{position:relative;border-radius:12px;padding:12px 12px 14px;
+  background:linear-gradient(165deg,var(--panel-hi),var(--panel) 40%,var(--panel-lo));
+  border:1px solid #101215;box-shadow:inset 0 1px 0 rgba(255,255,255,.1), inset 0 -10px 22px rgba(0,0,0,.3), 0 3px 8px rgba(0,0,0,.45)}
+.module .m-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.module .m-title{font-size:12px;font-weight:900;letter-spacing:.3em;color:var(--ink)}
+.module .m-lamp{margin-left:auto;width:13px;height:13px;border-radius:50%;background:#22242a;border:1px solid #0c0d0f;box-shadow:inset 0 1px 3px rgba(0,0,0,.8)}
+.module .m-lamp.on{background:var(--amber);box-shadow:0 0 10px rgba(255,176,46,.85)}
+.module .m-lamp.done{background:var(--green);box-shadow:0 0 10px rgba(55,224,139,.85)}
+.module .m-sub{font-size:11.5px;color:var(--ink-dim);line-height:1.45;margin-bottom:10px;white-space:pre-line}
+.module.locked{filter:brightness(.55) saturate(.5)}
+.module.locked::after{content:"NO POWER";position:absolute;top:10px;right:44px;font-size:9px;font-weight:900;letter-spacing:.3em;color:#77705c;border:1px solid #55503f;padding:3px 7px;border-radius:3px;transform:rotate(-4deg)}
+.module.solved{outline:1px solid rgba(55,224,139,.35)}
+.module.solved .m-title{color:var(--green)}
+.module .row{display:flex;gap:8px;align-items:center}
+.big-btn{display:block;width:100%;padding:14px;border-radius:9px;border:1px solid #101215;background:linear-gradient(180deg,#41464f,#26292f);color:#fff;font-size:14px;font-weight:900;letter-spacing:.18em;cursor:pointer;box-shadow:0 3px 0 #101215, inset 0 1px 0 rgba(255,255,255,.15);margin-top:10px}
+.big-btn:active{transform:translateY(3px);box-shadow:0 0 0 #101215}
+.big-btn.danger{background:linear-gradient(180deg,#c03327,#7e1d15)}
+.big-btn.ghost{background:linear-gradient(180deg,#2c2f35,#1d2024);color:var(--ink-dim);font-size:12px}
+@keyframes readyPulse{0%,100%{box-shadow:0 0 0 rgba(255,176,46,0)}50%{box-shadow:0 0 14px rgba(255,176,46,.55)}}
+.big-btn.ready{color:#ffd98a;border-color:#ffb62e;opacity:1;animation:readyPulse 1.1s ease-in-out infinite}
+.big-btn:disabled{opacity:.4}
+.ctl-btn{flex:1;background:linear-gradient(180deg,#434854,#26292f);border:1px solid #101215;color:#fff;border-radius:8px;padding:12px 6px;font-size:13px;font-weight:900;letter-spacing:.08em;cursor:pointer;box-shadow:0 3px 0 #101215, inset 0 1px 0 rgba(255,255,255,.15)}
+.ctl-btn:active{transform:translateY(3px);box-shadow:0 0 0 #101215}
+.ctl-btn:disabled{opacity:.35;transform:none;box-shadow:0 3px 0 #101215}
+.ctl-btn.armed{background:linear-gradient(180deg,#2f9e5f,#1d6b3e)}
+
+/* scan terminal */
+.term{background:var(--lcd);border:1px solid #000;border-radius:8px;box-shadow:inset 0 0 24px rgba(40,255,120,.07), inset 0 2px 10px #000;padding:10px 12px;min-height:96px;font-family:"Courier New",monospace;font-size:12.5px;line-height:1.55;color:#7ee787;white-space:pre-wrap;word-break:break-word}
+.term .dim{color:#3f7a4d}
+.scan-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.charge-pips{display:flex;gap:5px;margin-top:8px}
+.charge-pips i{width:22px;height:8px;border-radius:2px;background:#37e08b;box-shadow:0 0 6px rgba(55,224,139,.5)}
+.charge-pips i.spent{background:#2a2d33;box-shadow:none}
+
+/* dial + scope */
+.scope{background:#060a08;border:1px solid #000;border-radius:8px;box-shadow:inset 0 2px 12px #000;margin-bottom:10px}
+.scope canvas{width:100%;height:74px;display:block}
+.dial-row{display:flex;align-items:center;gap:10px}
+.knob{position:relative;flex:none;width:104px;height:104px;border-radius:50%;margin:0 auto;
+  background:radial-gradient(circle at 34% 28%,#5b616c,#33373e 55%,#1e2126);
+  border:2px solid #101215;box-shadow:0 6px 14px rgba(0,0,0,.6), inset 0 2px 3px rgba(255,255,255,.25), inset 0 -6px 12px rgba(0,0,0,.55);cursor:grab;touch-action:none}
+.knob::before{content:"";position:absolute;inset:9px;border-radius:50%;border:2px dashed rgba(255,255,255,.13)}
+.knob .pointer{position:absolute;left:50%;top:6px;width:5px;height:34px;margin-left:-2.5px;border-radius:3px;background:var(--amber);box-shadow:0 0 7px rgba(255,176,46,.8)}
+.freq-read{font-family:"Courier New",monospace;font-size:24px;font-weight:900;color:#ffd98a;text-align:center;text-shadow:0 0 10px rgba(255,176,46,.35)}
+.meter{display:flex;gap:4px;justify-content:center;margin:8px 0}
+.meter i{width:26px;height:9px;border-radius:2px;background:#26282e}
+.meter i.hot{background:var(--amber);box-shadow:0 0 7px rgba(255,176,46,.7)}
+.meter i.lock{background:var(--green);box-shadow:0 0 8px rgba(55,224,139,.8)}
+
+/* wires */
+.wirebay{background:#17181c;border:1px solid #0a0b0d;border-radius:9px;padding:10px 8px 6px;box-shadow:inset 0 3px 14px rgba(0,0,0,.75)}
+.wire-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.term-block{flex:none;width:13px;height:26px;border-radius:3px;background:linear-gradient(90deg,#5a5f68,#33363d);border:1px solid #0c0d0f}
+.wire-svg{flex:1;height:30px}
+.wire-tag{flex:none;min-width:44px;text-align:center;font-family:"Courier New",monospace;font-weight:900;font-size:11px;color:#ffd98a;background:#26221a;border:1px solid #57492a;border-radius:4px;padding:4px 2px;transform:rotate(-2deg)}
+.wire-tag.lit{background:#7a5b12;color:#fff;box-shadow:0 0 12px rgba(255,176,46,.8)}
+.cut-btn{flex:none;background:linear-gradient(180deg,#5a2d28,#38201c);color:#f0b1a8;border:1px solid #160c0a;border-radius:6px;padding:8px 9px;font-size:10px;font-weight:900;letter-spacing:.1em;cursor:pointer;box-shadow:0 2px 0 #160c0a}
+.cut-btn:active{transform:translateY(2px);box-shadow:none}
+.cut-btn:disabled{opacity:.3}
+.wire-row.cut .wire-tag{opacity:.35}
+.wire-note{font-size:10.5px;color:var(--ink-dim);font-style:italic;margin-top:2px}
+
+/* switches */
+.switch-bank{display:flex;gap:10px}
+.sw{flex:1;background:#1b1d21;border:1px solid #0c0d0f;border-radius:10px;padding:12px 6px 9px;text-align:center;box-shadow:inset 0 2px 10px rgba(0,0,0,.7)}
+.sw .slot{width:40px;height:64px;margin:0 auto 8px;border-radius:8px;background:#0c0d0f;box-shadow:inset 0 3px 10px #000;position:relative}
+.sw .toggle{position:absolute;left:4px;right:4px;height:30px;border-radius:6px;background:linear-gradient(180deg,#6a707b,#3a3e46);border:1px solid #101215;box-shadow:0 3px 6px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3);transition:top .09s ease;top:30px;cursor:pointer}
+.sw.on .toggle{top:4px;background:linear-gradient(180deg,#ffd98a,#c8922a)}
+.sw .sw-label{font-weight:900;letter-spacing:.2em;font-size:12px;color:var(--ink-dim)}
+.sw.lit{outline:2px solid var(--amber)}
+.seq-lamps{display:flex;gap:8px;justify-content:center;margin-bottom:10px}
+.seq-lamps i{width:16px;height:16px;border-radius:50%;background:#22242a;border:1px solid #0c0d0f}
+.seq-lamps i.blink{background:var(--amber);box-shadow:0 0 12px rgba(255,176,46,.9)}
+
+/* sliders */
+.sync-row{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.sync-track{position:relative;flex:1;height:26px;border-radius:5px;background:#101215;box-shadow:inset 0 2px 8px #000;overflow:hidden}
+.sync-zone{position:absolute;top:0;bottom:0;background:rgba(55,224,139,.4);border-left:1px solid var(--green);border-right:1px solid var(--green)}
+.sync-dot{position:absolute;top:3px;width:8px;height:20px;margin-left:-4px;border-radius:3px;background:#ffd98a;box-shadow:0 0 8px rgba(255,217,138,.8)}
+.sync-row.done .sync-track{outline:1px solid rgba(55,224,139,.5)}
+.sync-label{flex:none;width:56px;font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--ink-dim)}
+.lock-btn{flex:none;background:linear-gradient(180deg,#434854,#26292f);border:1px solid #101215;color:#fff;border-radius:7px;padding:9px 11px;font-size:11px;font-weight:900;cursor:pointer;box-shadow:0 2px 0 #101215}
+.lock-btn:disabled{opacity:.35}
+
+/* gauge */
+.gauge-wrap{display:flex;gap:12px;align-items:center}
+.gauge-svg{flex:none}
+.gauge-side{flex:1}
+.gauge-val{font-family:"Courier New",monospace;font-size:30px;font-weight:900;color:#ffd98a}
+.gauge-band-note{font-size:11px;color:var(--ink-dim);line-height:1.45;white-space:pre-line}
+.stable-ring{height:8px;border-radius:4px;background:#17181c;margin-top:8px;overflow:hidden}
+.stable-ring i{display:block;height:100%;width:0;background:var(--green);box-shadow:0 0 8px rgba(55,224,139,.7)}
+.press-btn{width:100%;padding:16px;border-radius:9px;border:1px solid #160c0a;background:linear-gradient(180deg,#7e2d23,#4d1a13);color:#ffd9d2;font-size:13px;font-weight:900;letter-spacing:.16em;cursor:pointer;box-shadow:0 4px 0 #160c0a;touch-action:none;user-select:none;-webkit-user-select:none}
+.press-btn:active,.press-btn.held{transform:translateY(3px);box-shadow:0 1px 0 #160c0a;background:linear-gradient(180deg,#a03a2c,#5f2016)}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(5,6,7,.86);display:none;align-items:flex-start;justify-content:center;padding:18px 12px;overflow-y:auto;z-index:50}
+.overlay.show{display:flex}
+.sheet{width:100%;max-width:480px;border-radius:14px;padding:22px 20px;background:linear-gradient(165deg,#33373f,#22252b 60%,#1b1e23);border:1px solid #101215;box-shadow:0 22px 60px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1)}
+.sheet h1{margin:0;font-size:34px;font-weight:900;letter-spacing:.4em;text-indent:.2em;text-align:center}
+.sheet h2{margin:0 0 4px;font-size:21px;font-weight:900;letter-spacing:.12em}
+.sheet-sub{text-align:center;color:var(--amber);font-size:10px;font-weight:900;letter-spacing:.3em;margin:6px 0 16px}
+.sheet h2 + .sheet-sub{text-align:left}
+.sheet-foot{font-size:11.5px;color:var(--ink-dim);line-height:1.55;margin-top:14px}
+#b-text{font-size:14px;line-height:1.6;color:var(--ink)}
+.b-meta{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.b-meta .chip{background:#1d2a1d;border-color:#2e442e;color:#9fd69f}
+.b-warn{font-size:12px;color:#f0b1a8}
+#mission-list{display:flex;flex-direction:column;gap:8px}
+.mission{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px 14px;border-radius:10px;border:1px solid #101215;background:linear-gradient(180deg,#2e3238,#212429);color:var(--ink);cursor:pointer;box-shadow:0 2px 0 #101215}
+.mission:active{transform:translateY(2px);box-shadow:none}
+.mission .m-num{font-family:"Courier New",monospace;font-size:19px;font-weight:900;color:var(--amber);min-width:38px}
+.mission .m-info{flex:1}
+.mission .m-name{font-weight:900;letter-spacing:.1em;font-size:13.5px}
+.mission .m-meta{font-size:10.5px;color:var(--ink-dim);letter-spacing:.06em;margin-top:2px}
+.mission .m-best{font-size:10px;color:#9fd69f;font-weight:800;text-align:right}
+.mission.locked{opacity:.45;cursor:default}
+.mission .m-lock{font-size:15px}
+#r-title.win{color:var(--green)}
+#r-title.lose{color:var(--red)}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- ══════════ THE CASE ══════════ -->
+  <div id="case">
+    <div class="case-lip top"><span class="latch"></span><span class="case-brand">WWC ORDNANCE // FIELD DISPOSAL UNIT</span><span class="latch"></span></div>
+
+    <header id="device-head">
+      <button id="btn-missions" class="head-btn">← MISSIONS</button>
+      <div class="head-title">DEFUSE</div>
+      <button id="btn-mute" class="head-btn">SOUND: ON</button>
+    </header>
+
+    <section id="plate">
+      <div class="plate-main">
+        <div class="maker" id="p-maker">—</div>
+        <div class="plate-sub" id="p-sub">AUTHORIZED TECHNICIANS ONLY</div>
+        <div class="plate-note" id="p-note"></div>
+      </div>
+      <div class="plate-specs">
+        <div><span>MODEL</span><b id="p-model">—</b></div>
+        <div><span>SERIAL</span><b id="p-serial">—</b></div>
+        <div><span>CELLS</span><b id="p-bat">—</b></div>
+        <div><span>MISSION</span><b id="p-mission">—</b></div>
+        <div><span>SITE</span><b id="p-loc">—</b></div>
+      </div>
+      <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+    </section>
+
+    <section id="timer-bay">
+      <div id="timer">--:--</div>
+      <div id="timer-state">STANDBY</div>
+      <div id="strikes" title="strikes"><i></i><i></i></div>
+    </section>
+
+    <section id="comms">
+      <span class="comms-tag">FIELD COMMS //</span>
+      <span id="comms-text">Awaiting mission authorization.</span>
+      <button id="btn-hint">ASK (−10s)</button>
+    </section>
+
+    <section id="intel-tray">
+      <span class="tray-tag">INTEL</i></span>
+      <div id="intel-chips"><span class="tray-empty">Nothing gathered yet. Work the device.</span></div>
+    </section>
+
+    <main id="board"><!-- modules mount here --></main>
+
+    <div class="case-lip bottom"><span class="hazard"></span></div>
+  </div>
+
+  <!-- ══════════ MISSION SELECT ══════════ -->
+  <div id="missions" class="overlay show">
+    <div class="sheet">
+      <h1>DEFUSE</h1>
+      <p class="sheet-sub">FIELD DISPOSAL UNIT // CAMPAIGN</p>
+      <div id="mission-list"></div>
+      <p class="sheet-foot">Every device is solvable from what's on it and what you can pull from it. Read the maker. Trust the evidence, not your first guess.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ BRIEFING ══════════ -->
+  <div id="briefing" class="overlay">
+    <div class="sheet">
+      <h2 id="b-name">—</h2>
+      <p class="sheet-sub"><span id="b-maker"></span> · <span id="b-loc"></span></p>
+      <p id="b-text"></p>
+      <div class="b-meta" id="b-meta"></div>
+      <p class="b-warn">Study the device as long as you like. The countdown starts when you arm it.</p>
+      <button id="btn-begin" class="big-btn danger">ARM DEVICE — BEGIN</button>
+      <button id="btn-back" class="big-btn ghost">BACK TO MISSIONS</button>
+    </div>
+  </div>
+
+  <!-- ══════════ RESULT ══════════ -->
+  <div id="result" class="overlay">
+    <div class="sheet">
+      <h2 id="r-title">—</h2>
+      <p id="r-text"></p>
+      <div class="b-meta" id="r-meta"></div>
+      <button id="btn-next" class="big-btn">NEXT MISSION</button>
+      <button id="btn-retry" class="big-btn ghost">RETRY</button>
+      <button id="btn-tomissions" class="big-btn ghost">MISSIONS</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* DEFUSE audio — tiny WebAudio kit, no assets */
+const Snd = (() => {
+  let ac = null, muted = false;
+  function ctx(){ if(!ac){ try{ ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(ac && ac.state==='suspended') ac.resume(); return ac; }
+  function tone(f, d=0.06, v=0.04, type='square'){
+    if(muted) return; const c = ctx(); if(!c) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.value = f; g.gain.value = v;
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + d);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + d);
+  }
+  function noise(d=0.08, v=0.05){
+    if(muted) return; const c = ctx(); if(!c) return;
+    const buf = c.createBuffer(1, c.sampleRate*d, c.sampleRate), ch = buf.getChannelData(0);
+    for(let i=0;i<ch.length;i++) ch[i] = (Math.random()*2-1) * (1 - i/ch.length);
+    const s = c.createBufferSource(); s.buffer = buf;
+    const g = c.createGain(); g.gain.value = v; const f = c.createBiquadFilter(); f.type='highpass'; f.frequency.value = 900;
+    s.connect(f); f.connect(g); g.connect(c.destination); s.start();
+  }
+  return {
+    toggleMute(){ muted = !muted; return muted; },
+    get muted(){ return muted; },
+    beep(f=760){ tone(f, .05, .03); },
+    tick(){ tone(1150, .03, .018); },
+    click(){ noise(.04,.05); tone(300,.03,.02); },
+    clack(up){ tone(up?520:360, .05, .05); noise(.05,.04); },
+    thunk(){ tone(120, .12, .09, 'sine'); noise(.09,.06); },
+    lock(){ tone(880,.07,.05); setTimeout(()=>tone(1320,.09,.05), 70); },
+    good(){ [660,880,1180].forEach((f,i)=>setTimeout(()=>tone(f,.09,.045), i*80)); },
+    bad(){ tone(170, .22, .08, 'sawtooth'); noise(.15,.06); },
+    alarm(){ tone(95, .5, .1, 'sawtooth'); },
+    scan(){ [440,560,700,920].forEach((f,i)=>setTimeout(()=>tone(f,.05,.025), i*60)); },
+  };
+})();
+
+</script>
+<script>
+/* ═══════════════ DEFUSE — LEVEL DATA ═══════════════
+   Levels are data: modules + a chain (stages; an array inside
+   the chain = a parallel group). Every level carries a documented
+   `solution` — the validator plays it to prove solvability. */
+const LEVELS = [
+/* ─────────── 1 ─────────── */
+{ id:1, name:'FIRST LIGHT', maker:'NORTHSTAR DEFENSE', model:'RAVEN FIELD UNIT', serial:'K7D42', batteries:2,
+  location:'BANK SUBLEVEL', timer:150,
+  briefing:'A Raven unit in a bank sublevel, ticking down in the dark. Northstar builds teaching machines — every answer is on the device, if you work it in the right order.',
+  plateNote:'STENCIL: CAL BEFORE CUT — BY ORDER\nA hand-scratched tag by the wire bay reads T-3.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:2, sub:'Two charges. Choose what you learn — and what you don\'t.', topics:[
+      { id:'signal', label:'SIGNAL', lines:['CARRIER UNSTABLE — DRIFTING.','REFERENCE LOCK: 91.1 MHz.','WAVEFORM SNAPSHOT STORED.'], gives:{ freq911:{label:'CARRIER REF', value:'91.1 MHz'}, snapshot:{label:'WAVEFORM SNAPSHOT'} }, comms:'Signal scan complete. A frequency and a waveform — the dial will want both.' },
+      { id:'power', label:'POWER', lines:['TRIGGER BUS LIVE ON T-3.','INTERLOCK: ISOLATE ONLY AFTER CALIBRATION.'], gives:{ trigT3:{label:'TRIGGER BUS', value:'T-3'} }, comms:'Power scan complete. The trigger has a name now.' },
+      { id:'coolant', label:'COOLANT', lines:['COOLANT SAFE BAND IS STATE-DEPENDENT.','RE-READ AFTER ANY TRIGGER CHANGE.'], gives:{ coolantNote:{label:'COOLANT NOTE', value:'BAND SHIFTS WITH TRIGGER'} } },
+    ]},
+    dial1:{ type:'dial', title:'SIGNAL CALIBRATION', min:88, max:108, start:88, target:91.1, tol:0.15, unit:'MHz', snapshotKey:'snapshot',
+      sub:'Hunt the carrier. The meter warms as you close in; the scope steadies. LOCK when it holds.',
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 91.1'}, litTag:{label:'TAG LAMP', value:'T-3'} },
+      lockMsg:'Locked. Across the case, a small lamp wakes beside one of the wires.' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'Five wires. The evidence names one of them — two separate threads, same answer.',
+      wires:[{tag:'T-1',color:'RED'},{tag:'T-2',color:'BLUE'},{tag:'T-3',color:'YELLOW'},{tag:'T-4',color:'RED'},{tag:'T-5',color:'WHITE'}],
+      answerFromIntel:'trigT3', lampFromIntel:'litTag', requiresIntel:['freqLocked'],
+      requiresMsg:'The cutter jams on the interlock — the plate said CAL BEFORE CUT.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'}, safeBand:{label:'SAFE BAND', value:[55,65]} },
+      solveMsg:'Trigger bus dark. Under the gauge, a band marker slides into its true place.' },
+    gauge1:{ type:'gauge', title:'PRESSURE REGULATOR', unit:'PSI', bandFromIntel:'safeBand', revealOnIntel:'triggerIsolated', decoyBand:[30,40], holdMs:1500,
+      sub:'The band marker lies until the trigger state changes it.',
+      noteHidden:'That band reads 30–40 — but the coolant note warned you it shifts. Trust nothing yet.',
+      solveMsg:'Pressure settles in the true band. The device is safe.' },
+  },
+  chain:['scan1','dial1','wires1','gauge1'], layout:['scan1','dial1','wires1','gauge1'],
+  hints:['The scanner is the only powered module. Signal and power are the charges that matter most.',
+    'Tune until the scope matches the snapshot and the meter goes green — then LOCK.',
+    'Two threads name the same wire: the scan called it T-3, and a lamp is burning beside it.',
+    'The pressure band only became true once the trigger was isolated. Ease in, hold it steady.'],
+  solution:[
+    { module:'scan1', action:'scan SIGNAL', gives:['freq911','snapshot'] },
+    { module:'scan1', action:'scan POWER', gives:['trigT3'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'dial1', action:'tune to 91.1 and LOCK', needs:['freq911'], gives:['freqLocked','litTag'] },
+    { module:'wires1', action:'cut T-3', needs:['trigT3','freqLocked'], gives:['triggerIsolated','safeBand'] },
+    { module:'gauge1', action:'hold pressure in 55–65', needs:['triggerIsolated','safeBand'] },
+  ],
+},
+/* ─────────── 2 ─────────── */
+{ id:2, name:'HONEST WORK', maker:'VANGUARD ORDNANCE', model:'MK-IV THUNDER', serial:'M3T88', batteries:3,
+  location:'WAREHOUSE 12', timer:115,
+  briefing:'Vanguard builds honest machines: no scanner, no tricks — everything you need is stamped, printed, or counted on the case itself. Read it like a label, because it is one.',
+  plateNote:'FIELD PLATE: ISOLATE THE CIRCUIT WHOSE NUMBER MATCHES THE CELL COUNT.',
+  startIntel:[{ key:'plateRule', label:'FIELD PLATE', value:'CIRCUIT № = CELL COUNT' }],
+  modules:{
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'Five numbered circuits. The plate tells you how to choose; the cells are counted on the plate.',
+      wires:[{tag:'C-1',color:'BLUE'},{tag:'C-2',color:'YELLOW'},{tag:'C-3',color:'GREEN'},{tag:'C-4',color:'RED'},{tag:'C-5',color:'WHITE'}],
+      answer:'C-3',
+      givesOnSolve:{ switchPattern:{label:'ROUTE PATTERN', value:[1,0,1]} },
+      solveMsg:'Route isolated. The firing pattern follows the green route: UP · DOWN · UP.' },
+    switches1:{ type:'switches', title:'FIRING CIRCUIT', sub:'Set the pattern the route dictates, then VERIFY.', patternFromIntel:'switchPattern', labels:['A','B','C'],
+      failMsg:'Pattern rejected — that isn\'t the route\'s pattern.' },
+    gauge1:{ type:'gauge', title:'PRESSURE REGULATOR', unit:'PSI', band:[40,55], holdMs:1500,
+      sub:'The band is printed on the dial face. Vanguard hides nothing.', solveMsg:'Pressure steady. Device safe.' },
+  },
+  chain:['wires1','switches1','gauge1'], layout:['wires1','switches1','gauge1'],
+  hints:['No scanner on a Vanguard. The plate is the manual: circuit number equals cell count.',
+    'Three cells. Count the circuits.',
+    'The route you cut dictates the switch pattern — it was announced when the wire went.'],
+  solution:[
+    { module:'wires1', action:'cut C-3 (3 cells → circuit 3)', gives:['switchPattern'] },
+    { module:'switches1', action:'set UP/DOWN/UP and VERIFY', needs:['switchPattern'] },
+    { module:'gauge1', action:'hold pressure in 40–55' },
+  ],
+},
+/* ─────────── 3 ─────────── */
+{ id:3, name:'GHOST SIGNAL', maker:'CINDERLINE SYSTEMS', model:'VEX-9', serial:'R6K21', batteries:2,
+  location:'SUBWAY TUNNEL', timer:145,
+  briefing:'Something is broadcasting from a dead tunnel, and Cinderline wired the receiver straight into the trigger. The carrier carries more than itself.',
+  plateNote:'CINDERLINE FIELD NOTE: THE CARRIER CARRIES MORE THAN ITSELF.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:2, sub:'Two charges. The signal is out there — go and get it.', topics:[
+      { id:'signal', label:'SIGNAL', lines:['CARRIER FOUND: 104.3 MHz.','PILOT TONE RIDES THE CARRIER.','WAVEFORM SNAPSHOT STORED.'], gives:{ freq1043:{label:'CARRIER', value:'104.3 MHz'}, snapshot:{label:'WAVEFORM SNAPSHOT'} }, comms:'Carrier logged: 104.3. Something rides it.' },
+      { id:'power', label:'POWER', lines:['AUX BUS FEEDS THE SYNCHRONIZERS FIRST.','FIRING BOARD ARMS LAST.'], gives:{ auxNote:{label:'AUX NOTE', value:'SYNC BEFORE FIRING'} } },
+      { id:'coolant', label:'COOLANT', lines:['COOLANT NOMINAL. NOTHING TO LEARN HERE.'], gives:{} },
+    ]},
+    dial1:{ type:'dial', title:'SIGNAL CALIBRATION', min:95, max:112, start:95, target:104.3, tol:0.15, unit:'MHz', snapshotKey:'snapshot',
+      sub:'Find the ghost. When the pilot tone locks, watch the lamps on the firing board.',
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 104.3'}, switchPattern:{label:'PILOT PATTERN', value:[0,1,1]} },
+      lockMsg:'Locked — and the firing board\'s pilot lamps blink it back: DOWN · UP · UP. The carrier was carrying the pattern.' },
+    sliders1:{ type:'sliders', title:'TIMING SYNCHRONIZER', sub:'Lock each channel inside its green window. A miss costs 3 seconds, nothing more.',
+      channels:[{label:'ALPHA',speed:30,w:24},{label:'BETA',speed:34,w:24},{label:'GAMMA',speed:38,w:22}], solveMsg:'Synchronizers aligned. The firing board wakes.' },
+    switches1:{ type:'switches', title:'FIRING CIRCUIT', sub:'The pilot lamps showed you this pattern. Set it, then VERIFY.', patternFromIntel:'switchPattern', labels:['A','B','C'],
+      failMsg:'Rejected. The pilot pattern was DOWN · UP · UP.' },
+  },
+  chain:['scan1','dial1','sliders1','switches1'], layout:['scan1','dial1','sliders1','switches1'],
+  hints:['Scan the signal. Coolant has nothing for you on this one.',
+    'At lock, the pilot lamps blink the firing pattern. DOWN · UP · UP.',
+    'Synchronizers are reflexes, not riddles: green window, LOCK.'],
+  solution:[
+    { module:'scan1', action:'scan SIGNAL', gives:['freq1043','snapshot'] },
+    { module:'scan1', action:'scan POWER', gives:['auxNote'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'dial1', action:'tune to 104.3 and LOCK', needs:['freq1043'], gives:['freqLocked','switchPattern'] },
+    { module:'sliders1', action:'lock all three channels' },
+    { module:'switches1', action:'set DOWN/UP/UP and VERIFY', needs:['switchPattern'] },
+  ],
+},
+/* ─────────── 4 ─────────── */
+{ id:4, name:'TWO KEYS', maker:'VANGUARD ORDNANCE', model:'TITAN 88', serial:'B9Q47', batteries:4,
+  location:'FREIGHT TERMINAL', timer:165,
+  briefing:'A Titan with two interlocks that don\'t care about each other: calibrate the beacon, vent the case — in either order — before the wire bay will so much as twitch.',
+  plateNote:'STENCIL, HALF-WORN: EMERGENCY BAND …8.9\nSTAMP INSIDE LID: FINAL PATTERN UP · UP · DOWN.',
+  startIntel:[{ key:'freqHint', label:'WORN STENCIL', value:'…8.9 MHz EMERGENCY BAND' },{ key:'lidStamp', label:'LID STAMP', value:'UP · UP · DOWN' }],
+  modules:{
+    dial1:{ type:'dial', title:'BEACON CALIBRATION', min:85, max:95, start:85, target:88.9, tol:0.15, unit:'MHz',
+      sub:'The stencil kept the tail of the frequency: …8.9. The band is narrow — hunt it.',
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 88.9'}, litTag:{label:'TAG LAMP', value:'W-2'} },
+      lockMsg:'Beacon locked. A tag lamp lights in the wire bay.' },
+    gauge1:{ type:'gauge', title:'CASE VENT', unit:'PSI', band:[60,75], holdMs:1200,
+      sub:'Vent the case into the printed band before the bay will open.', givesOnSolve:{ vented:{label:'CASE', value:'VENTED'} },
+      solveMsg:'Case vented. The bay\'s interlock relaxes — one key turned.' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'The bay wants both keys turned first. Then it names its wire with a lamp.',
+      wires:[{tag:'W-1',color:'RED'},{tag:'W-2',color:'YELLOW'},{tag:'W-3',color:'BLUE'},{tag:'W-4',color:'GREEN'}],
+      answerFromIntel:'litTag', lampFromIntel:'litTag', requiresIntel:['freqLocked','vented'],
+      requiresMsg:'Interlock holds: the bay wants calibration AND a vented case first.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'} }, solveMsg:'Trigger isolated. One board left.' },
+    switches1:{ type:'switches', title:'FIRING CIRCUIT', sub:'The lid stamp is the pattern. Set it, then VERIFY.', pattern:[1,1,0], labels:['A','B','C'],
+      failMsg:'Rejected. The lid said UP · UP · DOWN.' },
+  },
+  chain:[['dial1','gauge1'],'wires1','switches1'], layout:['dial1','gauge1','wires1','switches1'],
+  hints:['Two interlocks, either order: tune …8.9 on the dial, vent 60–75 on the gauge.',
+    'The wire bay names its wire with a lamp — but only once both keys are turned.',
+    'The firing pattern is stamped inside the lid: UP · UP · DOWN.'],
+  solution:[
+    { module:'dial1', action:'tune to 88.9 and LOCK (parallel with vent)', gives:['freqLocked','litTag'] },
+    { module:'gauge1', action:'vent into 60–75 (parallel with dial)', gives:['vented'] },
+    { module:'wires1', action:'cut the lamp-lit wire W-2', needs:['freqLocked','vented','litTag'], gives:['triggerIsolated'] },
+    { module:'switches1', action:'set UP/UP/DOWN and VERIFY' },
+  ],
+},
+/* ─────────── 5 ─────────── */
+{ id:5, name:'THE DECOY', maker:'BLACK SUN INDUSTRIES', model:'MANTICORE-3', serial:'X2D66', batteries:2,
+  location:'RESEARCH ANNEX', timer:175,
+  briefing:'Black Sun builds traps for clever people. Two carriers, two lamps, one truth — and the easy answer is the one they built for you.',
+  plateNote:'BLACK SUN INDUSTRIES: TRUST NOTHING THAT LIGHTS UP FIRST.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:3, sub:'Three charges. Black Sun punishes the unexamined scan.', topics:[
+      { id:'signal', label:'SIGNAL', lines:['TWO CARRIERS FOUND: 96.4 AND 99.2 MHz.','BOTH STRONG. BOTH PLAUSIBLE.'], gives:{ carrierA:{label:'CARRIER A', value:'96.4 MHz'}, carrierB:{label:'CARRIER B', value:'99.2 MHz'} }, comms:'Two carriers. Of course there are two carriers.' },
+      { id:'waveform', label:'WAVEFORM', lines:['ETCHED SNAPSHOT ON THE CASE: DOUBLE-PEAK.','ONLY ONE CARRIER MATCHES THE ETCHING.'], gives:{ snapshotDP:{label:'ETCHED SNAPSHOT', value:'DOUBLE-PEAK'} }, comms:'The case itself carries the reference shape: double-peak.' },
+      { id:'power', label:'POWER', lines:['TWO LAMPS WILL LIGHT IN THE WIRE BAY.','GREEN = LIVE CIRCUIT. AMBER = TEST CIRCUIT.'], gives:{ lampRule:{label:'LAMP RULE', value:'GREEN LIVE · AMBER TEST'} }, comms:'Green means live. Amber means they\'re laughing at you.' },
+    ]},
+    dial1:{ type:'dial', title:'SIGNAL CALIBRATION', min:94, max:102, start:96.4, target:99.2, tol:0.15, unit:'MHz', snapshotKey:'snapshotDP', doublePeak:true,
+      sub:'The dial wakes up parked on the first carrier. The scope\'s shape is the judge: match the etching.',
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 99.2'}, litTag:{label:'GREEN LAMP', value:'T-4'} },
+      lockMsg:'The double-peak snaps flat. In the bay: one lamp green, one amber.' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'Two lamps burn in this bay. The scan told you what the colors mean.',
+      wires:[{tag:'T-1',color:'BLUE'},{tag:'T-2',color:'RED'},{tag:'T-3',color:'WHITE'},{tag:'T-4',color:'GREEN'},{tag:'T-5',color:'YELLOW'}],
+      answer:'T-4', lampFromIntel:'litTag', requiresIntel:['freqLocked'],
+      requiresMsg:'Interlock: calibrate first. Black Sun counts on the impatient.',
+      wrongMsg:'That wire was a test circuit. Black Sun thanks you for playing.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'}, safeBand:{label:'SAFE BAND', value:[48,60]} },
+      solveMsg:'The real trigger dies. The true band shows itself: 48–60.' },
+    gauge1:{ type:'gauge', title:'PRESSURE REGULATOR', unit:'PSI', bandFromIntel:'safeBand', revealOnIntel:'triggerIsolated', decoyBand:[70,84], holdMs:1500,
+      sub:'The band on this dial has lied before.',
+      noteHidden:'Band reads 70–84. On a Black Sun box, ask yourself who painted it.',
+      solveMsg:'Pressure settles where the truth said it would. Device safe.' },
+  },
+  chain:['scan1','dial1','wires1','gauge1'], layout:['scan1','dial1','wires1','gauge1'],
+  hints:['Spend all three charges. The waveform scan is the one that convicts.',
+    'The dial starts on the decoy. Match the etched double-peak shape, not the first strong signal.',
+    'Green lamp = live circuit. Amber = test circuit. The scan said so.'],
+  solution:[
+    { module:'scan1', action:'scan SIGNAL', gives:['carrierA','carrierB'] },
+    { module:'scan1', action:'scan WAVEFORM', gives:['snapshotDP'] },
+    { module:'scan1', action:'scan POWER', gives:['lampRule'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'dial1', action:'tune to 99.2 (double-peak match) and LOCK', needs:['snapshotDP'], gives:['freqLocked','litTag'] },
+    { module:'wires1', action:'cut T-4 (green lamp)', needs:['freqLocked','litTag'], gives:['triggerIsolated','safeBand'] },
+    { module:'gauge1', action:'hold pressure in 48–60', needs:['triggerIsolated','safeBand'] },
+  ],
+},
+/* ─────────── 6 ─────────── */
+{ id:6, name:'BLINK CODE', maker:'CINDERLINE SYSTEMS', model:'VEX-9', serial:'P4H83', batteries:3,
+  location:'ABANDONED ARCADE', timer:150,
+  briefing:'Somebody wired a firing board into a gutted arcade cabinet. Before it arms, the house runs its lights — and the light show is the combination.',
+  plateNote:'THE HOUSE ALWAYS RUNS ITS LIGHTS BEFORE A GAME.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:2, sub:'Two charges. One of them explains the lamps.', topics:[
+      { id:'structure', label:'STRUCTURE', lines:['MAINTENANCE LAMPS RUN THE FIRING PATTERN','BEFORE THE BOARD ARMS. WATCH THEM.'], gives:{ patternNote:{label:'LAMP NOTE', value:'LAMPS RUN THE PATTERN'} }, comms:'The lamps aren\'t decoration. They\'re the combination, performed.' },
+      { id:'power', label:'POWER', lines:['REGULATOR BAND SEALED UNTIL THE SEQUENCE BOARD CLEARS.'], gives:{ regNote:{label:'REGULATOR NOTE', value:'BAND SEALED TILL SEQUENCE'} } },
+    ]},
+    switches1:{ type:'switches', title:'SEQUENCE BOARD', mode:'sequence', order:[2,0,1,2], labels:['A','B','C'],
+      sub:'WATCH THE PATTERN, then throw the switches in the order the lamps ran. A wrong throw costs a strike.',
+      givesOnSolve:{ seqDone:{label:'SEQUENCE', value:'CLEARED'}, safeBand:{label:'SAFE BAND', value:[35,48]} },
+      solveMsg:'Sequence accepted. The regulator unseals its true band: 35–48.', failMsg:'Wrong order. The board resets.' },
+    sliders1:{ type:'sliders', title:'TIMING SYNCHRONIZER', sub:'Arcade reflexes. Green window, LOCK.',
+      channels:[{label:'ALPHA',speed:32,w:24},{label:'BETA',speed:36,w:22},{label:'GAMMA',speed:40,w:22}], solveMsg:'Synchronizers aligned.' },
+    gauge1:{ type:'gauge', title:'PRESSURE REGULATOR', unit:'PSI', bandFromIntel:'safeBand', revealOnIntel:'seqDone', decoyBand:[60,72], holdMs:1500,
+      sub:'Sealed until the sequence board clears.',
+      noteHidden:'The band is sealed. The board upstairs holds the key.',
+      solveMsg:'Pressure settles. The house goes dark and quiet. Device safe.' },
+  },
+  chain:['scan1','switches1','sliders1','gauge1'], layout:['scan1','switches1','sliders1','gauge1'],
+  hints:['The structure scan explains the lamps. Read it before you touch the board.',
+    'WATCH THE PATTERN as many times as you need. Four throws. One of them repeats.',
+    'The regulator band stays sealed until the sequence clears.'],
+  solution:[
+    { module:'scan1', action:'scan STRUCTURE', gives:['patternNote'] },
+    { module:'scan1', action:'scan POWER', gives:['regNote'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'switches1', action:'watch lamps, repeat C·A·B·C', gives:['seqDone','safeBand'] },
+    { module:'sliders1', action:'lock all three channels' },
+    { module:'gauge1', action:'hold pressure in 35–48', needs:['seqDone','safeBand'] },
+  ],
+},
+/* ─────────── 7 ─────────── */
+{ id:7, name:'PRESSURE COOKER', maker:'BLACK SUN INDUSTRIES', model:'TITAN 88', serial:'G7W29', batteries:2,
+  location:'WAREHOUSE 12', timer:185,
+  briefing:'This Titan\'s wire bay is pressurized like a boiler and twice as touchy. Nobody touches a wire until both vents rest — and Black Sun left the bay\'s secret in the insulation.',
+  plateNote:'VENT IN ORDER. THE BAY OPENS WHEN THE NEEDLES REST.',
+  modules:{
+    gauge1:{ type:'gauge', title:'PRIMARY VENT', unit:'PSI', band:[70,82], holdMs:1200,
+      sub:'First stage. The band is printed; the needle is honest. Probably.',
+      givesOnSolve:{ vented1:{label:'PRIMARY', value:'VENTED'}, safeBand2:{label:'DOWNSTREAM SAFE', value:[22,32]} },
+      solveMsg:'Primary vented. A stencil downstream reads: NEXT STAGE SAFE 22–32.' },
+    gauge2:{ type:'gauge', title:'SECONDARY VENT', unit:'PSI', bandFromIntel:'safeBand2', holdMs:1200,
+      sub:'No band printed here. The stencil upstream named it.',
+      givesOnSolve:{ vented2:{label:'SECONDARY', value:'VENTED'} },
+      solveMsg:'Both needles rest. The wire bay unlocks with a sigh.' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'Four wires are scorched black. One is clean. Builders leave dummies dirty.',
+      note:'Look at the insulation, not the colors.',
+      wires:[{tag:'K-1',color:'RED',worn:true},{tag:'K-2',color:'BLUE',worn:true},{tag:'K-3',color:'YELLOW'},{tag:'K-4',color:'GREEN',worn:true},{tag:'K-5',color:'WHITE',worn:true}],
+      answer:'K-3', requiresIntel:['vented2'], requiresMsg:'The bay is still pressurized. Vent both stages first.',
+      wrongMsg:'A scorched dummy. It was never connected to anything but your hopes.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'} }, solveMsg:'The clean wire parts. One lock remains.' },
+    dial1:{ type:'dial', title:'FINAL CALIBRATION', min:70, max:90, start:70, target:73.5, tol:0.15, unit:'MHz',
+      sub:'A stencil under the bay lid: FINAL CAL 73.5. The last lock, in plain sight.',
+      startIntelNote:true,
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 73.5'} }, lockMsg:'Locked. The device exhales and goes still. Safe.' },
+  },
+  chain:['gauge1','gauge2','wires1','dial1'], layout:['gauge1','gauge2','wires1','dial1'],
+  startIntel:[{ key:'stencilFreq', label:'BAY STENCIL', value:'FINAL CAL 73.5' }],
+  hints:['Vent in order: primary 70–82 first. Its stencil names the second band.',
+    'Second stage: 22–32, from the stencil. Then the bay opens.',
+    'In the bay, ignore colors. Four wires are scorched; the real one is clean.'],
+  solution:[
+    { module:'gauge1', action:'vent into 70–82', gives:['vented1','safeBand2'] },
+    { module:'gauge2', action:'vent into 22–32', needs:['safeBand2'], gives:['vented2'] },
+    { module:'wires1', action:'cut K-3, the clean wire', needs:['vented2'], gives:['triggerIsolated'] },
+    { module:'dial1', action:'tune to 73.5 and LOCK', gives:['freqLocked'] },
+  ],
+},
+/* ─────────── 8 ─────────── */
+{ id:8, name:'THE EXPIRED PLATE', maker:'NORTHSTAR DEFENSE', model:'RAVEN FIELD UNIT', serial:'N8W43', batteries:2,
+  location:'BANK SUBLEVEL', timer:160,
+  briefing:'A Raven unit with a confident plate and an old revision stamp. Northstar updates its designs. Its plates, apparently, update slower.',
+  plateNote:'PLATE (REV A): CUT RED FIRST.\nThe revision stamp is old. Very old.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:2, sub:'Two charges. One of them is the service records.', topics:[
+      { id:'records', label:'RECORDS', lines:['SERVICE RECORD REV B — SUPERSEDES ALL PLATES.','ON THIS LOT, THE RED CIRCUIT IS THE DECOY.','ISOLATE BLUE — AFTER CALIBRATION.'], gives:{ revB:{label:'REV B RECORD', value:'BLUE LIVE · RED DECOY'} }, comms:'Rev B. The plate on the case is a revision out of date.' },
+      { id:'signal', label:'SIGNAL', lines:['CALIBRATION CARRIER: 101.5 MHz.'], gives:{ freq1015:{label:'CARRIER', value:'101.5 MHz'} } },
+      { id:'power', label:'POWER', lines:['TRIGGER BUS: ONE LIVE, ONE DECOY.','THE PLATE NAMES THE DECOY.'], gives:{} },
+    ]},
+    dial1:{ type:'dial', title:'SIGNAL CALIBRATION', min:96, max:106, start:96, target:101.5, tol:0.15, unit:'MHz',
+      sub:'Rev B still wants calibration before any cutting. Some things don\'t get revised.',
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 101.5'} }, lockMsg:'Locked. Now — which instruction do you believe?' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'The plate says red. The records say the plate is lying. Choose your authority.',
+      wires:[{tag:'W-RED',color:'RED'},{tag:'W-BLU',color:'BLUE'},{tag:'W-YEL',color:'YELLOW'},{tag:'W-GRN',color:'GREEN'}],
+      answer:'W-BLU', requiresIntel:['freqLocked','revB'], requiresMsg:'Something\'s missing: calibration, or the truth about this plate.',
+      wrongMsg:'The decoy. Rev A sends its regards.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'} }, solveMsg:'Blue parts cleanly. Somewhere, a Rev A plate is being quietly recalled.' },
+    gauge1:{ type:'gauge', title:'PRESSURE REGULATOR', unit:'PSI', band:[50,62], holdMs:1500,
+      sub:'Printed band, honest needle. Northstar\'s new revision behaves.', solveMsg:'Pressure steady. Device safe.' },
+  },
+  chain:['scan1','dial1','wires1','gauge1'], layout:['scan1','dial1','wires1','gauge1'],
+  hints:['Read the plate. Then check its revision stamp. Then scan the records.',
+    'Rev B supersedes all plates. On this lot, red is the decoy.',
+    'Calibration still comes first — that part of Rev A survived.'],
+  solution:[
+    { module:'scan1', action:'scan RECORDS', gives:['revB'] },
+    { module:'scan1', action:'scan SIGNAL', gives:['freq1015'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'dial1', action:'tune to 101.5 and LOCK', needs:['freq1015'], gives:['freqLocked'] },
+    { module:'wires1', action:'cut W-BLU per Rev B', needs:['freqLocked','revB'], gives:['triggerIsolated'] },
+    { module:'gauge1', action:'hold pressure in 50–62' },
+  ],
+},
+/* ─────────── 9 ─────────── */
+{ id:9, name:'FULL HOUSE', maker:'CINDERLINE SYSTEMS', model:'MANTICORE-3', serial:'T5M72', batteries:4,
+  location:'RESEARCH ANNEX', timer:240,
+  briefing:'Six systems, one chain, everything feeding everything else — Cinderline\'s love letter to itself. Take it one dependency at a time and it unfolds.',
+  plateNote:'CINDERLINE: EVERYTHING CONNECTED TO EVERYTHING ELSE. AS USUAL.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:3, sub:'Three charges, all of them load-bearing.', topics:[
+      { id:'signal', label:'SIGNAL', lines:['CARRIER: 87.3 MHz. SNAPSHOT STORED.'], gives:{ freq873:{label:'CARRIER', value:'87.3 MHz'}, snapshot:{label:'WAVEFORM SNAPSHOT'} } },
+      { id:'power', label:'POWER', lines:['TRIGGER BUS LIVE ON T-2.','ISOLATE AFTER CALIBRATION.'], gives:{ trig:{label:'TRIGGER BUS', value:'T-2'} } },
+      { id:'coolant', label:'COOLANT', lines:['SAFE BAND (POST-ISOLATION): 58–68 PSI.'], gives:{ safeBand:{label:'SAFE BAND', value:[58,68]} } },
+    ]},
+    dial1:{ type:'dial', title:'SIGNAL CALIBRATION', min:84, max:96, start:84, target:87.3, tol:0.15, unit:'MHz', snapshotKey:'snapshot',
+      sub:'Low band, tight lock.', gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 87.3'}, litTag:{label:'TAG LAMP', value:'T-2'} },
+      lockMsg:'Locked. The bay lamp confirms what the scan said.' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'Scan and lamp agree. Cut where they point.',
+      wires:[{tag:'T-1',color:'WHITE'},{tag:'T-2',color:'RED'},{tag:'T-3',color:'BLUE'},{tag:'T-4',color:'YELLOW'},{tag:'T-5',color:'GREEN'}],
+      answerFromIntel:'trig', lampFromIntel:'litTag', requiresIntel:['freqLocked'],
+      requiresMsg:'Interlock: calibration first.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'}, switchPattern:{label:'ROUTE PATTERN', value:[1,0,0,1]} },
+      solveMsg:'Trigger isolated. The route dictates the firing pattern: UP · DOWN · DOWN · UP.' },
+    switches1:{ type:'switches', title:'FIRING CIRCUIT', sub:'Four switches this time. The route named the pattern.', patternFromIntel:'switchPattern', labels:['A','B','C','D'],
+      failMsg:'Rejected. The route said UP · DOWN · DOWN · UP.' },
+    sliders1:{ type:'sliders', title:'TIMING SYNCHRONIZER', sub:'Faster windows on this board. Breathe, then lock.',
+      channels:[{label:'ALPHA',speed:34,w:20},{label:'BETA',speed:38,w:20},{label:'GAMMA',speed:42,w:18}], solveMsg:'Synchronizers aligned.' },
+    gauge1:{ type:'gauge', title:'PRESSURE REGULATOR', unit:'PSI', bandFromIntel:'safeBand', revealOnIntel:'triggerIsolated', decoyBand:[24,34], holdMs:1500,
+      sub:'The coolant scan read this band early. It only turns true after isolation.',
+      noteHidden:'Current marker is a placeholder. The coolant scan knows the real one.',
+      solveMsg:'Pressure settles at 58–68. Six systems, all quiet. Device safe.' },
+  },
+  chain:['scan1','dial1','wires1','switches1','sliders1','gauge1'], layout:['scan1','dial1','wires1','switches1','sliders1','gauge1'],
+  hints:['All three scans matter: frequency, trigger, and the post-isolation band.',
+    'The route you cut dictates a four-switch pattern.',
+    'The gauge\'s true band came from the coolant scan — after isolation, trust it.'],
+  solution:[
+    { module:'scan1', action:'scan SIGNAL', gives:['freq873','snapshot'] },
+    { module:'scan1', action:'scan POWER', gives:['trig'] },
+    { module:'scan1', action:'scan COOLANT', gives:['safeBand'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'dial1', action:'tune to 87.3 and LOCK', needs:['freq873'], gives:['freqLocked','litTag'] },
+    { module:'wires1', action:'cut T-2', needs:['trig','freqLocked'], gives:['triggerIsolated','switchPattern'] },
+    { module:'switches1', action:'set UP/DOWN/DOWN/UP and VERIFY', needs:['switchPattern'] },
+    { module:'sliders1', action:'lock all three channels' },
+    { module:'gauge1', action:'hold pressure in 58–68', needs:['triggerIsolated','safeBand'] },
+  ],
+},
+/* ─────────── 10 ─────────── */
+{ id:10, name:'TWO WRECKS', maker:'NORTHSTAR / BLACK SUN — SALVAGE LOT', model:'COMPOSITE FIELD UNIT', serial:'Z1Z99', batteries:3,
+  location:'FREIGHT TERMINAL', timer:260,
+  briefing:'Two wrecks bolted into one device by somebody with more confidence than budget. Northstar\'s discipline on the left, Black Sun\'s sense of humor on the right. Both halves keep their habits.',
+  plateNote:'SALVAGE MANIFEST: LEFT HALF NORTHSTAR. RIGHT HALF BLACK SUN.\nGREEN STILL MEANS LIVE. SOME THINGS SURVIVE THE WRECK.',
+  modules:{
+    scan1:{ type:'scan', title:'DIAGNOSTIC SCANNER', charges:3, sub:'Three charges across two wrecks. Spend them like a surveyor.', topics:[
+      { id:'signal', label:'SIGNAL', lines:['LEFT-WRECK CARRIER: 92.6 MHz.'], gives:{ freq926:{label:'CARRIER', value:'92.6 MHz'} } },
+      { id:'power', label:'POWER', lines:['TRIGGER BUS: T-5. GREEN LAMP = LIVE.','THE BAY OPENS WHEN CALIBRATED AND VENTED.'], gives:{ trig:{label:'TRIGGER BUS', value:'T-5'} }, comms:'T-5, and the bay wants two keys: calibration and a vent.' },
+      { id:'records', label:'RECORDS', lines:['FINAL REGULATOR SAFE BAND: 44–56 PSI.','(POST-SEQUENCE, POST-ISOLATION.)'], gives:{ safeBand:{label:'SAFE BAND', value:[44,56]} } },
+    ]},
+    dial1:{ type:'dial', title:'LEFT CALIBRATION', min:89, max:98, start:89, target:92.6, tol:0.15, unit:'MHz',
+      sub:'The Northstar half. Honest dial, honest lock.',
+      gives:{ freqLocked:{label:'CALIBRATION', value:'LOCKED 92.6'}, litTag:{label:'GREEN LAMP', value:'T-5'} },
+      lockMsg:'Locked. In the bay, a green lamp wakes beside T-5.' },
+    gauge1:{ type:'gauge', title:'RIGHT VENT', unit:'PSI', band:[65,78], holdMs:1200,
+      sub:'The Black Sun half — but the band is printed and, for once, true.',
+      givesOnSolve:{ vented:{label:'RIGHT HALF', value:'VENTED'} }, solveMsg:'Vented. Both keys are turned.' },
+    wires1:{ type:'wires', title:'POWER ROUTE', sub:'Green means live — the manifest and the scan agree. Both keys first.',
+      wires:[{tag:'T-1',color:'RED'},{tag:'T-2',color:'BLUE'},{tag:'T-3',color:'YELLOW'},{tag:'T-4',color:'WHITE'},{tag:'T-5',color:'GREEN'}],
+      answer:'T-5', lampFromIntel:'litTag', requiresIntel:['freqLocked','vented'],
+      requiresMsg:'Interlock: the bay wants calibration AND the vent first.',
+      givesOnSolve:{ triggerIsolated:{label:'TRIGGER', value:'ISOLATED'} },
+      solveMsg:'Trigger isolated. On the right wreck, four lamps stir — a pattern is coming.' },
+    switches1:{ type:'switches', title:'SEQUENCE BOARD', mode:'sequence', order:[1,3,0,2], labels:['A','B','C','D'],
+      sub:'The right wreck performs its pattern now the trigger is dead. WATCH, then repeat it.',
+      givesOnSolve:{ seqDone:{label:'SEQUENCE', value:'CLEARED'} }, solveMsg:'Sequence accepted. Only the final regulator remains.', failMsg:'Wrong order. Black Sun resets the board.' },
+    gauge2:{ type:'gauge', title:'FINAL REGULATOR', unit:'PSI', bandFromIntel:'safeBand', revealOnIntel:'triggerIsolated', decoyBand:[80,90], holdMs:1800,
+      sub:'The records scan named this band at the very start. Bring it home.',
+      noteHidden:'The painted band sits high and smug. The records named a different one.',
+      solveMsg:'Pressure settles at 44–56. Two wrecks, one silence. Device safe.' },
+  },
+  chain:['scan1',['dial1','gauge1'],'wires1','switches1','gauge2'], layout:['scan1','dial1','gauge1','wires1','switches1','gauge2'],
+  hints:['Three scans: carrier, trigger, and the final band. Take all three.',
+    'Calibration and the vent are parallel keys — either order, both before the bay.',
+    'After the trigger dies, watch the right wreck\'s lamps. Then bring the pressure home to 44–56.'],
+  solution:[
+    { module:'scan1', action:'scan SIGNAL', gives:['freq926'] },
+    { module:'scan1', action:'scan POWER', gives:['trig'] },
+    { module:'scan1', action:'scan RECORDS', gives:['safeBand'] },
+    { module:'scan1', action:'close scanner' },
+    { module:'dial1', action:'tune to 92.6 and LOCK (parallel)', gives:['freqLocked','litTag'] },
+    { module:'gauge1', action:'vent into 65–78 (parallel)', gives:['vented'] },
+    { module:'wires1', action:'cut T-5', needs:['freqLocked','vented','litTag'], gives:['triggerIsolated'] },
+    { module:'switches1', action:'watch lamps, repeat B·D·A·C', gives:['seqDone'] },
+    { module:'gauge2', action:'hold pressure in 44–56', needs:['triggerIsolated','safeBand'] },
+  ],
+},
+];
+if (typeof module !== 'undefined') module.exports = LEVELS;
+
+</script>
+<script>
+/* ═══════════════ DEFUSE MODULES ═══════════════
+   Every module: mount(el via create) with config + engine api.
+   No module ever prints its own solution — clues live in intel,
+   on the plate, or in the device's behavior. */
+const Modules = (() => {
+  const COL = { RED:'#c83232', BLUE:'#2f6fd0', YELLOW:'#d9a928', GREEN:'#2f9e5f', WHITE:'#d8d8d8', BLACK:'#43464d', ORANGE:'#d06a2f', VIOLET:'#7a4fd0' };
+  function shell(id, cfg){
+    const el = document.createElement('section');
+    el.className = 'module'; el.id = 'mod-' + id;
+    el.innerHTML = '<span class="screw tl"></span><span class="screw tr"></span>' +
+      '<div class="m-head"><span class="m-title"></span><span class="m-lamp"></span></div>' +
+      (cfg.sub ? '<div class="m-sub"></div>' : '') + '<div class="m-body"></div>';
+    el.querySelector('.m-title').textContent = cfg.title;
+    if(cfg.sub) el.querySelector('.m-sub').textContent = cfg.sub;
+    return { el, body: el.querySelector('.m-body') };
+  }
+  const active = (api,id) => api.isActive(id) && api.isRunning();
+
+  /* ─────────── SCAN ─────────── */
+  function scan(id, cfg, api){
+    const { el, body } = shell(id, cfg);
+    let charges = cfg.charges, scanned = 0, timers = [];
+    body.innerHTML =
+      '<div class="term"><span class="dim">DIAGNOSTIC UPLINK READY.\nSelect a subsystem. Charges: ' + charges + '.</span></div>' +
+      '<div class="scan-btns"></div><div class="charge-pips"></div>' +
+      '<button class="big-btn ghost close-scan">CLOSE SCANNER</button>';
+    const term = body.querySelector('.term'), btns = body.querySelector('.scan-btns'),
+          pips = body.querySelector('.charge-pips'), close = body.querySelector('.close-scan');
+    function drawPips(){ pips.innerHTML = ''; for(let i=0;i<cfg.charges;i++){ const p=document.createElement('i'); if(i>=charges) p.className='spent'; pips.appendChild(p);} }
+    drawPips(); close.disabled = true;
+    cfg.topics.forEach(t => {
+      const b = document.createElement('button'); b.className='ctl-btn'; b.textContent = 'SCAN ' + t.label;
+      b.onclick = () => {
+        if(!active(api,id) || charges<=0 || b.disabled) return;
+        charges--; scanned++; b.disabled = true; close.disabled = false; close.classList.add('ready');
+        Snd.scan(); drawPips();
+        let text = '\n> ' + t.label + ' SCAN\n';
+        term.innerHTML = '<span class="dim">DIAGNOSTIC UPLINK</span>' + text;
+        let li = 0;
+        const step = () => {
+          if(li < t.lines.length){ text += t.lines[li++] + '\n'; term.textContent = 'DIAGNOSTIC UPLINK' + text; term.scrollTop = 9999; timers.push(setTimeout(step, 260)); }
+          else {
+            Object.entries(t.gives || {}).forEach(([k,v]) => api.addIntel(k, v.label, v.value));
+            if(t.comms) api.comms(t.comms);
+            if(charges===0){ term.textContent += '\n— CHARGES EXHAUSTED —'; timers.push(setTimeout(() => api.comms('Scanner spent. Close it to route power onward.'), 2400)); }
+          }
+        };
+        timers.push(setTimeout(step, 200));
+      };
+      btns.appendChild(b);
+    });
+    close.onclick = () => { if(active(api,id) && scanned>0){ Snd.thunk(); [...btns.children].forEach(b=>b.disabled=true); close.disabled=true; api.solved(id); } };
+    return { el, teardown(){ timers.forEach(clearTimeout); } };
+  }
+
+  /* ─────────── DIAL (rotary calibration) ─────────── */
+  function dial(id, cfg, api){
+    const { el, body } = shell(id, cfg);
+    let f = cfg.start, raf = null, locked = false;
+    body.innerHTML =
+      '<div class="scope"><canvas width="460" height="74"></canvas></div>' +
+      '<div class="freq-read"></div><div class="meter"></div>' +
+      '<div class="dial-row"><button class="ctl-btn d-dn2">−1.0</button><button class="ctl-btn d-dn1">−0.1</button>' +
+      '<div class="knob"><div class="pointer"></div></div>' +
+      '<button class="ctl-btn d-up1">+0.1</button><button class="ctl-btn d-up2">+1.0</button></div>' +
+      '<button class="big-btn lock-btn-dial">LOCK FREQUENCY</button>';
+    const cv = body.querySelector('canvas'), cx = cv.getContext('2d'),
+          read = body.querySelector('.freq-read'), meter = body.querySelector('.meter'),
+          knob = body.querySelector('.knob'), ptr = body.querySelector('.pointer'),
+          lockBtn = body.querySelector('.lock-btn-dial');
+    for(let i=0;i<5;i++) meter.appendChild(document.createElement('i'));
+    const clamp = v => Math.min(cfg.max, Math.max(cfg.min, Math.round(v*10)/10));
+    function render(){
+      read.textContent = f.toFixed(1) + ' ' + cfg.unit;
+      knob.style.transform = 'rotate(' + ((f - cfg.min)/(cfg.max - cfg.min)*270 - 135) + 'deg)'; // pointer rides the knob
+      const dist = Math.abs(f - cfg.target), span = (cfg.max - cfg.min);
+      const hot = Math.max(0, 5 - Math.floor(dist/span*14));
+      [...meter.children].forEach((m,i)=>{ m.className = dist<=cfg.tol ? 'lock' : (i<hot ? 'hot' : ''); });
+      lockBtn.disabled = !(dist <= cfg.tol) || locked;
+      lockBtn.classList.toggle('armed', dist <= cfg.tol && !locked);
+    }
+    function drawScope(t){
+      const w = cv.width, h = cv.height; cx.clearRect(0,0,w,h);
+      cx.strokeStyle = 'rgba(60,255,140,.14)'; cx.beginPath();
+      for(let x=0;x<w;x+=23){ cx.moveTo(x,0); cx.lineTo(x,h); } cx.stroke();
+      const dist = Math.abs(f - cfg.target);
+      const noiseAmp = Math.min(16, dist*1.4), stab = dist <= cfg.tol;
+      cx.strokeStyle = stab ? '#37e08b' : '#ffb02e'; cx.lineWidth = 2; cx.beginPath();
+      for(let x=0;x<=w;x++){
+        const ph = x/w*Math.PI*4;
+        let y = h/2 + Math.sin(ph)*13 + Math.sin(ph*2.7)*5;
+        if(cfg.doublePeak) y = h/2 + (Math.sin(ph)*10 + Math.sin(ph*2)*9) * (stab?1:.6) + Math.sin(ph*5)*2;
+        y += (Math.random()*2-1) * noiseAmp * (stab? .12 : 1);
+        x===0 ? cx.moveTo(x,y) : cx.lineTo(x,y);
+      }
+      cx.stroke();
+      if(api.hasIntel(cfg.snapshotKey || '__none__')){
+        cx.strokeStyle = 'rgba(140,200,255,.5)'; cx.setLineDash([4,4]); cx.beginPath();
+        for(let x=0;x<=w;x++){ const ph=x/w*Math.PI*4; let y = cfg.doublePeak ? h/2 + Math.sin(ph)*10 + Math.sin(ph*2)*9 : h/2 + Math.sin(ph)*13 + Math.sin(ph*2.7)*5; x===0?cx.moveTo(x,y):cx.lineTo(x,y); }
+        cx.stroke(); cx.setLineDash([]);
+      }
+      if(active(api,id) || !locked) raf = requestAnimationFrame(drawScope);
+    }
+    function step(d){ if(!active(api,id) || locked) return; f = clamp(f + d); Snd.click(); render(); }
+    body.querySelector('.d-dn2').onclick = () => step(-1);
+    body.querySelector('.d-dn1').onclick = () => step(-0.1);
+    body.querySelector('.d-up1').onclick = () => step(0.1);
+    body.querySelector('.d-up2').onclick = () => step(1);
+    let dragY = null;
+    knob.addEventListener('pointerdown', e => { dragY = e.clientY; knob.setPointerCapture(e.pointerId); });
+    knob.addEventListener('pointermove', e => { if(dragY===null || !active(api,id) || locked) return; const dy = dragY - e.clientY; if(Math.abs(dy) >= 6){ step(Math.sign(dy)*0.2); dragY = e.clientY; } });
+    knob.addEventListener('pointerup', () => dragY = null);
+    lockBtn.onclick = () => {
+      if(!active(api,id) || locked || Math.abs(f - cfg.target) > cfg.tol) return;
+      locked = true; Snd.lock();
+      Object.entries(cfg.gives || {}).forEach(([k,v]) => api.addIntel(k, v.label, v.value));
+      api.comms(cfg.lockMsg || 'Frequency locked. The machine settles.');
+      api.solved(id);
+    };
+    render();
+    return { el, onActivate(){ if(!raf) raf = requestAnimationFrame(drawScope); }, teardown(){ cancelAnimationFrame(raf); raf=null; } };
+  }
+
+  /* ─────────── WIRES ─────────── */
+  function wires(id, cfg, api){
+    const { el, body } = shell(id, cfg);
+    const cut = new Set();
+    const wrap = document.createElement('div'); wrap.className = 'wirebay';
+    const rows = {};
+    cfg.wires.forEach((w, i) => {
+      const row = document.createElement('div'); row.className = 'wire-row';
+      const sag = 6 + ((i*7) % 9);
+      row.innerHTML =
+        '<span class="term-block"></span>' +
+        '<svg class="wire-svg" viewBox="0 0 200 30" preserveAspectRatio="none"><path d="M0,8 Q100,' + (8+sag*2) + ' 200,8" fill="none" stroke-width="7" stroke-linecap="round"/></svg>' +
+        '<span class="wire-tag"></span><span class="term-block"></span>' +
+        '<button class="cut-btn">CUT</button>';
+      const path = row.querySelector('path');
+      path.setAttribute('stroke', COL[w.color] || '#888');
+      if(w.worn) path.setAttribute('stroke-dasharray', '26 3 40 2 30 3');
+      row.querySelector('.wire-tag').textContent = w.tag;
+      const btn = row.querySelector('.cut-btn');
+      btn.onclick = () => doCut(w, row, path, btn);
+      wrap.appendChild(row); rows[w.tag] = { row, tagEl: row.querySelector('.wire-tag') };
+    });
+    body.appendChild(wrap);
+    if(cfg.note){ const n = document.createElement('div'); n.className='wire-note'; n.textContent = cfg.note; body.appendChild(n); }
+
+    function answerTag(){ return cfg.answerFromIntel ? api.intelVal(cfg.answerFromIntel) : cfg.answer; }
+    function doCut(w, row, path, btn){
+      if(!active(api,id) || cut.has(w.tag)) return;
+      const ans = answerTag();
+      if(w.tag === ans){
+        const missing = (cfg.requiresIntel || []).filter(k => !api.hasIntel(k));
+        if(missing.length){ api.strike(cfg.requiresMsg || 'Interlock: the device rejects that cut. Something else must happen first.', cfg.requiresCost || 15); return; }
+        cut.add(w.tag); row.classList.add('cut'); btn.disabled = true;
+        path.setAttribute('d', 'M0,8 Q60,26 96,16 M104,16 Q150,26 200,8'); path.setAttribute('stroke', '#3a3d44');
+        Snd.thunk();
+        Object.entries(cfg.givesOnSolve || {}).forEach(([k,v]) => api.addIntel(k, v.label, v.value));
+        if(cfg.solveMsg) api.comms(cfg.solveMsg);
+        api.solved(id);
+      } else {
+        cut.add(w.tag); row.classList.add('cut'); btn.disabled = true;
+        path.setAttribute('d', 'M0,8 Q60,26 96,16 M104,16 Q150,26 200,8'); path.setAttribute('stroke', '#3a3d44');
+        api.strike(cfg.wrongMsg || ('Wrong wire — ' + w.tag + ' was not the circuit.'), cfg.wrongCost || 15);
+      }
+    }
+    return { el, refresh(){
+      const lit = cfg.lampFromIntel && api.intelVal(cfg.lampFromIntel);
+      Object.entries(rows).forEach(([tag, r]) => r.tagEl.classList.toggle('lit', !!lit && lit === tag));
+    } };
+  }
+
+  /* ─────────── SWITCHES (pattern verify | sequence repeat) ─────────── */
+  function switches(id, cfg, api){
+    const { el, body } = shell(id, cfg);
+    const labels = cfg.labels || ['A','B','C'];
+    const state = labels.map(() => false);
+    let seqProgress = 0, watching = false;
+    if(cfg.mode === 'sequence'){
+      const lamps = document.createElement('div'); lamps.className='seq-lamps';
+      labels.forEach(() => lamps.appendChild(document.createElement('i')));
+      body.appendChild(lamps);
+      var lampEls = [...lamps.children];
+      const watch = document.createElement('button'); watch.className='big-btn ghost'; watch.textContent = '▶ WATCH THE PATTERN';
+      watch.onclick = () => {
+        if(!active(api,id) || watching) return;
+        watching = true; Snd.beep(440);
+        cfg.order.forEach((swIdx, i) => {
+          setTimeout(() => { lampEls[swIdx].classList.add('blink'); Snd.beep(500 + swIdx*160); }, 600 + i*650);
+          setTimeout(() => lampEls[swIdx].classList.remove('blink'), 600 + i*650 + 380);
+        });
+        setTimeout(() => { watching = false; api.comms('Your turn. Throw the switches in the order the lamps ran.'); }, 600 + cfg.order.length*650);
+      };
+      body.appendChild(watch);
+    }
+    const bank = document.createElement('div'); bank.className = 'switch-bank';
+    labels.forEach((lb, i) => {
+      const sw = document.createElement('div'); sw.className = 'sw';
+      sw.innerHTML = '<div class="slot"><div class="toggle"></div></div><div class="sw-label"></div>';
+      sw.querySelector('.sw-label').textContent = lb;
+      sw.querySelector('.toggle').onclick = () => {
+        if(!active(api,id) || watching) return;
+        if(cfg.mode === 'sequence'){
+          Snd.clack(true);
+          sw.classList.add('on'); setTimeout(() => sw.classList.remove('on'), 220);
+          if(i === cfg.order[seqProgress]){
+            seqProgress++;
+            if(seqProgress >= cfg.order.length){
+              Object.entries(cfg.givesOnSolve || {}).forEach(([k,v]) => api.addIntel(k, v.label, v.value));
+              if(cfg.solveMsg) api.comms(cfg.solveMsg);
+              api.solved(id);
+            }
+          } else {
+            seqProgress = 0;
+            api.strike(cfg.failMsg || 'Wrong order. The circuit resets.', cfg.failCost || 10);
+          }
+        } else {
+          state[i] = !state[i]; sw.classList.toggle('on', state[i]); Snd.clack(state[i]);
+        }
+      };
+      bank.appendChild(sw);
+    });
+    body.appendChild(bank);
+    if(cfg.mode !== 'sequence'){
+      const v = document.createElement('button'); v.className = 'big-btn'; v.textContent = 'VERIFY';
+      v.onclick = () => {
+        if(!active(api,id)) return;
+        const pat = cfg.patternFromIntel ? api.intelVal(cfg.patternFromIntel) : cfg.pattern;
+        if(!pat){ api.comms('The verify circuit has nothing to check against yet. The pattern has to come from somewhere on this device.'); Snd.beep(300); return; }
+        const ok = state.every((s, i) => (s?1:0) === pat[i]);
+        if(ok){ Snd.lock(); Object.entries(cfg.givesOnSolve || {}).forEach(([k,v2]) => api.addIntel(k, v2.label, v2.value)); if(cfg.solveMsg) api.comms(cfg.solveMsg); api.solved(id); }
+        else api.strike(cfg.failMsg || 'Pattern rejected.', cfg.failCost || 15);
+      };
+      body.appendChild(v);
+    }
+    return { el };
+  }
+
+  /* ─────────── SLIDERS (timing sync) ─────────── */
+  function sliders(id, cfg, api){
+    const { el, body } = shell(id, cfg);
+    let raf = null; const chans = cfg.channels.map((c, i) => ({
+      pos: (i*37) % 100, dir: 1, zone: 12 + ((i*23 + cfg.channels.length*7) % 55), w: c.w || 24,
+      speed: c.speed || 22, done: false,
+    }));
+    let current = 0, last = 0;
+    chans.forEach((c, i) => {
+      const row = document.createElement('div'); row.className = 'sync-row';
+      row.innerHTML = '<span class="sync-label"></span><div class="sync-track"><div class="sync-zone"></div><div class="sync-dot"></div></div><button class="lock-btn">LOCK</button>';
+      row.querySelector('.sync-label').textContent = cfg.channels[i].label;
+      const z = row.querySelector('.sync-zone'); z.style.left = c.zone + '%'; z.style.width = c.w + '%';
+      c.dot = row.querySelector('.sync-dot'); c.row = row;
+      const b = row.querySelector('.lock-btn'); c.btn = b; b.disabled = i !== 0;
+      b.onclick = () => {
+        if(!active(api,id) || i !== current || c.done) return;
+        if(c.pos >= c.zone && c.pos <= c.zone + c.w){
+          c.done = true; row.classList.add('done'); b.disabled = true; Snd.lock();
+          current++;
+          if(current >= chans.length){ api.comms(cfg.solveMsg || 'Synchronizer aligned.'); api.solved(id); }
+          else { chans[current].btn.disabled = false; api.comms('Contact locked. Next channel.'); }
+        } else {
+          Snd.bad(); api.penalize(3); api.comms('Missed the window. −3s. Reacquire and lock again.');
+        }
+      };
+      body.appendChild(row);
+    });
+    function frame(t){
+      if(!last) last = t; const dt = Math.min(50, t - last); last = t;
+      if(active(api,id) && current < chans.length){
+        const c = chans[current];
+        if(!c.done){ c.pos += c.dir * c.speed * dt/1000; if(c.pos >= 100){ c.pos = 100; c.dir = -1; } if(c.pos <= 0){ c.pos = 0; c.dir = 1; } c.dot.style.left = c.pos + '%'; }
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return { el, teardown(){ cancelAnimationFrame(raf); } };
+  }
+
+  /* ─────────── GAUGE (pressure regulator) ─────────── */
+  function gauge(id, cfg, api){
+    const { el, body } = shell(id, cfg);
+    let gv = 0, hold = false, stableMs = 0, raf = null, last = 0, struck = false;
+    const NS = 'http://www.w3.org/2000/svg';
+    const wrap = document.createElement('div'); wrap.className = 'gauge-wrap';
+    wrap.innerHTML =
+      '<svg class="gauge-svg" width="150" height="118" viewBox="0 0 150 118">' +
+      '<path d="M18,100 A62,62 0 1 1 132,100" fill="none" stroke="#17181c" stroke-width="13"/>' +
+      '<path class="g-band" d="" fill="none" stroke="#565b33" stroke-width="13"/>' +
+      '<path class="g-decoy" d="" fill="none" stroke="rgba(255,176,46,.25)" stroke-width="13"/>' +
+      '<line class="g-needle" x1="75" y1="100" x2="75" y2="48" stroke="#ffd98a" stroke-width="3.5" stroke-linecap="round"/>' +
+      '<circle cx="75" cy="100" r="8" fill="#33373e" stroke="#101215"/></svg>' +
+      '<div class="gauge-side"><div class="gauge-val">0</div><div class="gauge-band-note"></div>' +
+      '<div class="stable-ring"><i></i></div></div>';
+    body.appendChild(wrap);
+    const btn = document.createElement('button'); btn.className = 'press-btn'; btn.textContent = 'HOLD TO PRESSURIZE'; body.appendChild(btn);
+    const bandEl = wrap.querySelector('.g-band'), decoyEl = wrap.querySelector('.g-decoy'),
+          needle = wrap.querySelector('.g-needle'), val = wrap.querySelector('.gauge-val'),
+          note = wrap.querySelector('.gauge-band-note'), ring = wrap.querySelector('.stable-ring i');
+    function arc(v0, v1){
+      const a0 = Math.PI*0.85 + (v0/100)*Math.PI*1.3, a1 = Math.PI*0.85 + (v1/100)*Math.PI*1.3;
+      const p = a => [75 + Math.cos(a)*62, 100 - Math.sin(a)*62];
+      const [x0,y0] = p(a0), [x1,y1] = p(a1);
+      return 'M' + x0.toFixed(1) + ',' + y0.toFixed(1) + ' A62,62 0 0 1 ' + x1.toFixed(1) + ',' + y1.toFixed(1);
+    }
+    function trueBand(){ return cfg.bandFromIntel ? api.intelVal(cfg.bandFromIntel) : cfg.band; }
+    function revealed(){ return !cfg.revealOnIntel || api.hasIntel(cfg.revealOnIntel); }
+    function render(){
+      const tb = trueBand();
+      if(revealed() && tb){ bandEl.setAttribute('d', arc(tb[0], tb[1])); bandEl.setAttribute('stroke', '#37e08b'); decoyEl.setAttribute('d',''); }
+      else if(cfg.decoyBand){ decoyEl.setAttribute('d', arc(cfg.decoyBand[0], cfg.decoyBand[1])); bandEl.setAttribute('d',''); }
+      const ang = -122 + gv*2.44;
+      needle.setAttribute('transform', 'rotate(' + ang + ' 75 100)');
+      val.textContent = Math.round(gv) + ' ' + cfg.unit;
+      ring.style.width = Math.min(100, stableMs/(cfg.holdMs || 1500)*100) + '%';
+      note.textContent = revealed()
+        ? (tb ? 'SAFE BAND ' + tb[0] + '–' + tb[1] + ' ' + cfg.unit + '. Keep the needle inside until the ring fills.' : cfg.noteReady || '')
+        : (cfg.noteHidden || 'Band reading unreliable in the current device state.');
+    }
+    function frame(t){
+      if(!last) last = t; const dt = Math.min(50, t - last); last = t;
+      if(active(api,id)){
+        if(hold) gv = Math.min(100, gv + dt*0.022*(1 - 0.5*(gv/100)));
+        else gv = Math.max(0, gv - dt*0.006);
+        const tb = trueBand();
+        if(revealed() && tb){
+          if(gv >= tb[0] && gv <= tb[1]) stableMs += dt; else stableMs = Math.max(0, stableMs - dt*1.0);
+          if(gv > tb[1] + 18 && !struck){ struck = true; gv = 0; stableMs = 0; api.strike('Overpressure event.', 8); }
+          if(gv <= tb[1] + 10) struck = false;
+          if(stableMs >= (cfg.holdMs || 1500)){
+            Object.entries(cfg.givesOnSolve || {}).forEach(([k,v]) => api.addIntel(k, v.label, v.value));
+            if(cfg.solveMsg) api.comms(cfg.solveMsg);
+            api.solved(id); cancelAnimationFrame(raf); return;
+          }
+        }
+        render();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    const on = e => { e.preventDefault(); if(!active(api,id)) return; hold = true; btn.classList.add('held'); Snd.click(); };
+    const off = () => { hold = false; btn.classList.remove('held'); };
+    btn.addEventListener('pointerdown', on);
+    ['pointerup','pointerleave','pointercancel'].forEach(ev => btn.addEventListener(ev, off));
+    render();
+    return { el, refresh: render, teardown(){ cancelAnimationFrame(raf); } };
+  }
+
+  function create(type, id, cfg, api){
+    return { scan, dial, wires, switches, sliders, gauge }[type](id, cfg, api);
+  }
+  return { create };
+})();
+
+</script>
+<script>
+/* ═══════════════ DEFUSE ENGINE ═══════════════
+   One authoritative clock (timestamps, never interval counts),
+   an intel bus modules produce/consume, chain runner with
+   sequential stages and parallel groups, strikes, comms + hints. */
+const Engine = (() => {
+  const $ = id => document.getElementById(id);
+  let L = null;               // current level
+  let S = null;               // run state
+  let raf = null;
+
+  function freshState(level){
+    return {
+      level, running:false, over:false, won:false,
+      endAt:0, remainMs: level.timer*1000,
+      strikes:0, hintsUsed:0,
+      intel:{},                 // key -> {label, value}
+      stageIdx:0,               // index into level.chain
+      active:new Set(),         // module ids currently powered
+      solved:new Set(),
+      instances:{},             // id -> module instance
+    };
+  }
+
+  /* ── intel ─────────────────────────── */
+  function addIntel(key, label, value){
+    if(S.intel[key]) return;
+    S.intel[key] = {label, value};
+    const chips = $('intel-chips');
+    const empty = chips.querySelector('.tray-empty'); if(empty) empty.remove();
+    const c = document.createElement('span'); c.className='chip';
+    c.innerHTML = label + (value!==undefined ? ': <b></b>' : '');
+    if(value!==undefined) c.querySelector('b').textContent = value;
+    chips.appendChild(c);
+    refreshModules();
+  }
+  const hasIntel = key => !!S.intel[key];
+  const intelVal = key => S.intel[key] && S.intel[key].value;
+
+  function comms(msg){ $('comms-text').textContent = msg; }
+
+  /* ── timer ─────────────────────────── */
+  function fmt(ms){
+    ms = Math.max(0, ms);
+    const s = Math.ceil(ms/1000);
+    return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }
+  function loop(){
+    if(!S || !S.running) return;
+    S.remainMs = S.endAt - performance.now();
+    $('timer').textContent = fmt(S.remainMs);
+    document.body.classList.toggle('critical', S.remainMs <= 5000 && !S.over);
+    if(S.remainMs <= 30000) $('timer-state').textContent = 'CRITICAL MASS APPROACHING';
+    if(S.remainMs <= 0){ finish(false, 'The countdown reached zero.'); return; }
+    raf = requestAnimationFrame(loop);
+  }
+  function penalize(sec){
+    if(!S.running || S.over) return;
+    S.endAt -= sec*1000;
+    S.remainMs = S.endAt - performance.now();
+    $('timer').textContent = fmt(S.remainMs);
+  }
+
+  /* ── strikes / solve ───────────────── */
+  function strike(reason, costSec=15){
+    if(!S.running || S.over) return;
+    S.strikes++;
+    [...$('strikes').children].forEach((el,i)=> el.classList.toggle('hit', i < S.strikes));
+    Snd.bad();
+    comms(reason + ' −' + costSec + 's. (' + S.strikes + '/2 strikes)');
+    penalize(costSec);
+    if(S.strikes >= 2) finish(false, 'Two dangerous mistakes triggered the device.');
+    else if(S.remainMs <= 0) finish(false, 'The countdown reached zero.');
+  }
+  function moduleSolved(id){
+    if(S.over || S.solved.has(id)) return;
+    S.solved.add(id);
+    const inst = S.instances[id];
+    if(inst && inst.el){ inst.el.classList.add('solved'); const lamp = inst.el.querySelector('.m-lamp'); if(lamp) lamp.className='m-lamp done'; }
+    Snd.good();
+    const grp = L.chain[S.stageIdx];
+    const group = Array.isArray(grp) ? grp : [grp];
+    if(group.every(m => S.solved.has(m))){
+      S.stageIdx++;
+      if(S.stageIdx >= L.chain.length){ finish(true); return; }
+      activateStage();
+    }
+    refreshModules();
+  }
+
+  /* ── module lifecycle ──────────────── */
+  function activateStage(){
+    const grp = L.chain[S.stageIdx];
+    const group = Array.isArray(grp) ? grp : [grp];
+    group.forEach(id => {
+      S.active.add(id);
+      const inst = S.instances[id];
+      if(inst){ inst.el.classList.remove('locked'); const lamp = inst.el.querySelector('.m-lamp'); if(lamp) lamp.classList.add('on'); if(inst.onActivate) inst.onActivate(); }
+    });
+    const names = group.map(id => L.modules[id].title).join(' + ');
+    comms('Power routed to: ' + names + '.');
+  }
+  function refreshModules(){
+    Object.values(S.instances).forEach(inst => { if(inst.refresh) inst.refresh(); });
+    $('btn-hint').disabled = !S.running || S.over;
+  }
+
+  /* ── hints ─────────────────────────── */
+  function askHint(){
+    if(!S.running || S.over) return;
+    const hints = L.hints || [];
+    const h = hints[Math.min(S.hintsUsed, hints.length-1)];
+    const cost = 10 + S.hintsUsed*5;
+    S.hintsUsed++;
+    $('btn-hint').textContent = 'ASK (−' + (10 + S.hintsUsed*5) + 's)';
+    Snd.beep(520);
+    comms('COMMS: ' + (h || 'Work the device. The evidence is on it.') );
+    penalize(cost);
+    if(S.remainMs <= 0) finish(false, 'The countdown reached zero.');
+  }
+
+  /* ── finish ────────────────────────── */
+  function finish(won, reason){
+    if(!S || S.over) return;
+    S.over = true; S.won = won; S.running = false;
+    cancelAnimationFrame(raf);
+    document.body.classList.remove('critical');
+    Object.values(S.instances).forEach(inst => { if(inst.teardown) inst.teardown(); });
+    const t = $('timer');
+    if(won){ t.classList.add('safe'); $('timer-state').textContent = 'DEVICE SAFE'; Snd.lock(); }
+    else { t.classList.add('dead'); $('timer-state').textContent = 'DETONATED'; Snd.alarm(); }
+    const timeUsed = L.timer - Math.max(0, Math.ceil(S.remainMs/1000));
+    Save.record(L.id, won, timeUsed, S.strikes);
+    setTimeout(() => UI.showResult(won, reason, {
+      timeUsed, remain: Math.max(0, Math.ceil(S.remainMs/1000)), strikes: S.strikes, hints: S.hintsUsed,
+    }), won ? 900 : 1300);
+  }
+
+  /* ── load / start ──────────────────── */
+  function load(level){
+    cancelAnimationFrame(raf);
+    L = level; S = freshState(level);
+    // plate
+    $('p-maker').textContent = level.maker;
+    $('p-sub').textContent = level.makerSub || 'ORDNANCE DIVISION';
+    $('p-note').textContent = level.plateNote || '';
+    $('p-model').textContent = level.model;
+    $('p-serial').textContent = level.serial;
+    $('p-bat').textContent = level.batteries;
+    $('p-mission').textContent = '#' + String(level.id).padStart(3,'0');
+    $('p-loc').textContent = level.location;
+    $('timer').textContent = fmt(level.timer*1000);
+    $('timer').className = '';
+    $('timer-state').textContent = 'STANDBY — ARM WHEN READY';
+    [...$('strikes').children].forEach(el => el.classList.remove('hit'));
+    $('intel-chips').innerHTML = '<span class="tray-empty">Nothing gathered yet. Work the device.</span>';
+    $('btn-hint').textContent = 'ASK (−10s)'; $('btn-hint').disabled = true;
+    comms('Awaiting mission authorization.');
+    // board
+    const board = $('board'); board.innerHTML = '';
+    level.layout.forEach(id => {
+      const cfg = level.modules[id];
+      const inst = Modules.create(cfg.type, id, cfg, api);
+      S.instances[id] = inst;
+      inst.el.classList.add('locked');
+      board.appendChild(inst.el);
+    });
+    // starting intel printed on the device itself (plate intel)
+    (level.startIntel || []).forEach(k => addIntel(k.key, k.label, k.value));
+    refreshModules();
+  }
+  function start(){
+    if(!L || S.running || S.over) return;
+    S.running = true;
+    S.endAt = performance.now() + L.timer*1000;
+    $('timer-state').textContent = 'DEVICE ARMED';
+    $('btn-hint').disabled = false;
+    comms('Device armed. Begin defusal.');
+    activateStage();
+    loop();
+  }
+
+  const api = {
+    addIntel, hasIntel, intelVal, comms, strike, penalize,
+    solved: moduleSolved,
+    isActive: id => S.active.has(id),
+    isRunning: () => S.running && !S.over,
+    serial: () => L.serial, batteries: () => L.batteries,
+  };
+  document.addEventListener('visibilitychange', () => { /* timestamp clock needs no correction */ });
+
+  return { load, start, askHint, api, state: () => S, level: () => L };
+})();
+
+/* ── persistence (versioned) ─────────── */
+const Save = (() => {
+  const KEY = 'defuse-save-v2';
+  let data = { unlocked: 1, best: {} };
+  try{ const raw = localStorage.getItem(KEY); if(raw) data = JSON.parse(raw); }catch(e){}
+  function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){} }
+  return {
+    get unlocked(){ return data.unlocked; },
+    best(id){ return data.best[id]; },
+    record(id, won, timeUsed, strikes){
+      if(!won) return;
+      const prev = data.best[id];
+      if(!prev || timeUsed < prev.time) data.best[id] = { time: timeUsed, strikes };
+      data.unlocked = Math.max(data.unlocked, Math.min(LEVELS.length, id + 1));
+      persist();
+    },
+  };
+})();
+
+</script>
+<script>
+/* DEFUSE — UI shell: mission select, briefing, results */
+const UI = (() => {
+  const $ = id => document.getElementById(id);
+  let current = null;
+
+  function showMissions(){
+    ['missions'].forEach(id => $(id).classList.add('show'));
+    $('briefing').classList.remove('show'); $('result').classList.remove('show');
+    const list = $('mission-list'); list.innerHTML = '';
+    LEVELS.forEach(lv => {
+      const locked = lv.id > Save.unlocked;
+      const best = Save.best(lv.id);
+      const b = document.createElement('button');
+      b.className = 'mission' + (locked ? ' locked' : '');
+      b.innerHTML = '<span class="m-num">' + String(lv.id).padStart(2,'0') + '</span>' +
+        '<span class="m-info"><span class="m-name"></span><span class="m-meta"></span></span>' +
+        (locked ? '<span class="m-lock">🔒</span>' : '<span class="m-best">' + (best ? 'BEST ' + best.time + 's · ' + best.strikes + ' STRK' : 'UNPLAYED') + '</span>');
+      b.querySelector('.m-name').textContent = lv.name;
+      b.querySelector('.m-meta').textContent = lv.maker.split('—')[0].split('/')[0].trim() + ' · ' + lv.location + ' · ' + lv.timer + 's';
+      if(!locked) b.onclick = () => openBriefing(lv);
+      list.appendChild(b);
+    });
+  }
+  function openBriefing(lv){
+    current = lv;
+    $('missions').classList.remove('show'); $('result').classList.remove('show');
+    Engine.load(lv);
+    $('b-name').textContent = 'MISSION ' + String(lv.id).padStart(2,'0') + ' — ' + lv.name;
+    $('b-maker').textContent = lv.maker; $('b-loc').textContent = lv.location;
+    $('b-text').textContent = lv.briefing;
+    $('b-meta').innerHTML = '';
+    [['⏱', lv.timer + ' SECONDS'],['🧩', lv.layout.length + ' MODULES'],['🏭', lv.model]].forEach(([k,v]) => {
+      const c = document.createElement('span'); c.className = 'chip'; c.textContent = k + ' ' + v; $('b-meta').appendChild(c);
+    });
+    $('briefing').classList.add('show');
+  }
+  function showResult(won, reason, stats){
+    $('briefing').classList.remove('show');
+    const t = $('r-title');
+    t.textContent = won ? 'DEVICE SAFE' : 'DETONATED';
+    t.className = won ? 'win' : 'lose';
+    $('r-text').textContent = won
+      ? current.name + ' neutralized with ' + stats.remain + ' seconds to spare. ' + (stats.strikes === 0 ? 'Clean work — not a scratch on it.' : 'It\'s ugly, but ugly and alive beats pretty.')
+      : (reason || 'The device fired.') + ' The next technician thanks you for the lesson.';
+    $('r-meta').innerHTML = '';
+    [['TIME USED', stats.timeUsed + 's'], ['STRIKES', stats.strikes + '/2'], ['HINTS', stats.hints]].forEach(([k,v]) => {
+      const c = document.createElement('span'); c.className = 'chip'; c.textContent = k + ': ' + v; $('r-meta').appendChild(c);
+    });
+    $('btn-next').style.display = (won && current.id < LEVELS.length) ? 'block' : 'none';
+    $('result').classList.add('show');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    $('btn-begin').onclick = () => { $('briefing').classList.remove('show'); Snd.thunk(); Engine.start(); };
+    $('btn-back').onclick = showMissions;
+    $('btn-missions').onclick = showMissions;
+    $('btn-hint').onclick = () => Engine.askHint();
+    $('btn-retry').onclick = () => openBriefing(current);
+    $('btn-tomissions').onclick = showMissions;
+    $('btn-next').onclick = () => { const nx = LEVELS.find(l => l.id === current.id + 1); if(nx) openBriefing(nx); };
+    $('btn-mute').onclick = e => { const m = Snd.toggleMute(); e.target.textContent = m ? 'SOUND: OFF' : 'SOUND: ON'; };
+    Engine.load(LEVELS[0]); // case shows a device behind the mission sheet
+    showMissions();
+  });
+  return { showResult, showMissions };
+})();
+
+</script>
+</body>
+</html>
