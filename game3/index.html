@@ -56,10 +56,11 @@
     .mobileStats b.danger{color:#FF6B6B}
     /* Board: tighter gaps/padding so all 8 rows fit on a phone screen.
        Width is also capped by the available viewport height (minus the
-       compact banner, goal strip and score strip below), so on a short
-       phone webview the board shrinks a touch instead of pushing its
-       bottom rows off-screen. */
-    .board{gap:4px;max-width:100%;max-width:min(100%,max(250px,calc(100dvh - 258px)));margin-left:auto;margin-right:auto}
+       compact banner, goal strip, score strip and Concessions bar below),
+       so on a short phone webview the board shrinks a touch instead of
+       pushing its bottom rows off-screen. The 306px allowance is the old
+       258px plus ~48px for the shop bar added under the score strip. */
+    .board{gap:4px;max-width:100%;max-width:min(100%,max(250px,calc(100dvh - 306px)));margin-left:auto;margin-right:auto}
     .tile{border-radius:10px}
     /* The big sidebar stats duplicate the bottom score strip on phone — hide them */
     .layout aside>.card:first-child .stats{display:none}
@@ -149,6 +150,37 @@
   .btn:disabled{opacity:.45;cursor:not-allowed}
   .saveLine{margin:10px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
   .saveLine b{color:var(--gold)}
+  /* CONCESSIONS SHOP — one compact bar under the score strip (inside the
+     board card, so it never pushes the board itself), opening a sheet.
+     The bar is a fixed height on phone: bank chip + button, no wrap. */
+  .shopBar{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .bankChip{flex:1 1 0;min-width:0;background:var(--panel2);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:9px 12px;font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bankChip b{color:var(--gold);font-family:"DM Mono",monospace}
+  .shopBtn{flex:none;background:var(--gold);border-color:var(--gold);color:#231603;font-weight:900;box-shadow:0 6px 18px rgba(255,201,60,.28)}
+  .shopBtn:hover{background:#FFD65C}
+  .armedChip{flex:1 1 0;min-width:0;display:none;align-items:center;gap:6px;background:rgba(255,201,60,.14);border:1px solid var(--gold);border-radius:999px;padding:8px 10px;font-size:12.5px;font-weight:800;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .armedChip.show{display:flex}
+  .armedChip button{flex:none;background:none;border:none;color:var(--gold);font-size:15px;font-weight:900;min-height:0;padding:2px 6px;line-height:1}
+  .shopBar.armed .bankChip,.shopBar.armed .shopBtn{display:none}
+  .shopBar.armed .armedChip{display:flex}
+  /* While an item is armed the board itself says so: gold frame, and
+     tiles take a crosshair so a tap clearly means "blast here". */
+  .board.armed{box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(255,201,60,.35)}
+  .board.armed .tile{cursor:crosshair}
+  .shopSheet{max-width:460px;text-align:left}
+  .shopSheet .big,.shopSheet .kicker{text-align:center}
+  .shopSheet>p{text-align:center}
+  .shopBank{text-align:center;font-size:15px}
+  .shopBank b{color:var(--gold);font-family:"DM Mono",monospace;font-size:17px}
+  .shopItem{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:10px;margin-bottom:8px}
+  .shopItem .shopIcon{font-size:26px;flex:none}
+  .shopItem .shopMeta{flex:1;min-width:0}
+  .shopItem .shopMeta b{display:block;font-size:14px}
+  .shopItem .shopMeta span{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+  .shopItem .shopMeta .shopCost{color:var(--gold);font-weight:800}
+  .shopItem .shopBtns{display:flex;flex-direction:column;gap:6px;flex:none}
+  .shopItem .shopBtns .btn{padding:8px 12px;min-height:38px;font-size:12.5px}
+  .shopItem .shopBtns .btn.armedBtn{background:var(--gold);border-color:var(--gold);color:#231603;font-weight:900}
   /* BOARD */
   .boardCard{background:linear-gradient(180deg,#22121E,#150B13);border:1px solid var(--line);border-radius:20px;padding:14px;position:relative;min-width:0;max-width:100%;overflow:hidden}
   .boardTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
@@ -303,6 +335,11 @@
       </div>
       <div class="board" id="board" role="grid" aria-label="Creature Cinema match board"></div>
       <div class="mobileStats" aria-label="Score, target, moves, showing and best score"><span>Score<b id="mScore">0</b></span><span>Target<b id="mTarget">1,500</b></span><span>Moves<b id="mMoves">24</b></span><span>Showing<b id="mLevel">1</b></span><span>Best<b id="mBest">0</b></span></div>
+      <div class="shopBar" id="shopBar">
+        <span class="bankChip" id="bankChip">🎟️ Points bank: <b id="bankVal">0</b></span>
+        <button class="btn shopBtn" id="shopBtn" type="button">🍿 Concessions</button>
+        <span class="armedChip" id="armedChip"><span id="armedText"></span><button type="button" id="armedCancel" aria-label="Cancel armed item">✕</button></span>
+      </div>
       <div class="banner" id="banner"><div id="bannerText"></div></div>
     </section>
   </div>
@@ -311,6 +348,7 @@
     <div class="card"><h2>1 · Swap &amp; Match</h2><p>Tap a tile, then tap a neighbour — or swipe. Match <b>3 or more</b> of the same creature-feature and every tile that's about to go <b>lights up with a gold ring and glow</b> first — so you can see the whole match, including any beam or bomb chain, before it pops. Tiles fall, new ones drop in, and chain reactions pay out bigger every time.</p></div>
     <div class="card"><h2>2 · Make the Specials</h2><p>Match <b>4</b> and you forge a <b>Projector Beam</b> — match it again (or double-tap it) and it blasts its whole row or column. Match <b>5</b> for an <b>Atomic Popcorn Bomb</b> that clears everything around it.</p></div>
     <div class="card"><h2>3 · Beat the Showing</h2><p>Hit the <b>score target</b> and finish the <b>collection goals</b> before your moves run out. There are <b>500 showings</b> across 50 reels. A 7th tile joins the cast from Showing 3, a third collection goal arrives at Showing 21, and from <b>Showing 8</b> the house exclusive appears: the <b>Static Veil</b>, a translucent sheet of haunted TV static clinging to board squares. Clear tiles on a veiled square to burn the static off that square — and a showing with static on it isn't beaten until every last wisp is gone. From Showing 31 some squares wear <b>Dense Static</b> that takes two hits.</p></div>
+    <div class="card"><h2>4 · Concessions</h2><p>Every point you score is banked. Spend banked points at the <b>Concessions</b> stand under the board — the stand spends banked points only, never your showing score. <b>Dynamite Reel</b> (3×3 blast, 300 pts), <b>Monster Mash</b> (4×4 blast, 750 pts), <b>Ticket Punch</b> (one tile, 150 pts), <b>Encore</b> (+5 moves, 500 pts), <b>Scream Boost</b> (fills the Scream Meter, 400 pts). Tap a blast or the punch to arm it, then tap a tile — Encore and Scream Boost fire right away.</p></div>
   </div>
 
   <footer>A Silent Scream Studios arcade attraction · Terror has a voice — and it just screamed your high score.</footer>
@@ -333,10 +371,21 @@
   <div class="sheet">
     <div class="kicker">Start over?</div>
     <div class="big">RESET TO SHOWING 1?</div>
-    <p>This wipes your saved game, your score and your best, and starts the programme again from Showing 1. There's no undo — use it when a big change makes a clean run fairer.</p>
+    <p>This wipes your saved game, your score and your best, your banked points and your Concessions items, and starts the programme again from Showing 1. There's no undo — use it when a big change makes a clean run fairer.</p>
     <button class="btn primary" id="resetConfirm" style="width:100%">Yes — Reset Everything</button>
     <div style="height:8px"></div>
     <button class="btn" id="resetCancel" style="width:100%">Cancel — Keep Playing</button>
+  </div>
+</div>
+
+<div class="overlay" id="shopOverlay">
+  <div class="sheet shopSheet">
+    <div class="kicker">Silent Scream Studios</div>
+    <div class="big">CONCESSIONS</div>
+    <p>Every point you score is banked here. The stand spends <b style="color:var(--ink)">banked points only</b> — never your showing score.</p>
+    <p class="shopBank">🎟️ Points bank: <b id="shopBank">0</b></p>
+    <div id="shopItems"></div>
+    <button class="btn" id="shopClose" style="width:100%">Close — Back to the Board</button>
   </div>
 </div>
 
@@ -366,6 +415,39 @@ var grid=[], selected=null, busy=false, soundOn=true, audioCtx=null;
 var level=1, score=0, best=0, movesLeft=24, targetScore=1500, scream=0, goals={}, collected={}, activeTypes=[];
 var MAX_LEVEL=500, weightedTypes=[], staticVeil={}, staticTotalHits=0, staticBurned=0;
 
+/* ---- Concessions shop ----------------------------------------------------
+   Currency is a lifetime banked "Points" balance: every point scored is
+   banked, and the shop spends banked points ONLY — never the current
+   showing's score, because the score is the win condition and must stay
+   intact. Banking is done by diffing: syncBank() moves any score gained
+   since the last sync into the bank. It runs in updateHUD (so the bank
+   display is always live), in buildSaveData (so a save never loses points
+   scored since the last render, e.g. a win bonus), and at the top of
+   startLevel (so a fresh start banks the old run's points before the
+   score is zeroed). bankedScoreMark is the score value the bank was last
+   synced to; it is reset alongside the score, never on its own. */
+var banked=0, bankedScoreMark=0;
+var SHOP_ITEMS={
+  dynamite:{name:'Dynamite Reel', icon:'🧨', cost:300, kind:'target', desc:'Blows up a 3×3 patch — tap a tile, everything around it goes.'},
+  mash:{name:'Monster Mash', icon:'👹', cost:750, kind:'target', desc:'Blows up a 4×4 patch — anchored at the tile you tap.'},
+  punch:{name:'Ticket Punch', icon:'🎟️', cost:150, kind:'target', desc:'Removes one tile — or burns the static off one square.'},
+  encore:{name:'Encore', icon:'🎬', cost:500, kind:'instant', desc:'+5 moves, right now.'},
+  boost:{name:'Scream Boost', icon:'😱', cost:400, kind:'instant', desc:'Fills the Scream Meter and fires the row payoff.'}
+};
+var SHOP_ORDER=['dynamite','mash','punch','encore','boost'];
+var inventory={dynamite:0, mash:0, punch:0, encore:0, boost:0};
+var armedItem=null;
+var bankValEl=document.getElementById('bankVal'), shopBarEl=document.getElementById('shopBar'),
+    armedChipEl=document.getElementById('armedChip'), armedTextEl=document.getElementById('armedText'),
+    shopOverlayEl=document.getElementById('shopOverlay'), shopItemsEl=document.getElementById('shopItems'),
+    shopBankEl=document.getElementById('shopBank');
+function syncBank(){
+  // Score only ever grows within a showing and is zeroed through
+  // startLevel (which syncs first), so a positive diff is always real
+  // points scored — never double-counted, never lost on a reset.
+  if(score>bankedScoreMark){ banked += score-bankedScoreMark; bankedScoreMark=score; }
+}
+
 /* ---- Save / Reset --------------------------------------------------------
    A save snapshots the whole run — showing, score, best, moves, goals,
    the exact board, specials, Scream Meter and Static Veil — to this
@@ -383,9 +465,11 @@ function fmtSavedAt(ts){
 }
 function setSaveLine(html){ if(saveLineEl) saveLineEl.innerHTML=html; }
 function buildSaveData(){
+  syncBank();
   return {
     v:1, savedAt:Date.now(),
     level:level, score:score, best:best, movesLeft:movesLeft, targetScore:targetScore, scream:scream,
+    banked:banked, inventory:{dynamite:inventory.dynamite, mash:inventory.mash, punch:inventory.punch, encore:inventory.encore, boost:inventory.boost},
     goals:goals, collected:collected, activeTypes:activeTypes.slice(), weightedTypes:weightedTypes.slice(),
     grid:grid.map(function(c){ return {type:c.type, special:c.special}; }),
     staticVeil:staticVeil, staticTotalHits:staticTotalHits, staticBurned:staticBurned,
@@ -487,6 +571,21 @@ function loadSaveInner(){
       if(d.staticVeil[vk[vi]]!==1 && d.staticVeil[vk[vi]]!==2) return false;
     }
   }
+  // Concessions state: the banked balance is a finite non-negative whole
+  // number inside a sane lifetime bound (500 showings × ~6,000 points is
+  // about 3M, so 100M leaves generous headroom); inventory is a plain
+  // map of known item keys to whole counts, 0–999 each. Unknown keys or
+  // out-of-range values mean a damaged save — discard it, as above.
+  if(d.banked!==undefined && !(typeof d.banked==='number' && isFinite(d.banked) && Math.floor(d.banked)===d.banked && d.banked>=0 && d.banked<=100000000)) return false;
+  if(d.inventory!==undefined){
+    if(!d.inventory || typeof d.inventory!=='object' || Array.isArray(d.inventory)) return false;
+    var ik=Object.keys(d.inventory);
+    for(var ii=0;ii<ik.length;ii++){
+      if(SHOP_ORDER.indexOf(ik[ii])<0) return false;
+      var iv=d.inventory[ik[ii]];
+      if(!(typeof iv==='number' && isFinite(iv) && Math.floor(iv)===iv && iv>=0 && iv<=999)) return false;
+    }
+  }
   level=d.level; score=d.score||0; best=d.best||0; movesLeft=(typeof d.movesLeft==='number')? d.movesLeft : 24;
   targetScore=d.targetScore||1500; scream=d.scream||0;
   goals=d.goals; collected=d.collected;
@@ -494,6 +593,16 @@ function loadSaveInner(){
   weightedTypes=(Array.isArray(d.weightedTypes)&&d.weightedTypes.length)? d.weightedTypes : activeTypes.slice();
   grid=d.grid.map(function(c){ return {type:c.type, special:c.special||null}; });
   staticVeil=d.staticVeil||{}; staticTotalHits=d.staticTotalHits||0; staticBurned=d.staticBurned||0;
+  // Saves from before the shop existed have no banked/inventory fields —
+  // they start at zero and earn from here on; nothing is credited
+  // retroactively, so the bank always equals points scored while the
+  // shop existed.
+  banked=(typeof d.banked==='number')? d.banked : 0;
+  inventory={dynamite:0, mash:0, punch:0, encore:0, boost:0};
+  if(d.inventory && typeof d.inventory==='object'){
+    SHOP_ORDER.forEach(function(k){ if(typeof d.inventory[k]==='number') inventory[k]=d.inventory[k]; });
+  }
+  bankedScoreMark=score; armedItem=null;
   if(typeof d.soundOn==='boolean'){ soundOn=d.soundOn; var sb=document.getElementById('soundBtn'); if(sb) sb.textContent= soundOn? '🔊 Sound: On':'🔇 Sound: Off'; }
   selected=null; busy=false;
   render(); overlay.classList.remove('show');
@@ -510,7 +619,11 @@ function resetAll(){
   try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
   document.getElementById('resetOverlay').classList.remove('show');
   score=0; best=0;
-  startLevel(1);
+  // A full reset wipes the Concessions side too: banked points, items,
+  // and any armed item. (The score is already 0 here, so the sync inside
+  // startLevel has nothing to bank.)
+  banked=0; bankedScoreMark=0; inventory={dynamite:0, mash:0, punch:0, encore:0, boost:0}; armedItem=null;
+  startLevel(1, true);
   setSaveLine('Fresh start — no saved game. Progress <b>auto-saves after every showing you beat</b>; tap <b>Save Progress</b> anytime to keep a mid-showing board on this device too.');
   showBanner('BACK TO SHOWING 1','Clean reel, clean slate — good luck in there',1300);
 }
@@ -932,6 +1045,9 @@ function render(hintPair){
   updateHUD();
 }
 function updateHUD(){
+  syncBank();
+  if(bankValEl) bankValEl.textContent=banked.toLocaleString();
+  if(shopBankEl && shopOverlayEl.classList.contains('show')) shopBankEl.textContent=banked.toLocaleString();
   scoreEl.textContent=score.toLocaleString();
   targetEl.textContent=targetScore.toLocaleString();
   movesEl.textContent=movesLeft;
@@ -984,7 +1100,7 @@ boardEl.addEventListener('pointerdown',function(e){
   touchStart={x:e.clientX,y:e.clientY,i:Array.prototype.indexOf.call(boardEl.children,t)};
 });
 boardEl.addEventListener('pointerup',function(e){
-  if(!touchStart||busy) return;
+  if(!touchStart||busy||armedItem) return;
   var dx=e.clientX-touchStart.x, dy=e.clientY-touchStart.y, start=touchStart; touchStart=null;
   if(Math.abs(dx)<24&&Math.abs(dy)<24) return;
   var r=Math.floor(start.i/SIZE), c=start.i%SIZE, ni=null;
@@ -999,6 +1115,9 @@ var suppressClick=false;
 
 function onTap(i){
   if(busy||suppressClick) return;
+  // An armed Concessions item turns the tap into a firing order: the
+  // tile is the blast/punch target, never a swap selection.
+  if(armedItem){ fireArmedItem(i); return; }
   sfxTap();
   if(selected===null){ selected=i; render(); return; }
   if(selected===i){
@@ -1105,33 +1224,37 @@ function resolveBoard(swapA,swapB){
       return sleep(190).then(step);
     });
   }
-  return step().then(function(){
-    // Scream payoff
-    if(scream>=100){
-      scream=0; updateHUD();
-      showBanner('THE SCREAM!','The whole theatre lets loose — one row is gone',1500);
-      sfxScream();
-      var row=Math.floor(Math.random()*SIZE), set={};
-      for(var c=0;c<SIZE;c++) set[idx(row,c)]=true;
-      expandClear(set);
-      var list=Object.keys(set).map(Number);
-      score+=list.length*40+300; if(score>best) best=score;
-      list.forEach(function(i){ if(goals[grid[i].type]!==undefined) collected[grid[i].type]++; if(boardEl.children[i]) boardEl.children[i].classList.add('matched'); });
-      return sleep(520).then(function(){
-        list.forEach(function(i){ if(boardEl.children[i]){ boardEl.children[i].classList.remove('matched'); boardEl.children[i].classList.add('clearing'); } });
-        return sleep(280);
-      }).then(function(){
-        burnVeils(list);
-        list.forEach(function(i){ grid[i]=null; });
-        for(var cc=0;cc<SIZE;cc++){
-          var stack=[];
-          for(var rr=SIZE-1;rr>=0;rr--){ var cell=grid[idx(rr,cc)]; if(cell) stack.push(cell); }
-          for(var r2=SIZE-1;r2>=0;r2--) grid[idx(r2,cc)] = stack.length? stack.shift() : {type:randType(),special:null};
-        }
-        render();
-        return resolveBoard(-1,-1);
-      });
+  return step().then(function(){ return screamPayoff(); });
+}
+
+/* The Scream Meter payoff, factored out of resolveBoard so the Scream
+   Boost item can fire the exact same row blowout on demand: the meter
+   empties, one random row blows out for bonus points, and the refill
+   resolves through the normal cascade path. */
+function screamPayoff(){
+  if(scream<100) return Promise.resolve();
+  scream=0; updateHUD();
+  showBanner('THE SCREAM!','The whole theatre lets loose — one row is gone',1500);
+  sfxScream();
+  var row=Math.floor(Math.random()*SIZE), set={};
+  for(var c=0;c<SIZE;c++) set[idx(row,c)]=true;
+  expandClear(set);
+  var list=Object.keys(set).map(Number);
+  score+=list.length*40+300; if(score>best) best=score;
+  list.forEach(function(i){ if(goals[grid[i].type]!==undefined) collected[grid[i].type]++; if(boardEl.children[i]) boardEl.children[i].classList.add('matched'); });
+  return sleep(520).then(function(){
+    list.forEach(function(i){ if(boardEl.children[i]){ boardEl.children[i].classList.remove('matched'); boardEl.children[i].classList.add('clearing'); } });
+    return sleep(280);
+  }).then(function(){
+    burnVeils(list);
+    list.forEach(function(i){ grid[i]=null; });
+    for(var cc=0;cc<SIZE;cc++){
+      var stack=[];
+      for(var rr=SIZE-1;rr>=0;rr--){ var cell=grid[idx(rr,cc)]; if(cell) stack.push(cell); }
+      for(var r2=SIZE-1;r2>=0;r2--) grid[idx(r2,cc)] = stack.length? stack.shift() : {type:randType(),special:null};
     }
+    render();
+    return resolveBoard(-1,-1);
   });
 }
 
@@ -1159,6 +1282,180 @@ function detonate(i){
   });
 }
 
+/* ---- Concessions shop ----------------------------------------------------
+   Buying adds to the inventory; targeted items (Dynamite Reel, Monster
+   Mash, Ticket Punch) are armed and fired at a tapped tile, instant items
+   (Encore, Scream Boost) fire on the spot. A blast is spent when it is
+   fired, not when it is armed — cancelling an armed item costs nothing.
+   Shop clears run through the same clearing path as matches and special
+   detonations (gold-ring highlight, pop, veil burn-off, gravity, cascade
+   resolve, then the win/lose check), so cleared tiles count toward
+   collection goals and Static Veil exactly like a match would. */
+function updateArmedUI(){
+  var armed=!!armedItem;
+  if(boardEl) boardEl.classList.toggle('armed', armed);
+  if(shopBarEl) shopBarEl.classList.toggle('armed', armed);
+  if(armedTextEl && armedItem){
+    var it=SHOP_ITEMS[armedItem];
+    armedTextEl.textContent=it.icon+' '+it.name+' armed — tap a tile';
+  }
+  if(!armed && comboEl && comboEl.textContent.indexOf('armed — tap a tile')>=0){
+    comboEl.textContent='Tap two neighbouring tiles to swap them';
+  }
+}
+function disarmItem(silent){
+  if(!armedItem) return;
+  armedItem=null; updateArmedUI();
+  if(!silent && comboEl) comboEl.textContent='Item put away — tap two neighbouring tiles to swap them';
+  renderShop();
+}
+function openShop(){
+  if(!shopOverlayEl) return;
+  renderShop();
+  shopOverlayEl.classList.add('show');
+}
+function closeShop(){ if(shopOverlayEl) shopOverlayEl.classList.remove('show'); }
+function renderShop(){
+  if(!shopItemsEl) return;
+  syncBank();
+  if(shopBankEl) shopBankEl.textContent=banked.toLocaleString();
+  var html='';
+  SHOP_ORDER.forEach(function(key){
+    var it=SHOP_ITEMS[key], owned=inventory[key]||0, afford=banked>=it.cost;
+    var isArmed=armedItem===key;
+    html+='<div class="shopItem"><div class="shopIcon">'+it.icon+'</div>'+
+      '<div class="shopMeta"><b>'+it.name+'</b><span>'+it.desc+'</span>'+
+      '<span class="shopCost">'+it.cost.toLocaleString()+' pts · Owned: '+owned+'</span></div>'+
+      '<div class="shopBtns">'+
+      '<button class="btn" type="button" data-buy="'+key+'"'+(afford?'':' disabled')+'>Buy</button>'+
+      '<button class="btn'+(isArmed?' armedBtn':'')+(owned?' primary':'')+'" type="button" data-use="'+key+'"'+(owned?'':' disabled')+'>'+(isArmed?'Armed ✓':'Use')+'</button>'+
+      '</div></div>';
+  });
+  shopItemsEl.innerHTML=html;
+}
+function buyItem(key){
+  var it=SHOP_ITEMS[key];
+  if(!it || busy) return;
+  syncBank();
+  if(banked<it.cost){
+    comboEl.textContent='Not enough banked points for the '+it.name+' yet — keep matching, the bank grows with every point you score.';
+    sfxInvalid();
+    return;
+  }
+  banked-=it.cost; inventory[key]++;
+  chime();
+  comboEl.textContent=it.icon+' '+it.name+' bought — '+(it.kind==='target'?'tap Use, then tap a tile.':'tap Use to fire it right away.');
+  renderShop(); updateHUD(); autoSave();
+}
+function useItem(key){
+  var it=SHOP_ITEMS[key];
+  if(!it || busy || !inventory[key]) return;
+  if(armedItem===key){ disarmItem(); return; }
+  if(it.kind==='instant'){
+    inventory[key]--;
+    closeShop(); renderShop();
+    if(key==='encore'){
+      movesLeft+=5;
+      sfxWin();
+      showBanner('ENCORE!','+5 moves — the show goes on',1100);
+      comboEl.textContent='🎬 Encore! +5 moves.';
+      updateHUD(); autoSave();
+    } else if(key==='boost'){
+      useBoost();
+    }
+    return;
+  }
+  // Targeted item: arm it, close the sheet, and let the next board tap
+  // choose the target. The item is spent when it fires, not when armed.
+  armedItem=key; selected=null;
+  closeShop(); updateArmedUI(); render();
+  comboEl.textContent=it.icon+' '+it.name+' armed — tap a tile'+(key==='dynamite'?' to blast a 3×3 patch':key==='mash'?' to blast a 4×4 patch':' to clear it')+'. Tap ✕ to cancel.';
+  sfxTap();
+}
+function blastCells(key, i){
+  var r=Math.floor(i/SIZE), c=i%SIZE, list=[];
+  if(key==='dynamite'){
+    // 3×3 centred on the tapped tile, clipped at the board edges.
+    for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+      var nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE) list.push(idx(nr,nc));
+    }
+  } else if(key==='mash'){
+    // 4×4 anchored top-left at the tapped tile, clipped at the edges —
+    // deterministic: the same tap always clears the same squares.
+    for(var dr2=0;dr2<4;dr2++) for(var dc2=0;dc2<4;dc2++){
+      var nr2=r+dr2, nc2=c+dc2;
+      if(nr2>=0&&nr2<SIZE&&nc2>=0&&nc2<SIZE) list.push(idx(nr2,nc2));
+    }
+  } else if(key==='punch'){
+    list=[i];
+  }
+  return list;
+}
+function fireArmedItem(i){
+  var key=armedItem, it=SHOP_ITEMS[key];
+  if(!key || !it || busy || !inventory[key]){ disarmItem(true); return; }
+  armedItem=null; updateArmedUI();
+  inventory[key]--;
+  shopClear(blastCells(key, i), key);
+}
+function shopClear(list, key){
+  if(busy) return;
+  busy=true; selected=null;
+  var it=SHOP_ITEMS[key];
+  // Specials caught in the blast chain through the normal path (beams
+  // fire, bombs blow), exactly as they do inside a match.
+  var set={};
+  list.forEach(function(i){ set[i]=true; });
+  expandClear(set);
+  var clearList=Object.keys(set).map(Number);
+  if(!clearList.length){ busy=false; render(); return; }
+  // 50 points per tile cleared — the same rate as firing a special.
+  var gained=clearList.length*50;
+  score+=gained; if(score>best) best=score;
+  clearList.forEach(function(i){
+    if(goals[grid[i].type]!==undefined) collected[grid[i].type]++;
+    scream=Math.min(100, scream+4);
+  });
+  if(key==='punch'){ sfxMatch(1); }
+  else {
+    sfxBomb();
+    boardCard.classList.add('shake'); setTimeout(function(){ boardCard.classList.remove('shake'); },420);
+  }
+  var label = key==='dynamite' ? '🧨 Dynamite Reel!' : key==='mash' ? '👹 Monster Mash!' : '🎟️ Ticket Punch!';
+  comboEl.textContent=label+' '+clearList.length+' tile'+(clearList.length===1?'':'s')+' cleared — +'+gained.toLocaleString()+' pts';
+  if(clearList.length) floatScore('+'+gained.toLocaleString(), clearList[0]);
+  clearList.forEach(function(i){ if(boardEl.children[i]) boardEl.children[i].classList.add('matched'); });
+  updateHUD();
+  sleep(520).then(function(){
+    clearList.forEach(function(i){ if(boardEl.children[i]){ boardEl.children[i].classList.remove('matched'); boardEl.children[i].classList.add('clearing'); } });
+    return sleep(280);
+  }).then(function(){
+    var burnedStatic=burnVeils(clearList);
+    if(burnedStatic) comboEl.textContent += ' · 📺 Static burned ×'+burnedStatic+(veilsLeft()? ' — '+veilsLeft()+' hit'+(veilsLeft()>1?'s':'')+' of static left' : ' — signal clear!');
+    clearList.forEach(function(i){ grid[i]=null; });
+    for(var c=0;c<SIZE;c++){
+      var stack=[];
+      for(var r=SIZE-1;r>=0;r--){ var cell=grid[idx(r,c)]; if(cell) stack.push(cell); }
+      for(var r2=SIZE-1;r2>=0;r2--) grid[idx(r2,c)] = stack.length? stack.shift() : {type:randType(),special:null};
+    }
+    render();
+    return resolveBoard(-1,-1);
+  }).then(function(){
+    afterTurn();
+    autoSave();
+  });
+}
+function useBoost(){
+  if(busy) return;
+  busy=true; selected=null;
+  scream=100; updateHUD();
+  screamPayoff().then(function(){
+    afterTurn();
+    autoSave();
+  });
+}
+
 function goalsMet(){ return veilsLeft()===0 && Object.keys(goals).every(function(k){ return collected[k]>=goals[k]; }); }
 function collectionsMet(){ return Object.keys(goals).every(function(k){ return collected[k]>=goals[k]; }); }
 
@@ -1171,6 +1468,10 @@ function afterTurn(){
   }
   if(goalsMet() && score>=targetScore){
     var bonus=movesLeft*50; score+=bonus; if(score>best) best=score;
+    // The win bonus is added after render() ran at the top of afterTurn,
+    // so refresh the HUD here or the score strip (and bank chip) would show
+    // the pre-bonus total until the player's next tap.
+    updateHUD();
     var autoSaved=autoSave();
     showOverlay(true, bonus, autoSaved);
   } else if(movesLeft<=0){
@@ -1203,8 +1504,18 @@ function showOverlay(won,bonus,autoSaved){
 }
 
 var firstLoad=true;
-function startLevel(lv){
-  level=lv; score = lv===1? 0 : score; if(lv===1){ best=Math.max(best,0); }
+function startLevel(lv, fresh){
+  // Bank first: a fresh start (New Showing, Jump, Encore lap, Reset,
+  // replaying Showing 1) zeroes the score below, and any points scored
+  // since the last sync — the win bonus, for instance — would be lost
+  // if they were not banked before the zeroing. The mark then restarts
+  // from the new score, so nothing is ever banked twice.
+  syncBank();
+  level=lv;
+  if(fresh || lv===1){ score=0; }
+  if(lv===1){ best=Math.max(best,0); }
+  bankedScoreMark=score;
+  armedItem=null; updateArmedUI();
   levelConfig(lv); scream=0; selected=null; busy=false;
   comboEl.classList.remove('hot');
   newBoard(); render(); overlay.classList.remove('show');
@@ -1236,7 +1547,7 @@ function shuffleBoard(free){
 }
 function afterTurnCheckOnly(){ if(movesLeft<=0 && !(goalsMet()&&score>=targetScore)) showOverlay(false,0); render(); }
 
-document.getElementById('newBtn').addEventListener('click',function(){ score=0; startLevel(1); showBanner('FEATURE PRESENTATION','Showing 1 — good luck in there',1200); });
+document.getElementById('newBtn').addEventListener('click',function(){ startLevel(1, true); showBanner('FEATURE PRESENTATION','Showing 1 — good luck in there',1200); });
 document.getElementById('hintBtn').addEventListener('click',function(){
   if(busy) return; var mv=hasMove();
   if(mv){ render(mv); comboEl.textContent='💡 Try the two glowing tiles.'; sfxHint(); setTimeout(function(){ if(!busy) render(); },1700); }
@@ -1246,23 +1557,31 @@ document.getElementById('shuffleBtn').addEventListener('click',function(){ shuff
 document.getElementById('soundBtn').addEventListener('click',function(){ soundOn=!soundOn; this.textContent= soundOn? '🔊 Sound: On':'🔇 Sound: Off'; if(soundOn){ unlockAudio(); startAmbience(); chime(); comboEl.textContent='🔊 Sound on — spooky sounds and the night-woods ambience are playing.'; } else { stopAmbience(); } });
 document.getElementById('ovBtn').addEventListener('click',function(){
   var won = goalsMet() && score>=targetScore && overlay.classList.contains('show') && document.getElementById('ovTitle').textContent.indexOf('COMPLETE')>=0;
-  if(won && level>=MAX_LEVEL){ score=0; startLevel(1); autoSave(); showBanner('ENCORE!','All '+MAX_LEVEL+' showings beaten — back to Showing 1',1400); return; }
+  if(won && level>=MAX_LEVEL){ startLevel(1, true); autoSave(); showBanner('ENCORE!','All '+MAX_LEVEL+' showings beaten — back to Showing 1',1400); return; }
   if(won) startLevel(level+1); else startLevel(level);
   // Checkpoint the fresh showing (the next one after a win, or the retry
   // after a loss) so leaving now never loses the level you reached.
   autoSave();
   if(won) showBanner('SHOWING '+level,'Reel '+Math.ceil(level/10)+' of 50 — good luck in there',1200);
 });
-document.getElementById('ovRestart').addEventListener('click',function(){ if(level===1) score=0; startLevel(level); });
+document.getElementById('ovRestart').addEventListener('click',function(){ startLevel(level, level===1); });
 document.getElementById('jumpBtn').addEventListener('click',function(){
   var v=parseInt(document.getElementById('jumpInput').value,10);
   if(isNaN(v)){ comboEl.textContent='Type a showing number between 1 and '+MAX_LEVEL+' first.'; return; }
   v=Math.max(1,Math.min(MAX_LEVEL,v));
-  score=0; startLevel(v);
+  startLevel(v, true);
   showBanner('SHOWING '+level,'Reel '+Math.ceil(level/10)+' of 50'+(staticTotalHits>0?' — Static Veil on screen':''),1300);
 });
 document.getElementById('jumpInput').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('jumpBtn').click(); } });
 document.getElementById('saveBtn').addEventListener('click',function(){ unlockAudio(); saveGame(); });
+document.getElementById('shopBtn').addEventListener('click',function(){ unlockAudio(); openShop(); });
+document.getElementById('shopClose').addEventListener('click',function(){ closeShop(); });
+document.getElementById('armedCancel').addEventListener('click',function(){ disarmItem(); });
+document.getElementById('shopItems').addEventListener('click',function(e){
+  var buyBtn=e.target.closest('[data-buy]'), useBtn=e.target.closest('[data-use]');
+  if(buyBtn && !buyBtn.disabled){ unlockAudio(); buyItem(buyBtn.getAttribute('data-buy')); return; }
+  if(useBtn && !useBtn.disabled){ unlockAudio(); useItem(useBtn.getAttribute('data-use')); }
+});
 document.getElementById('resetBtn').addEventListener('click',function(){
   if(busy) return;
   document.getElementById('resetOverlay').classList.add('show');
