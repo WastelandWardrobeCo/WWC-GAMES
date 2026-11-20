@@ -397,7 +397,22 @@
      window of showings around the viewed chunk is rendered at a time
      (500 nodes would bury the page), with Earlier / Later controls to
      travel the reel. */
-  .mapBtn{width:100%;text-align:center}
+  .mapBtn{flex:1;text-align:center;min-width:0}
+  .dailyBtn.done{border-color:var(--teal);color:#BFF5EE}
+  .mapNodeBtn .mapStars{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);font-size:9px;line-height:1;letter-spacing:1px;color:var(--gold);text-shadow:0 1px 3px #000;pointer-events:none;white-space:nowrap}
+  .mapNodeBtn.locked .mapStars{display:none}
+  /* CREATURE GALLERY — one row per creature: tile art, lifetime clears,
+     and the poster tier it has earned. */
+  .galRow{display:flex;align-items:center;gap:10px;padding:8px 10px;margin:6px 0;background:var(--panel2);border:1px solid rgba(255,255,255,.09);border-radius:12px;text-align:left}
+  .galIcon{width:44px;height:44px;flex:none;border-radius:10px;overflow:hidden;position:relative}
+  .galIcon img{width:100%;height:100%;object-fit:cover;display:block}
+  .galMeta{flex:1;min-width:0}
+  .galMeta b{display:block;font-size:14px}
+  .galMeta span{font-size:12px;color:var(--muted);font-weight:700}
+  .galBadge{flex:none;font-size:11px;font-weight:900;padding:5px 9px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--muted);white-space:nowrap}
+  .galBadge.bronze{background:#6B4A2F;color:#FFD9A3}
+  .galBadge.silver{background:#5A6470;color:#E8F1F8}
+  .galBadge.gold{background:var(--gold);color:#231603}
   /* The map is the front door now, so it takes the whole screen — no more
      small sheet floating in the middle with a wall of text above it. */
   #mapOverlay{padding:0;background:#0A050A}
@@ -485,10 +500,12 @@
           <button class="btn danger" id="resetBtn">⏮ Reset to Showing 1</button>
           <button class="btn" id="hintBtn">💡 Hint</button>
           <button class="btn" id="soundBtn">🔊 Sound: On</button>
+          <button class="btn" id="galleryBtn">🖼️ Gallery</button>
         </div>
         <p class="saveLine" id="saveLine">No saved game yet — your progress <b>auto-saves after every showing you beat</b>, and you can tap <b>Save Progress</b> anytime to keep a mid-showing board on this device too.</p>
         <div class="jumpRow">
           <button class="btn save mapBtn" id="mapBtn" type="button">🎞️ The Haunted Reel — Level Map</button>
+          <button class="btn save mapBtn dailyBtn" id="dailyBtn" type="button">🎬 Tonight's Feature</button>
         </div>
         <p class="reelLine" id="mapProgress">Follow the film through the dark theatre — tap any unlocked showing on the path to jump straight to it.</p>
         <p class="reelLine" id="reelLine"><b>500 showings</b> on the programme — 50 reels of 10. Beat them in order, or replay any showing you've already beaten.</p>
@@ -504,6 +521,11 @@
           <span class="chip"><i style="background:#FFC93C"></i> Blasts run on 🪙 Tokens — earn them from wins &amp; Bonus Rounds</span>
           <span class="chip"><i style="background:#D8E9F2"></i> Showing 8+ → Static Veil: burn it off square by square</span>
           <span class="chip"><i style="background:#8FB6C9"></i> Showing 31+ → Dense Static takes 2 hits</span>
+          <span class="chip"><i style="background:#FFC93C"></i> Tonight's Feature — one fresh showing a day, with a streak</span>
+          <span class="chip"><i style="background:#E63946"></i> Stars — beat a showing with moves to spare for ★★★</span>
+          <span class="chip"><i style="background:#2EC4B6"></i> Swap two specials together for a Double Bill combo</span>
+          <span class="chip"><i style="background:#FF9E2C"></i> Out of moves? Spend 3 🪙 Tokens to continue with +5 moves</span>
+          <span class="chip"><i style="background:#7FB2E5"></i> Creature Gallery — every tile you clear joins the collection</span>
         </div>
       </div>
     </aside>
@@ -556,9 +578,10 @@
 
   <div class="howto">
     <div class="card"><h2>1 · Swap &amp; Match</h2><p>Tap a tile, then tap a neighbour — or swipe. Match <b>3 or more</b> of the same creature-feature and every tile that's about to go <b>lights up with a gold ring and glow</b> first — so you can see the whole match, including any beam or bomb chain, before it pops. Tiles fall, new ones drop in, and chain reactions pay out bigger every time.</p></div>
-    <div class="card"><h2>2 · Make the Specials</h2><p>Match <b>4</b> and you forge a <b>Projector Beam</b> — match it again (or double-tap it) and it blasts its whole row or column. Match <b>5</b> for an <b>Atomic Popcorn Bomb</b> that clears everything around it.</p></div>
-    <div class="card"><h2>3 · Beat the Showing</h2><p>Hit the <b>score target</b> and finish the <b>collection goals</b> before your moves run out. There are <b>500 showings</b> across 50 reels. The cast grows to seven tile types by Showing 3 and <b>rotates every 5 showings</b> from Showing 6 on — one face swaps out for a new one, so the board always holds seven types but the lineup keeps changing. A third collection goal arrives at Showing 21, and from <b>Showing 8</b> the house exclusive appears: the <b>Static Veil</b>, a translucent sheet of haunted TV static clinging to board squares. Clear tiles on a veiled square to burn the static off that square — and a showing with static on it isn't beaten until every last wisp is gone. From Showing 31 some squares wear <b>Dense Static</b> that takes two hits.</p></div>
-    <div class="card"><h2>4 · Concessions</h2><p>Every point you score is banked as <b>Points</b>, and the stand under the board runs on two currencies. The blast shelf takes 🪙 <b>Tokens</b> — <b>Dynamite Reel</b> (3×3 blast, 2 tokens), <b>Monster Mash</b> (4×4 blast, 4 tokens), <b>Ticket Punch</b> (one tile, 1 token) — while <b>Encore</b> (+5 moves, 500 pts) and <b>Scream Boost</b> (fills the Scream Meter, 400 pts) still take banked Points. Earn Tokens by beating any showing (+1) and from <b>Bonus Rounds</b> (1 per 500 bonus points, up to 3 a round): beat any <b>5th showing</b> (5, 10, 15, 20, then repeating) to trigger one — Fill the Vault, Frenzy Board, Haunted Doors and Midnight Screening rotate in that order, all no-fail. Tap a blast or the punch to arm it, then tap a tile — Encore and Scream Boost fire right away. The stand never spends your showing score.</p></div>
+    <div class="card"><h2>2 · Make the Specials</h2><p>Match <b>4</b> and you forge a <b>Projector Beam</b> — match it again (or double-tap it) and it blasts its whole row or column. Match <b>5</b> for an <b>Atomic Popcorn Bomb</b> that clears everything around it. Swap <b>two specials together</b> and they combine into a <b>Double Bill</b> — two beams clear both lines, two bombs go off in a 5×5 blast, and a beam into a bomb clears a full cross plus a 3×3 patch.</p></div>
+    <div class="card"><h2>3 · Beat the Showing</h2><p>Hit the <b>score target</b> and finish the <b>collection goals</b> before your moves run out. There are <b>500 showings</b> across 50 reels. The cast grows to seven tile types by Showing 3 and <b>rotates every 5 showings</b> from Showing 6 on — one face swaps out for a new one, so the board always holds seven types but the lineup keeps changing. A third collection goal arrives at Showing 21, and from <b>Showing 8</b> the house exclusive appears: the <b>Static Veil</b>, a translucent sheet of haunted TV static clinging to board squares. Clear tiles on a veiled square to burn the static off that square — and a showing with static on it isn't beaten until every last wisp is gone. From Showing 31 some squares wear <b>Dense Static</b> that takes two hits. Beat a showing with moves to spare to earn <b>stars</b> — ★★★ for finishing with plenty of moves left, ★★ for a comfortable win, ★ for a win by any margin. One star is a win; the other two are for showing off.</p></div>
+    <div class="card"><h2>4 · Concessions</h2><p>Every point you score is banked as <b>Points</b>, and the stand under the board runs on two currencies. The blast shelf takes 🪙 <b>Tokens</b> — <b>Dynamite Reel</b> (3×3 blast, 2 tokens), <b>Monster Mash</b> (4×4 blast, 4 tokens), <b>Ticket Punch</b> (one tile, 1 token) — while <b>Encore</b> (+5 moves, 500 pts) and <b>Scream Boost</b> (fills the Scream Meter, 400 pts) still take banked Points. Earn Tokens by beating any showing (+1) and from <b>Bonus Rounds</b> (1 per 500 bonus points, up to 3 a round): beat any <b>5th showing</b> (5, 10, 15, 20, then repeating) to trigger one — Fill the Vault, Frenzy Board, Haunted Doors and Midnight Screening rotate in that order, all no-fail. Tap a blast or the punch to arm it, then tap a tile — Encore and Scream Boost fire right away. The stand never spends your showing score. Run out of moves on a showing? The loss screen offers a <b>Continue</b> — 3 🪙 Tokens for +5 moves, once per attempt. And every tile you clear joins the <b>Creature Gallery</b> — open it from the button under the board to see your lifetime collection and the poster tiers.</p></div>
+    <div class="card"><h2>5 · Tonight's Feature</h2><p>One fresh showing every day — the same board for every player, dealt fresh each morning. Beat it and earn <b>+3 🪙 Tokens</b> the first time that day, and keep your <b>streak</b> alive: any daily beat counts, and a missed day gets one free grace day before the streak resets. A 7-day streak pays a <b>+7 Token</b> bonus.</p></div>
   </div>
 
   <footer>A Silent Scream Studios arcade attraction · Terror has a voice — and it just screamed your high score.</footer>
@@ -581,7 +604,7 @@
   <div class="sheet">
     <div class="kicker">Start over?</div>
     <div class="big">RESET TO SHOWING 1?</div>
-    <p>This wipes your saved game, your score and your best, your banked points, your tokens and your Concessions items, and starts the programme again from Showing 1. There's no undo — use it when a big change makes a clean run fairer.</p>
+    <p>This wipes your saved game, your score and your best, your banked points, your tokens and your Concessions items, your stars, your Creature Gallery and your daily streak, and starts the programme again from Showing 1. There's no undo — use it when a big change makes a clean run fairer.</p>
     <button class="btn primary" id="resetConfirm" style="width:100%">Yes — Reset Everything</button>
     <div style="height:8px"></div>
     <button class="btn" id="resetCancel" style="width:100%">Cancel — Keep Playing</button>
@@ -634,6 +657,17 @@
       <button class="btn" type="button" data-mapnav="next">Later ▶</button>
     </div>
     <button class="btn primary" id="mapClose" type="button" style="width:100%">Back to the Board</button>
+  </div>
+</div>
+
+<div class="overlay" id="galleryOverlay">
+  <div class="sheet mapSheet">
+    <div class="kicker">Silent Scream Studios Presents</div>
+    <div class="big">CREATURE GALLERY</div>
+    <p>Every tile you clear joins the collection. Clear 100 of a creature for a Bronze <b>Lobby Poster</b>, 250 for a Silver <b>Silver Screen</b>, 500 for a Gold <b>Marquee Legend</b>.</p>
+    <div class="mapScroll" style="flex:1 1 auto"><div id="galleryList" style="padding:4px 2px"></div></div>
+    <div style="height:10px"></div>
+    <button class="btn primary" id="galleryClose" type="button" style="width:100%">Back to the Board</button>
   </div>
 </div>
 
@@ -760,6 +794,12 @@ var tokens=0;
    showing), and it is persisted in the save — saves from before the
    map existed start with just their current showing unlocked. */
 var unlockedMax=1;
+/* ---- v7 — Daily Showing, Stars, Combos, Token Continue, Gallery, and
+   the silent kindness (see afterTurn / startLevel) ----------------------- */
+var stars={}, collection={};
+var daily={lastDate:0, streak:0, beatenDate:0, graceDate:0};
+var failStreak={level:0, count:0};
+var startMoves=24, dailyMode=false, regularLevel=1, dailyLevel=0, dailySeed=0, dailySeedFn=null, continueUsed=false, lastOverlayWon=false;
 var SHOP_ITEMS={
   dynamite:{name:'Dynamite Reel', icon:'🧨', cost:2, cur:'tokens', kind:'target', desc:'Blows up a 3×3 patch — tap a tile, everything around it goes.'},
   mash:{name:'Monster Mash', icon:'👹', cost:4, cur:'tokens', kind:'target', desc:'Blows up a 4×4 patch — anchored at the tile you tap.'},
@@ -823,7 +863,10 @@ function buildSaveData(){
     goals:goals, collected:collected, activeTypes:activeTypes.slice(), weightedTypes:weightedTypes.slice(),
     grid:grid.map(function(c){ return {type:c.type, special:c.special}; }),
     staticVeil:staticVeil, staticTotalHits:staticTotalHits, staticBurned:staticBurned,
-    soundOn:soundOn
+    soundOn:soundOn,
+    stars:stars, collection:collection,
+    daily:{lastDate:daily.lastDate, streak:daily.streak, beatenDate:daily.beatenDate, graceDate:daily.graceDate},
+    failStreak:{level:failStreak.level, count:failStreak.count}
   };
 }
 function boardSaveable(){ return grid.length===SIZE*SIZE && !grid.some(function(c){ return !c; }); }
@@ -958,6 +1001,45 @@ function loadSaveInner(){
   // One-time map intro popup: a boolean. Saves from before it existed
   // have no field and see the popup once.
   if(d.mapIntroSeen!==undefined && typeof d.mapIntroSeen!=='boolean') return false;
+  // v7 fields — all optional with defaults, like Tokens before them.
+  // Stars: a plain map of showing number (1–500) to best stars (1–3).
+  if(d.stars!==undefined){
+    if(!d.stars || typeof d.stars!=='object' || Array.isArray(d.stars)) return false;
+    var sk=Object.keys(d.stars);
+    for(var si=0;si<sk.length;si++){
+      var sn=Number(sk[si]);
+      if(!(Math.floor(sn)===sn && sn>=1 && sn<=MAX_LEVEL)) return false;
+      if(!(typeof d.stars[sk[si]]==='number' && Math.floor(d.stars[sk[si]])===d.stars[sk[si]] && d.stars[sk[si]]>=1 && d.stars[sk[si]]<=3)) return false;
+    }
+  }
+  // Collection: a plain map of tile type to lifetime clears (whole, sane bound).
+  if(d.collection!==undefined){
+    if(!d.collection || typeof d.collection!=='object' || Array.isArray(d.collection)) return false;
+    var ck2=Object.keys(d.collection);
+    for(var ci2=0;ci2<ck2.length;ci2++){
+      if(!ICONS[ck2[ci2]]) return false;
+      var cv=d.collection[ck2[ci2]];
+      if(!(typeof cv==='number' && isFinite(cv) && Math.floor(cv)===cv && cv>=0 && cv<=100000000)) return false;
+    }
+  }
+  // Daily: lastDate / beatenDate / graceDate are YYYYMMDD ints (0 = never),
+  // streak a whole number.
+  if(d.daily!==undefined){
+    if(!d.daily || typeof d.daily!=='object' || Array.isArray(d.daily)) return false;
+    var dd=['lastDate','beatenDate','graceDate'];
+    for(var di=0;di<dd.length;di++){
+      var dv=d.daily[dd[di]];
+      if(dv!==undefined && !(typeof dv==='number' && Math.floor(dv)===dv && dv>=0 && dv<=99999999)) return false;
+    }
+    if(d.daily.streak!==undefined && !(typeof d.daily.streak==='number' && Math.floor(d.daily.streak)===d.daily.streak && d.daily.streak>=0 && d.daily.streak<=10000)) return false;
+  }
+  // Fail streak: the showing being struggled on (0 = none) and how many
+  // times in a row it has been lost (0–99).
+  if(d.failStreak!==undefined){
+    if(!d.failStreak || typeof d.failStreak!=='object' || Array.isArray(d.failStreak)) return false;
+    if(d.failStreak.level!==undefined && !(typeof d.failStreak.level==='number' && Math.floor(d.failStreak.level)===d.failStreak.level && d.failStreak.level>=0 && d.failStreak.level<=MAX_LEVEL)) return false;
+    if(d.failStreak.count!==undefined && !(typeof d.failStreak.count==='number' && Math.floor(d.failStreak.count)===d.failStreak.count && d.failStreak.count>=0 && d.failStreak.count<=99)) return false;
+  }
   level=d.level; score=d.score||0; best=d.best||0; movesLeft=(typeof d.movesLeft==='number')? d.movesLeft : 24;
   targetScore=d.targetScore||1500; scream=d.scream||0;
   goals=d.goals; collected=d.collected;
@@ -978,6 +1060,11 @@ function loadSaveInner(){
   }
   bankedScoreMark=score; armedItem=null;
   tipsSeen={beam:!!(d.tipsSeen && d.tipsSeen.beam), bomb:!!(d.tipsSeen && d.tipsSeen.bomb)};
+  // v7: saves from before these features have no fields and start empty.
+  stars={}; if(d.stars && typeof d.stars==='object'){ Object.keys(d.stars).forEach(function(k){ stars[Number(k)]=d.stars[k]; }); }
+  collection={}; if(d.collection && typeof d.collection==='object'){ Object.keys(d.collection).forEach(function(k){ collection[k]=d.collection[k]; }); }
+  daily={lastDate:(d.daily && typeof d.daily.lastDate==='number')? d.daily.lastDate : 0, streak:(d.daily && typeof d.daily.streak==='number')? d.daily.streak : 0, beatenDate:(d.daily && typeof d.daily.beatenDate==='number')? d.daily.beatenDate : 0, graceDate:(d.daily && typeof d.daily.graceDate==='number')? d.daily.graceDate : 0};
+  failStreak={level:(d.failStreak && typeof d.failStreak.level==='number')? d.failStreak.level : 0, count:(d.failStreak && typeof d.failStreak.count==='number')? d.failStreak.count : 0};
   mapIntroSeen=!!d.mapIntroSeen;
   tipQueue=[];
   if(typeof d.soundOn==='boolean'){ soundOn=d.soundOn; var sb=document.getElementById('soundBtn'); if(sb) sb.textContent= soundOn? '🔊 Sound: On':'🔇 Sound: Off'; }
@@ -1000,6 +1087,8 @@ function resetAll(){
   // and any armed item. (The score is already 0 here, so the sync inside
   // startLevel has nothing to bank.)
   banked=0; bankedScoreMark=0; tokens=0; unlockedMax=1; inventory={dynamite:0, mash:0, punch:0, encore:0, boost:0}; armedItem=null;
+  stars={}; collection={}; daily={lastDate:0, streak:0, beatenDate:0, graceDate:0}; failStreak={level:0, count:0};
+  dailyMode=false; dailySeedFn=null; continueUsed=false;
   tipsSeen={beam:false,bomb:false}; tipQueue=[]; mapIntroSeen=false;
   startLevel(1, true);
   setSaveLine('Fresh start — no saved game. Progress <b>auto-saves after every showing you beat</b>; tap <b>Save Progress</b> anytime to keep a mid-showing board on this device too.');
@@ -1010,7 +1099,7 @@ function randType(){
   // Goal tiles are threaded into the reel with extra copies (see
   // levelConfig), so weightedTypes — not the flat cast list — is the draw.
   var pool = weightedTypes.length? weightedTypes : activeTypes;
-  return pool[Math.floor(Math.random()*pool.length)];
+  return pool[Math.floor(rng()*pool.length)];
 }
 function veilsLeft(){ var n=0; for(var k in staticVeil) n+=staticVeil[k]; return n; }
 function burnVeils(list){
@@ -1333,7 +1422,7 @@ function levelConfig(lv){
   var pool=activeTypes.slice();
   function pick(exclude){
     var p=pool.filter(function(t){ return exclude.indexOf(t)<0; });
-    return p[Math.floor(Math.random()*p.length)];
+    return p[Math.floor(rng()*p.length)];
   }
   var g1=pick([]);
   goals[g1]= Math.min(26, 12 + Math.floor((lv-1)*0.3)); collected[g1]=0;
@@ -1366,7 +1455,7 @@ function placeStatic(lv){
   if(!sc.squares) return;
   var cells=[];
   for(var i=0;i<SIZE*SIZE;i++) cells.push(i);
-  for(var i2=cells.length-1;i2>0;i2--){ var j=Math.floor(Math.random()*(i2+1)), t=cells[i2]; cells[i2]=cells[j]; cells[j]=t; }
+  for(var i2=cells.length-1;i2>0;i2--){ var j=Math.floor(rng()*(i2+1)), t=cells[i2]; cells[i2]=cells[j]; cells[j]=t; }
   for(var k=0;k<sc.squares;k++) staticVeil[cells[k]] = k<sc.dense? 2 : 1;
 }
 function newBoard(){
@@ -1514,6 +1603,7 @@ function updateHUD(){
   if(reelEl) reelEl.innerHTML='<b>Reel '+Math.ceil(level/10)+' of 50</b> · Showing '+level+' of '+MAX_LEVEL+'. '+(level<8?'The Static Veil first flickers on at Showing 8.':(staticTotalHits>0?'Static on this showing: burn every wisp off to beat it.':'No static on this showing — a clear signal.'));
   var mapProgEl=document.getElementById('mapProgress');
   if(mapProgEl) mapProgEl.innerHTML='Follow the film through the dark theatre — <b style="color:var(--gold)">'+Math.max(0,unlockedMax-1)+' of '+MAX_LEVEL+' showings beaten</b>, Showing '+level+' on screen now. Tap any unlocked showing on the path to jump straight to it.';
+  refreshDailyBtn();
 }
 function showBanner(main,sub,ms){
   bannerText.innerHTML=main+(sub?'<small>'+sub+'</small>':'');
@@ -1569,6 +1659,9 @@ function attemptSwap(a,b){
   if(busy) return; busy=true; selected=null;
   swapCells(a,b); render();
   setTimeout(function(){
+    // v7 — Double Bill: two specials swapped together combine instead
+    // of matching. Costs one move, like firing a special.
+    if(grid[a] && grid[b] && grid[a].special && grid[b].special){ fireCombo(a,b); return; }
     var groups=findGroups();
     if(!groups.length){
       swapCells(a,b); render(); sfxInvalid(); busy=false; comboEl.textContent='No match — the audience groans. Try another swap.';
@@ -1618,6 +1711,7 @@ function resolveBoard(swapA,swapB){
     clearList.forEach(function(i){
       var t=grid[i].type;
       if(goals[t]!==undefined) collected[t]++;
+      noteCleared(t);
       scream=Math.min(100, scream+4);
     });
     // Per-tile voice: the largest matched group decides which sound
@@ -1678,7 +1772,7 @@ function screamPayoff(){
   expandClear(set);
   var list=Object.keys(set).map(Number);
   score+=list.length*40+300; if(score>best) best=score;
-  list.forEach(function(i){ if(goals[grid[i].type]!==undefined) collected[grid[i].type]++; if(boardEl.children[i]) boardEl.children[i].classList.add('matched'); });
+  list.forEach(function(i){ if(goals[grid[i].type]!==undefined) collected[grid[i].type]++; noteCleared(grid[i].type); if(boardEl.children[i]) boardEl.children[i].classList.add('matched'); });
   return sleep(520).then(function(){
     list.forEach(function(i){ if(boardEl.children[i]){ boardEl.children[i].classList.remove('matched'); boardEl.children[i].classList.add('clearing'); } });
     return sleep(280);
@@ -1700,9 +1794,57 @@ function detonate(i){
   if(movesLeft>0) movesLeft--;
   var set={}; set[i]=true; expandClear(set);
   var list=Object.keys(set).map(Number);
-  list.forEach(function(j){ if(boardEl.children[j]) boardEl.children[j].classList.add('matched'); if(goals[grid[j].type]!==undefined) collected[grid[j].type]++; });
+  list.forEach(function(j){ if(boardEl.children[j]) boardEl.children[j].classList.add('matched'); if(goals[grid[j].type]!==undefined) collected[grid[j].type]++; noteCleared(grid[j].type); });
   score+=list.length*50; if(score>best) best=score;
   scream=Math.min(100,scream+list.length*3);
+  sleep(520).then(function(){
+    list.forEach(function(j){ if(boardEl.children[j]){ boardEl.children[j].classList.remove('matched'); boardEl.children[j].classList.add('clearing'); } });
+    return sleep(280);
+  }).then(function(){
+    burnVeils(list);
+    list.forEach(function(j){ grid[j]=null; });
+    for(var c=0;c<SIZE;c++){
+      var stack=[];
+      for(var r=SIZE-1;r>=0;r--){ var cell=grid[idx(r,c)]; if(cell) stack.push(cell); }
+      for(var r2=SIZE-1;r2>=0;r2--) grid[idx(r2,c)] = stack.length? stack.shift() : {type:randType(),special:null};
+    }
+    render();
+    resolveBoard(-1,-1).then(function(){ afterTurn(); });
+  });
+}
+
+function fireCombo(a,b){
+  // A Double Bill: both swapped cells are specials. Builds the combined
+  // clear set from the two specials' shapes, then runs the same
+  // clear → gravity → cascade → win/lose path as a detonation.
+  if(movesLeft>0) movesLeft--;
+  var sa=grid[a].special, sb=grid[b].special;
+  var ra=Math.floor(a/SIZE), ca=a%SIZE, rb=Math.floor(b/SIZE), cb=b%SIZE;
+  var set={};
+  function addRow(r){ for(var cc=0;cc<SIZE;cc++) set[idx(r,cc)]=true; }
+  function addCol(c){ for(var rr=0;rr<SIZE;rr++) set[idx(rr,c)]=true; }
+  function addBox(r,c,half){ for(var dr=-half;dr<=half;dr++) for(var dc=-half;dc<=half;dc++){ var nr=r+dr, nc=c+dc; if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE) set[idx(nr,nc)]=true; } }
+  if(sa==='bomb' && sb==='bomb'){ addBox(ra,ca,2); }
+  else if(sa==='bomb' || sb==='bomb'){
+    var br = sa==='bomb'? ra : rb, bc = sa==='bomb'? ca : cb;
+    var mr = sa==='bomb'? rb : ra, mc = sa==='bomb'? cb : ca;
+    addRow(mr); addCol(mc); addBox(br,bc,1);
+  }
+  else {
+    if(sa==='row') addRow(ra); else addCol(ca);
+    if(sb==='row') addRow(rb); else addCol(cb);
+  }
+  expandClear(set);
+  var list=Object.keys(set).map(Number);
+  list.forEach(function(j){ if(boardEl.children[j]) boardEl.children[j].classList.add('matched'); if(goals[grid[j].type]!==undefined) collected[grid[j].type]++; noteCleared(grid[j].type); });
+  score+=list.length*50; if(score>best) best=score;
+  scream=Math.min(100,scream+list.length*3);
+  boardCard.classList.add('shake'); setTimeout(function(){boardCard.classList.remove('shake');},420);
+  showBanner('DOUBLE BILL!','Two specials, one glorious mess — +'+list.length*50+' pts',1500);
+  sfxBomb(); sfxBeam();
+  comboEl.textContent='🎬 Double Bill! '+list.length+' tiles cleared — +'+(list.length*50).toLocaleString()+' pts';
+  if(list.length) floatScore('+'+(list.length*50).toLocaleString(), list[0]);
+  updateHUD();
   sleep(520).then(function(){
     list.forEach(function(j){ if(boardEl.children[j]){ boardEl.children[j].classList.remove('matched'); boardEl.children[j].classList.add('clearing'); } });
     return sleep(280);
@@ -1863,6 +2005,7 @@ function shopClear(list, key){
   score+=gained; if(score>best) best=score;
   clearList.forEach(function(i){
     if(goals[grid[i].type]!==undefined) collected[grid[i].type]++;
+    noteCleared(grid[i].type);
     scream=Math.min(100, scream+4);
   });
   if(key==='punch'){ sfxMatch(1); }
@@ -1956,11 +2099,24 @@ function afterTurn(){
   // automatic shuffle.
   if(goalsMet() && score>=targetScore){
     var bonus=movesLeft*50; score+=bonus; if(score>best) best=score;
-    // Beating a showing pays one Token — the blast shelf's currency.
-    // Granted here, before the auto-save, so it is written with the win.
-    tokens+=1;
-    // …and unlocks the next showing on the Haunted Reel map.
-    if(level<MAX_LEVEL && level+1>unlockedMax) unlockedMax=level+1;
+    // v7 — stars: 3 for finishing with ≥35% of starting moves left,
+    // 2 for ≥12%, else 1. Best per showing is kept (regular showings
+    // only — the daily board doesn't write stars to the map).
+    var starCount = starForWin();
+    if(!dailyMode && (!stars[level] || starCount>stars[level])) stars[level]=starCount;
+    // v7 — a win clears the fail streak for good.
+    failStreak={level:0, count:0};
+    if(dailyMode){
+      // Tonight's Feature pays +3 Tokens the first time it is beaten
+      // today, plus +7 at every 7-day streak multiple. No +1, no map unlock.
+      onDailyWin();
+    } else {
+      // Beating a showing pays one Token — the blast shelf's currency.
+      // Granted here, before the auto-save, so it is written with the win.
+      tokens+=1;
+      // …and unlocks the next showing on the Haunted Reel map.
+      if(level<MAX_LEVEL && level+1>unlockedMax) unlockedMax=level+1;
+    }
     // The win bonus is added after render() ran at the top of afterTurn,
     // so refresh the HUD here or the score strip (and bank chip) would show
     // the pre-bonus total until the player's next tap.
@@ -1968,6 +2124,10 @@ function afterTurn(){
     var autoSaved=autoSave();
     showOverlay(true, bonus, autoSaved);
   } else if(movesLeft<=0){
+    // v7 — the silent kindness: losing the same showing twice in a row
+    // arms the relief (see startLevel). No UI, no banner — the board
+    // is simply a little kinder next time.
+    if(failStreak.level===level) failStreak.count++; else failStreak={level:level, count:1};
     showOverlay(false,0);
   } else if(!hasMove()){
     comboEl.textContent='No moves left on the board — shuffling the reel for free…';
@@ -1993,12 +2153,27 @@ function showOverlay(won,bonus,autoSaved){
         : 'You beat Showing '+level+(bonus>0 ? ' with '+bonus.toLocaleString()+' bonus points for moves to spare' : '')+'. The creatures applaud from the screen. Next showing: Reel '+Math.ceil((level+1)/10)+', a slightly bigger target'+(nextNotes.length? ' — plus '+nextNotes.join('; ')+'.':'.'))
     : 'So close — the audience files out into the night. Score: '+score.toLocaleString()+' of '+targetScore.toLocaleString()+' needed'+(collectionsMet()?'':', the collection wasn\'t finished')+(veilsLeft()>0?', and '+veilsLeft()+' hit'+(veilsLeft()>1?'s':'')+' of Static Veil still clung to the screen':'')+'. Hunt the collection tiles first. The projector is already rewinding for you.';
   document.getElementById('ovFinal').textContent='Final score · '+score.toLocaleString()+'   ·   Best · '+best.toLocaleString();
-  if(won) document.getElementById('ovText').textContent += ' 🪙 +1 token earned for the Concessions blast shelf.';
-  var winBonusDef = won? bonusForLevel(level) : null;
+  if(won){
+    if(dailyMode){
+      if(dailyJustRewarded) document.getElementById('ovText').textContent += ' 🪙 +3 tokens earned for tonight\'s feature.' + (daily.streak>0 && daily.streak%7===0 ? ' 🔥 '+daily.streak+'-day streak — +7 bonus tokens!' : '');
+      else document.getElementById('ovText').textContent += ' Tonight\'s Feature is already in the books for today — no extra Tokens this time.';
+    } else {
+      document.getElementById('ovText').textContent += ' 🪙 +1 token earned for the Concessions blast shelf.';
+    }
+    // v7 — stars earned on this win (regular showings keep their best).
+    document.getElementById('ovText').textContent += ' ' + starText(starForWin()) + (dailyMode ? '' : ' · Best on this showing: ' + starText(stars[level]||0));
+  }
+  // v7 — in Tonight's Feature there is no Bonus Round detour: the win
+  // returns to the regular showing instead.
+  var winBonusDef = (won && !dailyMode)? bonusForLevel(level) : null;
   if(winBonusDef) document.getElementById('ovText').textContent += ' Bonus Round unlocked: '+winBonusDef.name+' — '+winBonusDef.sub+'. It can\'t be lost, and every point you win goes straight into your Concessions bank.';
   var ovSaveEl=document.getElementById('ovSave');
   if(ovSaveEl) ovSaveEl.textContent = won ? (autoSaved===false ? '⚠️ Auto-save isn\'t available in this view, so this win can\'t be kept between visits.' : '💾 Auto-saved — this showing is in the books. Your progress is kept on this device, no button press needed.') : '';
   document.getElementById('ovBtn').textContent = won? (winBonusDef? 'Play Bonus: '+winBonusDef.name+' →' : (level>=MAX_LEVEL? 'Encore — Back to Showing 1 ↻' : 'Next Showing →')) : 'Try Again ↻';
+  // v7 — Token Continue: on a loss, with 3+ Tokens and the continue
+  // unused this attempt, the replay button offers +5 moves instead.
+  document.getElementById('ovRestart').textContent = (!won && tokens>=3 && !continueUsed) ? 'Continue: +5 moves (3 🪙 tokens)' : 'Replay this showing';
+  lastOverlayWon=won;
   overlay.classList.add('show');
   if(won){ sfxWin(); } else { sfxLose(); }
 }
@@ -2012,15 +2187,30 @@ function startLevel(lv, fresh){
   // from the new score, so nothing is ever banked twice.
   syncBank();
   level=lv;
+  // v7 — Tonight's Feature re-deals the same seeded board on every
+  // attempt, and stepping away from it returns to the regular game.
+  if(dailyMode){
+    if(lv===dailyLevel){ dailySeedFn=mulberry32(dailySeed); }
+    else { dailyMode=false; dailySeedFn=null; }
+  }
   // Dealing in a showing at (or beyond) the map frontier keeps the
   // frontier honest — the sequential Next-Showing and Bonus-Round
-  // flows land here right after a win already unlocked it.
-  if(lv>unlockedMax) unlockedMax=lv;
+  // flows land here right after a win already unlocked it. (Never in
+  // Tonight's Feature — a daily level must not unlock map showings.)
+  if(!dailyMode && lv>unlockedMax) unlockedMax=lv;
   if(fresh || lv===1){ score=0; }
   if(lv===1){ best=Math.max(best,0); }
   bankedScoreMark=score;
   armedItem=null; updateArmedUI();
-  levelConfig(lv); scream=0; selected=null; busy=false;
+  levelConfig(lv);
+  // v7 — the silent kindness: two straight losses on this showing earn
+  // +3 moves on the next attempt. No text, no banner — it just is.
+  if(failStreak.level===lv && failStreak.count>=2) movesLeft+=3;
+  // v7 — stars are judged against the moves this attempt actually started with.
+  startMoves=movesLeft;
+  // v7 — a fresh attempt gets a fresh Token Continue.
+  continueUsed=false;
+  scream=0; selected=null; busy=false;
   comboEl.classList.remove('hot');
   newBoard(); render(); overlay.classList.remove('show');
   var goalNames=Object.keys(goals).map(function(k){ return ICONS[k].name; }).join(' & ');
@@ -2055,6 +2245,106 @@ function shuffleBoard(){
   comboEl.textContent='Reel shuffled — fresh chances on the board.';
 }
 
+/* ---- v7 features ----------------------------------------------------------
+   Tonight's Feature (daily showing + forgiving streak), stars, Double
+   Bill combos, Token Continue, Creature Gallery, and the silent
+   difficulty relief (which is deliberately never mentioned to the
+   player anywhere). */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function rng(){ return dailySeedFn? dailySeedFn() : Math.random(); }
+function todaySeed(){
+  var d=new Date();
+  return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+}
+function dayNum(yyyymmdd){
+  var y=Math.floor(yyyymmdd/10000), m=Math.floor(yyyymmdd/100)%100, d=yyyymmdd%100;
+  return Math.floor(Date.UTC(y, m-1, d)/86400000);
+}
+function startDaily(){
+  if(busy) return;
+  unlockAudio();
+  if(!dailyMode) regularLevel=level;
+  dailySeed=todaySeed();
+  dailyLevel=10 + (dailySeed % 25);
+  dailyMode=true;
+  dailySeedFn=mulberry32(dailySeed);
+  startLevel(dailyLevel, true);
+  autoSave();
+  showBanner('TONIGHT\'S FEATURE','Showing '+dailyLevel+' — the same board for every player today',1400);
+  comboEl.textContent='🎬 Tonight\'s Feature — Showing '+dailyLevel+', dealt fresh for today. Beat it for +3 🪙 Tokens.';
+}
+var dailyJustRewarded=false;
+function onDailyWin(){
+  // First beat of the day pays +3 Tokens and advances the streak.
+  // A replay after beating it today pays nothing. The streak is
+  // forgiving: a 1-day gap continues it, a 2-day gap continues it once
+  // via a grace day (refreshed by getting back on track), anything
+  // longer resets it to 1. Every 7th streak day pays +7 Tokens.
+  var today=todaySeed();
+  dailyJustRewarded=false;
+  if(daily.beatenDate===today) return;
+  tokens+=3;
+  dailyJustRewarded=true;
+  if(daily.lastDate){
+    var gap=dayNum(today)-dayNum(daily.lastDate);
+    if(gap===1){ daily.streak++; daily.graceDate=0; }
+    else if(gap===2 && daily.graceDate!==daily.lastDate){ daily.streak++; daily.graceDate=today; }
+    else { daily.streak=1; daily.graceDate=0; }
+  } else {
+    daily.streak=1; daily.graceDate=0;
+  }
+  daily.lastDate=today;
+  daily.beatenDate=today;
+  if(daily.streak>0 && daily.streak%7===0) tokens+=7;
+}
+function starForWin(){
+  if(!startMoves) return 1;
+  var pct=movesLeft/startMoves;
+  return pct>=0.35? 3 : (pct>=0.12? 2 : 1);
+}
+function starText(n){
+  var s='';
+  for(var i=0;i<3;i++) s+= i<n? '★' : '☆';
+  return s+' '+(n||0)+' star'+((n||0)===1?'':'s');
+}
+function totalStars(){
+  var t=0;
+  Object.keys(stars).forEach(function(k){ t+=stars[k]||0; });
+  return t;
+}
+function noteCleared(t){ collection[t]=(collection[t]||0)+1; }
+function refreshDailyBtn(){
+  var b=document.getElementById('dailyBtn'); if(!b) return;
+  var today=todaySeed();
+  var beaten = daily.beatenDate===today;
+  b.textContent = beaten ? '🎬 Tonight\'s Feature ✓ Done' : '🎬 Tonight\'s Feature';
+  b.classList.toggle('done', beaten);
+  b.title = daily.streak>1 ? 'Streak: '+daily.streak+' days — beat tonight\'s feature to keep it alive' : 'One fresh showing every day';
+}
+function galleryTier(n){
+  if(n>=500) return {cls:'gold', label:'🏆 Marquee Legend'};
+  if(n>=250) return {cls:'silver', label:'🥈 Silver Screen'};
+  if(n>=100) return {cls:'bronze', label:'🥉 Lobby Poster'};
+  return {cls:'', label:'No poster yet'};
+}
+function renderGallery(){
+  var list=document.getElementById('galleryList'); if(!list) return;
+  var html='';
+  ROSTER.forEach(function(t){
+    var n=collection[t]||0, tier=galleryTier(n);
+    html+='<div class="galRow"><div class="galIcon" style="background:'+ICONS[t].tile+'"><img src="'+ICONS[t].img+'" alt=""></div>'+
+      '<div class="galMeta"><b>'+ICONS[t].name+'</b><span>'+n.toLocaleString()+' cleared all time</span></div>'+
+      '<span class="galBadge '+tier.cls+'">'+tier.label+'</span></div>';
+  });
+  list.innerHTML=html;
+}
+function openGallery(){
+  if(busy){ comboEl.textContent='Let the board settle, then open the Gallery.'; return; }
+  renderGallery();
+  document.getElementById('galleryOverlay').classList.add('show');
+}
+function closeGallery(){ document.getElementById('galleryOverlay').classList.remove('show'); }
+
 document.getElementById('newBtn').addEventListener('click',function(){ startLevel(1, true); showBanner('FEATURE PRESENTATION','Showing 1 — good luck in there',1200); });
 document.getElementById('hintBtn').addEventListener('click',function(){
   if(busy) return; var mv=hasMove();
@@ -2064,6 +2354,14 @@ document.getElementById('hintBtn').addEventListener('click',function(){
 document.getElementById('soundBtn').addEventListener('click',function(){ soundOn=!soundOn; this.textContent= soundOn? '🔊 Sound: On':'🔇 Sound: Off'; if(soundOn){ unlockAudio(); startAmbience(); chime(); comboEl.textContent='🔊 Sound on — spooky sounds and the night-woods ambience are playing.'; } else { stopAmbience(); } });
 document.getElementById('ovBtn').addEventListener('click',function(){
   var won = goalsMet() && score>=targetScore && overlay.classList.contains('show') && document.getElementById('ovTitle').textContent.indexOf('COMPLETE')>=0;
+  // v7 — a Tonight's Feature win steps back to the regular showing
+  // instead of advancing to the next one.
+  if(won && dailyMode){
+    overlay.classList.remove('show');
+    startLevel(regularLevel, true); autoSave();
+    showBanner('SHOWING '+regularLevel,'Back to your regular showing — Reel '+Math.ceil(regularLevel/10)+' of 50',1200);
+    return;
+  }
   if(won){
     // Every 5th showing beaten detours through its Bonus Round first;
     // the round's Collect button deals in the next showing afterwards.
@@ -2077,7 +2375,21 @@ document.getElementById('ovBtn').addEventListener('click',function(){
   autoSave();
   if(won) showBanner('SHOWING '+level,'Reel '+Math.ceil(level/10)+' of 50 — good luck in there',1200);
 });
-document.getElementById('ovRestart').addEventListener('click',function(){ startLevel(level, level===1); });
+document.getElementById('ovRestart').addEventListener('click',function(){
+  // v7 — Token Continue: on a loss overlay, with 3+ Tokens and the
+  // continue unused this attempt, the first click spends 3 Tokens for
+  // +5 moves and play resumes where it stopped. Otherwise it replays.
+  if(!lastOverlayWon && tokens>=3 && !continueUsed){
+    tokens-=3; continueUsed=true; movesLeft+=5;
+    overlay.classList.remove('show'); busy=false;
+    updateHUD(); autoSave();
+    comboEl.textContent='🎬 Continue! +5 moves — the show goes on.';
+    showBanner('CONTINUE!','+5 moves — make them count',1200);
+    sfxWin();
+    return;
+  }
+  startLevel(level, level===1);
+});
 /* ---- The Haunted Reel — level map ---------------------------------------
    A winding film-strip path through the dark theatre, one node per
    showing, in place of the old Jump-to-Showing number box. Beaten
@@ -2128,7 +2440,7 @@ function dismissMapIntro(){
 }
 function renderMap(){
   var start=mapChunkStart(mapCenter), end=Math.min(MAX_LEVEL, start+MAP_WINDOW-1);
-  mapStatsEl.textContent='👻 You are in Showing '+level+' · Reel '+Math.ceil(level/10)+' of 50 · '+Math.max(0,unlockedMax-1)+' of '+MAX_LEVEL+' showings beaten';
+  mapStatsEl.textContent='👻 You are in Showing '+level+' · Reel '+Math.ceil(level/10)+' of 50 · '+Math.max(0,unlockedMax-1)+' of '+MAX_LEVEL+' showings beaten · ⭐ '+totalStars()+' stars';
   mapOverlayEl.querySelectorAll('[data-mapwin]').forEach(function(el){ el.textContent='Showings '+start+'–'+end+' of '+MAX_LEVEL; });
   mapOverlayEl.querySelectorAll('[data-mapnav="prev"]').forEach(function(b){ b.disabled=start<=1; b.style.opacity=start<=1?'.45':'1'; });
   mapOverlayEl.querySelectorAll('[data-mapnav="next"]').forEach(function(b){ b.disabled=end>=MAX_LEVEL; b.style.opacity=end>=MAX_LEVEL?'.45':'1'; });
@@ -2163,6 +2475,8 @@ function renderMap(){
     if(isDone && !isCurrent) btn.innerHTML+='<span class="mapCheck">✓</span>';
     if(isDone && isCurrent) btn.innerHTML+='<span class="mapCheck">✓</span>';
     if(isLocked) btn.innerHTML+='<span class="mapLock">🔒</span>';
+    // v7 — best stars for this showing, under the node (locked nodes hide them).
+    if(!isLocked && stars[n]) btn.innerHTML+='<span class="mapStars">'+'★'.repeat(stars[n])+'☆'.repeat(3-stars[n])+'</span>';
     btn.disabled=isLocked;
     btn.setAttribute('aria-label','Showing '+n+(bDef?' — Bonus Round: '+bDef.name:'')+(isCurrent?' — now showing':isLocked?' — locked':isDone?' — beaten':' — unlocked'));
     (function(nn){ btn.addEventListener('click',function(){ mapJump(nn); }); })(n);
@@ -2231,6 +2545,9 @@ function mapJump(n){
   sfxTap();
 }
 document.getElementById('mapBtn').addEventListener('click',function(){ unlockAudio(); openMap(); });
+document.getElementById('dailyBtn').addEventListener('click',function(){ startDaily(); });
+document.getElementById('galleryBtn').addEventListener('click',function(){ unlockAudio(); openGallery(); });
+document.getElementById('galleryClose').addEventListener('click',function(){ closeGallery(); });
 document.getElementById('mapClose').addEventListener('click',function(){ closeMap(); });
 document.getElementById('mapIntroBtn').addEventListener('click',function(){ dismissMapIntro(); });
 mapOverlayEl.addEventListener('click',function(e){
