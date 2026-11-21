@@ -1545,7 +1545,7 @@ function render(hintPair){
     var b=document.createElement('button');
     b.className='tile'; b.type='button'; b.setAttribute('role','gridcell');
     b.style.background=ICONS[cell.type].tile;
-    b.style.boxShadow='inset 0 0 0 3px '+ICONS[cell.type].ring+'E6';
+    b.style.border='3px solid '+ICONS[cell.type].ring; b.style.boxSizing='border-box';
     if(cell.special){ b.classList.add('special'); }
     var veilHp = staticVeil[i]||0;
     if(veilHp) b.classList.add('veiled');
@@ -1586,7 +1586,7 @@ function updateHUD(){
   Object.keys(goals).forEach(function(k){
     var done=collected[k]>=goals[k];
     var div=document.createElement('div'); div.className='goal'+(done?' done':'');
-    div.innerHTML='<div class="gicon" style="background:'+ICONS[k].tile+';box-shadow:inset 0 0 0 2px '+ICONS[k].ring+'55"><img src="'+ICONS[k].img+'" alt=""></div>'+
+    div.innerHTML='<div class="gicon" style="background:'+ICONS[k].tile+';border:2px solid '+ICONS[k].ring+';box-sizing:border-box"><img src="'+ICONS[k].img+'" alt=""></div>'+
       '<div class="gmeta"><b>'+ICONS[k].name+'</b><div class="bar"><i style="width:'+Math.min(100,collected[k]/goals[k]*100)+'%"></i></div></div>'+
       '<div class="gcount">'+(done?'✓ ':'' )+Math.min(collected[k],goals[k])+' / '+goals[k]+'</div>';
     goalsEl.appendChild(div);
