@@ -348,6 +348,18 @@
   .sheet .final{font-family:"DM Mono",monospace;font-size:15px;color:var(--gold);margin-bottom:16px}
   .sheet .ovSave{margin:-4px 0 14px;font-size:13px;font-weight:700;color:var(--gold);line-height:1.45}
   .sheet .ovSave:empty{display:none}
+  /* v16 — the big end-screen stars: three large stars up front on a win,
+     gold for earned and dim for missed, middle star raised, popping in
+     one by one; the best for the showing sits underneath. Hidden on a
+     loss and whenever the overlay is reused without a win. */
+  .ovStars{display:none;margin:2px 0 2px;text-align:center}
+  .ovStars.show{display:block}
+  .ovStars .st{display:inline-block;font-size:52px;line-height:1;margin:0 5px;color:var(--gold);text-shadow:0 0 18px rgba(255,201,60,.55),0 2px 6px #000;animation:starPop .45s ease both}
+  .ovStars .st:nth-child(2){font-size:62px;animation-delay:.12s}
+  .ovStars .st:nth-child(3){animation-delay:.24s}
+  .ovStars .st.off{color:rgba(255,255,255,.22);text-shadow:0 2px 6px #000}
+  .ovStars .ovBest{display:block;margin-top:6px;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.4px}
+  @keyframes starPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
   /* FIRST-TIME SPECIAL TIP — a small sheet over the board the first time
      a special is forged: its tile art with the in-game badge, its name,
      and the double-tap instruction, dismissed with one button. */
@@ -591,6 +603,7 @@
   <div class="sheet">
     <div class="kicker" id="ovKicker">The reel has stopped</div>
     <div class="big" id="ovTitle">SHOWING COMPLETE!</div>
+    <div class="ovStars" id="ovStars"></div>
     <p id="ovText"></p>
     <div class="final" id="ovFinal"></div>
     <p class="ovSave" id="ovSave"></p>
@@ -2199,6 +2212,10 @@ function afterTurn(){
 function showOverlay(won,bonus,autoSaved){
   document.getElementById('ovKicker').textContent = won? 'Creepy Creature Cinema' : 'The reel has stopped';
   document.getElementById('ovTitle').textContent = won? 'SHOWING COMPLETE!' : 'OUT OF MOVES';
+  // v16 — the big stars start cleared on every overlay; the win branch
+  // below fills them in (a loss shows none).
+  var ovStarsEl=document.getElementById('ovStars');
+  if(ovStarsEl){ ovStarsEl.innerHTML=''; ovStarsEl.classList.remove('show'); ovStarsEl.removeAttribute('aria-label'); }
   var nextNotes=[];
   if(level+1===3) nextNotes.push('the Eyeball joins the cast');
   if(level+1===6) nextNotes.push('the cast starts rotating — one face swaps out for a new one every 5 showings');
@@ -2219,8 +2236,16 @@ function showOverlay(won,bonus,autoSaved){
     } else {
       document.getElementById('ovText').textContent += ' 🪙 +1 token earned for the Concessions blast shelf.';
     }
-    // v7 — stars earned on this win (regular showings keep their best).
-    document.getElementById('ovText').textContent += ' ' + starText(starForWin()) + (dailyMode ? '' : ' · Best on this showing: ' + starText(stars[level]||0));
+    // v16 — the big end-screen stars (see ovStarsHTML): three large stars
+    // up front, gold for earned and dim for missed, best underneath on
+    // regular showings. The old text clause in ovText is gone — the
+    // display carries the stars now.
+    if(ovStarsEl){
+      var earned=starForWin(), bestStars=dailyMode?0:(stars[level]||0);
+      ovStarsEl.innerHTML=ovStarsHTML(earned,bestStars);
+      ovStarsEl.setAttribute('aria-label', earned+' of 3 stars'+(dailyMode?'':' — best on this showing '+bestStars+' of 3'));
+      ovStarsEl.classList.add('show');
+    }
   }
   // v7 — in Tonight's Feature there is no Bonus Round detour: the win
   // returns to the regular showing instead.
@@ -2365,6 +2390,16 @@ function starText(n){
   var s='';
   for(var i=0;i<3;i++) s+= i<n? '★' : '☆';
   return s+' '+(n||0)+' star'+((n||0)===1?'':'s');
+}
+// v16 — the big end-screen star display: three large stars, gold for the
+// ones earned this win, dim for the ones missed; regular showings also
+// show the best stars earned on this showing underneath. Daily wins show
+// the earned stars only (the daily board keeps no best).
+function ovStarsHTML(earned,best){
+  var h='';
+  for(var i=0;i<3;i++) h+='<span class="st'+(i<earned?'':' off')+'" aria-hidden="true">'+(i<earned?'★':'☆')+'</span>';
+  if(best>0) h+='<span class="ovBest">Best on this showing: '+starText(best)+'</span>';
+  return h;
 }
 function totalStars(){
   var t=0;
