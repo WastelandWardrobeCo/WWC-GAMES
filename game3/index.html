@@ -1545,7 +1545,7 @@ function render(hintPair){
     var b=document.createElement('button');
     b.className='tile'; b.type='button'; b.setAttribute('role','gridcell');
     b.style.background=ICONS[cell.type].tile;
-    b.style.boxShadow='inset 0 0 0 2px '+ICONS[cell.type].ring+'33';
+    b.style.boxShadow='inset 0 0 0 3px '+ICONS[cell.type].ring+'E6';
     if(cell.special){ b.classList.add('special'); }
     var veilHp = staticVeil[i]||0;
     if(veilHp) b.classList.add('veiled');
