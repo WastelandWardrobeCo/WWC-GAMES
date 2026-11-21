@@ -1203,7 +1203,25 @@ function unlockAudio(){
 document.addEventListener('pointerdown',unlockAudio,true);
 document.addEventListener('touchend',unlockAudio,true);
 document.addEventListener('click',unlockAudio,true);
-document.addEventListener('visibilitychange',function(){ if(!document.hidden) ensureAudio(); });
+// v14 — when the player leaves the game, the sound must leave with them.
+// The night-woods bed is a 50-second track that restarts on every tap, so
+// it effectively never ends during play — and an iPhone does NOT stop a web
+// page's audio when you switch away; the page has to stop it itself. The
+// game never did: the only lifecycle handler resumed audio on return,
+// nothing paused on hide, and nothing ran on tab close. Now, on hide: pause
+// the bed and suspend the AudioContext (which silences every synth sound
+// too). On return: resume the context and restart the bed — the next tap
+// would do it anyway via unlockAudio, but coming back should sound right
+// immediately. pagehide covers closing the tab outright.
+function stopAllAudio(){
+  try{ stopAmbience(); }catch(e){}
+  try{ if(audioCtx && audioCtx.state==='running'){ var p=audioCtx.suspend(); if(p&&p.catch) p.catch(function(){}); } }catch(e){}
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden) stopAllAudio();
+  else { ensureAudio(); startAmbience(); }
+});
+window.addEventListener('pagehide',stopAllAudio);
 /* ---- Spooky sample layer -------------------------------------------------
    Real recorded horror effects (Mixkit free horror / scary / scream
    collections, Mixkit Sound Effects Free License) layered over the synth
