@@ -739,18 +739,57 @@ var ALL=["popcorn","ghost","skull","alien","reel","ticket","eye"];
    90 showings later. */
 var ROSTER=ALL.concat(["raven","beaker","ladder","cat","pumpkin","bat","spider","coffin","crystal","raygun","gravestone","mummy","wolfmoon","soda","glasses","clapper","canister","candy"]);
 var CAST_SIZE=7;
+// v13: tiles that look alike never share a showing. Each confusion group
+// (same-family rings) may put at most one member in the cast, so similar
+// rings never sit side by side on the board. Enforced inside castForLevel,
+// before goals are picked — goals are drawn from the cast, so an objective
+// can never ask for a tile the rule excluded. Deterministic: same level,
+// same cast, for every player. The Creature Gallery still shows all 25
+// together, so the ring colors still matter there.
+var LOOK_GROUPS=[["alien","beaker"],["skull","clapper"],["ladder","eye","crystal"],["soda","spider"],["cat","mummy","wolfmoon"],["reel","pumpkin"]];
+function groupOf(t){
+  for(var g=0;g<LOOK_GROUPS.length;g++){ if(LOOK_GROUPS[g].indexOf(t)>=0) return g; }
+  return -1;
+}
 function castForLevel(lv){
-  if(lv<=2) return ROSTER.slice(0, lv===1?5:6);
-  var cast=ROSTER.slice(0,CAST_SIZE), bench=ROSTER.slice(CAST_SIZE);
-  if(!bench.length) return cast;
-  var swaps=Math.floor((lv-1)/5);
-  for(var k=1;k<=swaps;k++){
-    // Slots leave in a fixed parade order — last slot first — so the
-    // swap is deterministic and identical for every player.
-    var outIdx=(CAST_SIZE-1)-((k-1)%CAST_SIZE);
-    var out=cast[outIdx];
-    cast[outIdx]=bench.shift();
-    bench.push(out);
+  var cast, bench;
+  if(lv<=2){ cast=ROSTER.slice(0, lv===1?5:6); bench=ROSTER.slice(cast.length); }
+  else{
+    cast=ROSTER.slice(0,CAST_SIZE); bench=ROSTER.slice(CAST_SIZE);
+    var swaps=Math.floor((lv-1)/5);
+    for(var k=1;k<=swaps;k++){
+      // Slots leave in a fixed parade order — last slot first — so the
+      // swap is deterministic and identical for every player.
+      var outIdx=(CAST_SIZE-1)-((k-1)%CAST_SIZE);
+      var out=cast[outIdx];
+      cast[outIdx]=bench.shift();
+      bench.push(out);
+    }
+  }
+  // Resolve look-alike conflicts in two passes, so the earliest member of
+  // each group in the original cast is always the one that stays. Pass 1
+  // finds the later members; pass 2 swaps each for the first bench tile
+  // that fits (ungrouped, or grouped with no member already in the cast).
+  // A fitting bench tile always exists — at least four tiles belong to no
+  // group and the cast holds at most seven — but the guard keeps a miss
+  // from corrupting the cast if that ever stopped being true.
+  var seen={}, conflictSlots=[];
+  for(var i=0;i<cast.length;i++){
+    var g=groupOf(cast[i]);
+    if(g<0) continue;
+    if(!seen[g]) seen[g]=true; else conflictSlots.push(i);
+  }
+  for(var c=0;c<conflictSlots.length;c++){
+    var idx=conflictSlots[c], repl=-1;
+    for(var b=0;b<bench.length;b++){
+      var cg=groupOf(bench[b]);
+      if(cg<0 || !seen[cg]){ repl=b; break; }
+    }
+    if(repl<0) continue;
+    bench.push(cast[idx]);
+    cast[idx]=bench.splice(repl,1)[0];
+    var rg=groupOf(cast[idx]);
+    if(rg>=0) seen[rg]=true;
   }
   return cast;
 }
