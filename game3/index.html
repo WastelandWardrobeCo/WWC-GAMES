@@ -746,7 +746,9 @@ var CAST_SIZE=7;
 // can never ask for a tile the rule excluded. Deterministic: same level,
 // same cast, for every player. The Creature Gallery still shows all 25
 // together, so the ring colors still matter there.
-var LOOK_GROUPS=[["alien","beaker"],["skull","clapper"],["ladder","eye","crystal"],["soda","spider"],["cat","mummy","wolfmoon"],["reel","pumpkin"]];
+// v15: popcorn joins the gold group — its ring #FFC93C is nearly the
+// cat's #E8B33C, and the two shared a board in 80 of 500 showings.
+var LOOK_GROUPS=[["alien","beaker"],["skull","clapper"],["ladder","eye","crystal"],["soda","spider"],["cat","mummy","wolfmoon","popcorn"],["reel","pumpkin"]];
 function groupOf(t){
   for(var g=0;g<LOOK_GROUPS.length;g++){ if(LOOK_GROUPS[g].indexOf(t)>=0) return g; }
   return -1;
