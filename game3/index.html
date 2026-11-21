@@ -367,6 +367,13 @@
   .thUp{display:flex;flex-direction:column;gap:8px;margin-top:10px}
   .thUp .btn{text-align:left}
   .thUp .btn small{display:block;font-weight:400;opacity:.8}
+.overlay.splash{z-index:60}
+#theatreBtn.pulse{animation:thPulse 1s ease-in-out infinite}
+@keyframes thPulse{from{box-shadow:0 0 0 3px rgba(255,201,60,.55),0 0 14px rgba(255,201,60,.35)}to{box-shadow:0 0 0 7px rgba(255,201,60,.95),0 0 34px rgba(255,201,60,.75)}}
+#theatreBtn.nudge{animation:thNudge 2.4s ease-in-out infinite}
+@keyframes thNudge{0%,100%{box-shadow:0 0 0 2px rgba(255,201,60,.35),0 0 8px rgba(255,201,60,.2)}50%{box-shadow:0 0 0 5px rgba(255,201,60,.7),0 0 22px rgba(255,201,60,.45)}}
+.thCoach{background:rgba(255,201,60,.12);border:1px solid rgba(255,201,60,.5);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45}
+.thFoot{text-align:center;font-size:13px;color:var(--muted);margin-top:12px}
   @keyframes starPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
   /* FIRST-TIME SPECIAL TIP — a small sheet over the board the first time
      a special is forged: its tile art with the in-game badge, its name,
@@ -712,6 +719,26 @@
   </div>
 </div>
 
+<div class="overlay splash show" id="splashOverlay">
+  <div class="sheet">
+    <div class="kicker">Silent Scream Studios Presents</div>
+    <div class="big">CREATURE CINEMA</div>
+    <img class="thImg" id="splashImg" src="" alt="The Creature Cinema marquee glowing at night">
+    <p>Match the creatures. Rebuild the theatre.</p>
+    <button class="btn primary" id="splashBtn" style="width:100%">🎬 Tap to Enter</button>
+  </div>
+</div>
+
+<div class="overlay" id="introOverlay">
+  <div class="sheet">
+    <div class="kicker" id="introKicker">A letter from your late uncle</div>
+    <div class="big" id="introTitle">THE OLD THEATRE IS YOURS</div>
+    <img class="thImg" id="introImg" src="" alt="The dusty old auditorium" style="display:none">
+    <p id="introText"></p>
+    <button class="btn primary" id="introBtn" style="width:100%">See the old place →</button>
+  </div>
+</div>
+
 <div class="overlay" id="tipOverlay">
   <div class="sheet tipSheet">
     <div class="kicker">You made a special!</div>
@@ -940,7 +967,8 @@ function buildSaveData(){
     stars:stars, collection:collection,
     daily:{lastDate:daily.lastDate, streak:daily.streak, beatenDate:daily.beatenDate, graceDate:daily.graceDate},
     failStreak:{level:failStreak.level, count:failStreak.count},
-    theatre:{stage:theatre.stage, customers:theatre.customers, seats:theatre.seats, screens:theatre.screens, marqueeLvl:theatre.marqueeLvl, ticketLvl:theatre.ticketLvl, seatLvl:theatre.seatLvl}
+    theatre:{stage:theatre.stage, customers:theatre.customers, seats:theatre.seats, screens:theatre.screens, marqueeLvl:theatre.marqueeLvl, ticketLvl:theatre.ticketLvl, seatLvl:theatre.seatLvl},
+    introSeen:!!introSeen, theatreLastVisit:theatreLastVisit
   };
 }
 function boardSaveable(){ return grid.length===SIZE*SIZE && !grid.some(function(c){ return !c; }); }
@@ -1128,6 +1156,10 @@ function loadSaveInner(){
       if(!(typeof tv==='number' && isFinite(tv) && Math.floor(tv)===tv && tv>=0 && tv<=thMax[tk2[ti2]])) return false;
     }
   }
+  // v18 — intro flag (boolean) and last theatre visit (showing 0-500).
+  // Saves from before v18 have neither and start unseen / never.
+  if(d.introSeen!==undefined && typeof d.introSeen!=='boolean') return false;
+  if(d.theatreLastVisit!==undefined && !(typeof d.theatreLastVisit==='number' && isFinite(d.theatreLastVisit) && Math.floor(d.theatreLastVisit)===d.theatreLastVisit && d.theatreLastVisit>=0 && d.theatreLastVisit<=MAX_LEVEL)) return false;
   level=d.level; score=d.score||0; best=d.best||0; movesLeft=(typeof d.movesLeft==='number')? d.movesLeft : 24;
   targetScore=d.targetScore||1500; scream=d.scream||0;
   goals=d.goals; collected=d.collected;
@@ -1167,6 +1199,8 @@ function loadSaveInner(){
     if(theatre.customers>theatre.seats) theatre.customers=theatre.seats;
   }
   mapIntroSeen=!!d.mapIntroSeen;
+  introSeen=!!d.introSeen;
+  theatreLastVisit=(typeof d.theatreLastVisit==='number')? Math.max(0,Math.min(MAX_LEVEL,Math.floor(d.theatreLastVisit))) : 0;
   tipQueue=[];
   if(typeof d.soundOn==='boolean'){ soundOn=d.soundOn; var sb=document.getElementById('soundBtn'); if(sb) sb.textContent= soundOn? '🔊 Sound: On':'🔇 Sound: Off'; }
   selected=null; busy=false;
@@ -1190,6 +1224,7 @@ function resetAll(){
   // startLevel has nothing to bank.)
   banked=0; bankedScoreMark=0; tokens=0; unlockedMax=1; inventory={dynamite:0, mash:0, punch:0, encore:0, boost:0}; armedItem=null;
   stars={}; collection={}; daily={lastDate:0, streak:0, beatenDate:0, graceDate:0}; failStreak={level:0, count:0};  stars={}; collection={}; daily={lastDate:0, streak:0, beatenDate:0, graceDate:0}; failStreak={level:0, count:0}; theatre=defaultTheatre();
+  introSeen=false; theatreLastVisit=0; theatreCoach=''; theatreNudgeMsg=''; pendingTheatreAfterWin=false; pendingAdvanceAfterTheatre=false;
   dailyMode=false; dailySeedFn=null; continueUsed=false;
   tipsSeen={beam:false,bomb:false}; tipQueue=[]; mapIntroSeen=false;
   startLevel(1, true);
@@ -2243,6 +2278,11 @@ function afterTurn(){
     // the pre-bonus total until the player's next tap.
     updateHUD();
     var autoSaved=autoSave();
+    // v18 — after the first showing the player is walked straight into
+    // the theatre (see the ovBtn handler); five showings without a
+    // theatre visit earns a quiet nudge on the win screen instead.
+    if(!dailyMode && level===1 && theatre.stage===0) pendingTheatreAfterWin=true;
+    theatreNudgeMsg=(!dailyMode && theatreNudgeActive() && !theatrePulseActive()) ? ' 🎭 Your theatre could use some love — you have '+banked.toLocaleString()+' Points waiting to be spent there.' : '';
     showOverlay(true, bonus, autoSaved);
   } else if(movesLeft<=0){
     // v7 — the silent kindness: losing the same showing twice in a row
@@ -2286,6 +2326,7 @@ function showOverlay(won,bonus,autoSaved){
       document.getElementById('ovText').textContent += ' 🪙 +1 token earned for the Concessions blast shelf.';
     }
     if(lastTheatreWin) document.getElementById('ovText').textContent += ' 🎟️ '+lastTheatreWin;
+    if(theatreNudgeMsg) document.getElementById('ovText').textContent += theatreNudgeMsg;
     // v16 — the big end-screen stars (see ovStarsHTML): three large stars
     // up front, gold for earned and dim for missed, best underneath on
     // regular showings. The old text clause in ovText is gone — the
@@ -2304,6 +2345,7 @@ function showOverlay(won,bonus,autoSaved){
   var ovSaveEl=document.getElementById('ovSave');
   if(ovSaveEl) ovSaveEl.textContent = won ? (autoSaved===false ? '⚠️ Auto-save isn\'t available in this view, so this win can\'t be kept between visits.' : '💾 Auto-saved — this showing is in the books. Your progress is kept on this device, no button press needed.') : '';
   document.getElementById('ovBtn').textContent = won? (winBonusDef? 'Play Bonus: '+winBonusDef.name+' →' : (level>=MAX_LEVEL? 'Encore — Back to Showing 1 ↻' : 'Next Showing →')) : 'Try Again ↻';
+  if(won && !dailyMode && level===1 && theatre.stage===0) document.getElementById('ovBtn').textContent='Your Theatre Awaits →';
   // v7 — Token Continue: on a loss, with 3+ Tokens and the continue
   // unused this attempt, the replay button offers +5 moves instead.
   document.getElementById('ovRestart').textContent = (!won && tokens>=3 && !continueUsed) ? 'Continue: +5 moves (3 🪙 tokens)' : 'Replay this showing';
@@ -2497,6 +2539,10 @@ var THEATRE_IMGS={dusty:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBD
 function defaultTheatre(){ return {stage:0, customers:0, seats:20, screens:1, marqueeLvl:0, ticketLvl:0, seatLvl:0}; }
 var theatre=defaultTheatre();
 var lastTheatreWin='';
+// v18 — splash + tutorial state: introSeen is saved; the rest is the
+// current visit's choreography (reset with the save, never persisted).
+var introSeen=false, theatreLastVisit=0, theatreCoach='', theatreNudgeMsg='',
+    pendingTheatreAfterWin=false, pendingAdvanceAfterTheatre=false;
 var THEATRE_STAGE_COSTS=[500,1000,2500,5000]; // clean hall, clean stand, hire staff, buy marquee
 var THEATRE_SEAT_COSTS=[2000,4000,7000,11000]; // seatLvl 0->3: 20->40->60->80->100 seats
 var THEATRE_MAX_SCREENS=20, THEATRE_MAX_MARQUEE=5, THEATRE_MAX_TICKET=5;
@@ -2512,6 +2558,20 @@ function theatreSeatLabel(){
 }
 function theatreMarqueeCost(){ return 8000*(theatre.marqueeLvl+1); }
 function theatreTicketCost(){ return 6000*(theatre.ticketLvl+1); }
+function theatreNextCost(){
+  if(theatre.stage<4) return THEATRE_STAGE_COSTS[theatre.stage];
+  var c=Infinity;
+  if(theatre.screens<THEATRE_MAX_SCREENS) c=Math.min(c, theatreSeatCost());
+  if(theatre.marqueeLvl<THEATRE_MAX_MARQUEE) c=Math.min(c, theatreMarqueeCost());
+  if(theatre.ticketLvl<THEATRE_MAX_TICKET) c=Math.min(c, theatreTicketCost());
+  return c;
+}
+// v18 — the level-2 teaching moment: the button glows gold until the
+// theatre is opened once after Showing 2 (levels 3-6 only, so it can
+// never nag forever). The nudge is the longer game: five showings
+// since the last theatre visit with an affordable next step.
+function theatrePulseActive(){ return level>=3 && level<=6 && theatre.stage<4 && theatreLastVisit<2; }
+function theatreNudgeActive(){ return !dailyMode && level>=2 && (level-theatreLastVisit)>=5 && theatreNextCost()!==Infinity && banked>=theatreNextCost(); }
 function theatreHeroImg(){
   if(theatre.stage===0) return THEATRE_IMGS.dusty;
   if(theatre.stage===1||theatre.stage===2) return THEATRE_IMGS.lobby;
@@ -2534,23 +2594,32 @@ function theatreBuyBtn(action,label,sub,cost){
 function renderTheatreBtn(){
   var b=document.getElementById('theatreBtn'); if(!b) return;
   b.textContent = theatre.stage===4 ? '🎭 My Theatre · '+theatre.customers.toLocaleString()+' in the house' : '🎭 My Theatre';
+  b.classList.remove('pulse','nudge');
+  if(theatrePulseActive()) b.classList.add('pulse');
+  else if(theatreNudgeActive()) b.classList.add('nudge');
 }
 function renderTheatre(){
   renderTheatreBtn();
   var body=document.getElementById('theatreBody'); if(!body) return;
+  syncBank();
   var h='<img class="thImg" src="'+theatreHeroImg()+'" alt="">';
+  if(theatreCoach) h+='<p class="thCoach">'+theatreCoach+'</p>';
   if(theatre.stage===0){
     h+='<p><b>You inherited the old Creature Cinema.</b> Dusty, cobwebbed, and dark — but the bones are good. First job: clean up the auditorium.</p>';
     h+='<div class="thUp">'+theatreBuyBtn('cleanHall','🧹 Clean the Auditorium','Sweep out the cobwebs, patch the torn seats. First step to opening night.',THEATRE_STAGE_COSTS[0])+'</div>';
+    if(banked<THEATRE_STAGE_COSTS[0]) h+='<p class="thCoach">💸 Not enough Points yet — go win a showing, earn some more, and come back to finish the job.</p>';
   } else if(theatre.stage===1){
     h+='<p><b>The auditorium shines.</b> Next: the concession stand — it needs the same treatment before anyone can buy popcorn.</p>';
     h+='<div class="thUp">'+theatreBuyBtn('cleanStand','🍿 Clean the Concession Stand','Scrub the counter, fire up the popcorn machine.',THEATRE_STAGE_COSTS[1])+'</div>';
+    if(banked<THEATRE_STAGE_COSTS[1]) h+='<p class="thCoach">💸 Not enough Points yet — go win a showing, earn some more, and come back to finish the job.</p>';
   } else if(theatre.stage===2){
     h+='<p><b>The place is clean.</b> Now it needs people to run it — and it is one click, no thinking: a ticket taker, someone for concessions, and someone to clean up after the show.</p>';
     h+='<div class="thUp">'+theatreBuyBtn('hireStaff','🤝 Hire the Staff','Ticket taker · concessions · cleaner — all three, one click.',THEATRE_STAGE_COSTS[2])+'</div>';
+    if(banked<THEATRE_STAGE_COSTS[2]) h+='<p class="thCoach">💸 Not enough Points yet — go win a showing, earn some more, and come back to finish the job.</p>';
   } else if(theatre.stage===3){
     h+='<p><b>Staff hired, lights on.</b> One thing left before the doors open: the big marquee out front. That is what pulls people in off the street.</p>';
     h+='<div class="thUp">'+theatreBuyBtn('buyMarquee','💡 Buy the Big Marquee','Glowing bulbs, your name in lights — customers start trickling in.',THEATRE_STAGE_COSTS[3])+'</div>';
+    if(banked<THEATRE_STAGE_COSTS[3]) h+='<p class="thCoach">💸 Not enough Points yet — go win a showing, earn some more, and come back to finish the job.</p>';
   } else {
     h+='<p><b>The Creature Cinema is open.</b> Every showing you beat brings in <b>'+theatreCustomersPerWin()+' new customers</b> (while there are seats), and every paying customer earns <b>'+theatreTicketPrice()+' Points</b> a win. More customers, more cash, more theatre.</p>';
     h+='<p style="text-align:center"><b>'+theatre.customers.toLocaleString()+' customers</b> in the house · '+theatre.seats.toLocaleString()+' seats · '+theatre.screens+(theatre.screens===1?' screen':' screens')+' · ticket '+theatreTicketPrice()+' Points</p>';
@@ -2565,6 +2634,8 @@ function renderTheatre(){
     else h+=theatreBuyBtn('ticket','🎟️ Raise Ticket Price — '+(theatreTicketPrice()+5)+' Points','Every customer pays 5 Points more per win.',theatreTicketCost());
     h+='</div>';
   }
+  if(theatre.stage===4 && theatreNextCost()!==Infinity && banked<theatreNextCost()) h+='<p class="thCoach">💸 Not enough Points yet — go win a showing, earn some more, and come back to finish the job.</p>';
+  h+='<p class="thFoot">🎬 Beat showings to earn Points — and build your theatre empire.</p>';
   body.innerHTML=h;
 }
 function theatreBuy(action){
@@ -2606,10 +2677,52 @@ function theatreOnWin(){
 }
 function openTheatre(){
   if(busy){ comboEl.textContent='Let the board settle, then step into the theatre.'; return; }
+  theatreLastVisit=level;
   renderTheatre();
   document.getElementById('theatreOverlay').classList.add('show');
 }
-function closeTheatre(){ document.getElementById('theatreOverlay').classList.remove('show'); }
+function closeTheatre(){
+  document.getElementById('theatreOverlay').classList.remove('show');
+  theatreCoach='';
+  // v18 — the theatre was the intermission after Showing 1: closing it
+  // deals in Showing 2 (the win overlay is already gone).
+  if(pendingAdvanceAfterTheatre){
+    pendingAdvanceAfterTheatre=false;
+    startLevel(level+1); autoSave();
+    showBanner('SHOWING '+level,'Reel '+Math.ceil(level/10)+' of 50 — good luck in there',1200);
+  }
+}
+/* ---- v18 — Splash + Tutorial -------------------------------------------
+   The splash is the front door on every open (the markup carries the
+   .show class, so it paints before the script runs). Enter dismisses it
+   into the two-screen intro on a fresh run — the uncle's bequest, then
+   the dusty theatre — or straight to the map for everyone else. Each
+   intro screen is one short paragraph and one tap: no scrolling to get
+   to the matching. */
+var introStep=0;
+function showIntroStep(n){
+  introStep=n;
+  if(n===1){
+    document.getElementById('introKicker').textContent='A letter from your late uncle';
+    document.getElementById('introTitle').textContent='THE OLD THEATRE IS YOURS';
+    document.getElementById('introImg').style.display='none';
+    document.getElementById('introText').textContent='Your Uncle Mortimer has passed away — and left you his old movie palace, the Creature Cinema. It is dusty, dark, and empty. Clean it up, hire a crew, and bring the crowds back.';
+    document.getElementById('introBtn').textContent='See the old place →';
+  } else {
+    document.getElementById('introKicker').textContent='Your inheritance';
+    document.getElementById('introTitle').textContent='IT NEEDS WORK';
+    document.getElementById('introImg').style.display='block';
+    document.getElementById('introText').textContent='Earn Points by matching tiles. Spend them here to clean up the theatre and hire your staff.';
+    document.getElementById('introBtn').textContent='Start Matching →';
+  }
+  document.getElementById('introOverlay').classList.add('show');
+}
+function enterGame(){
+  unlockAudio();
+  document.getElementById('splashOverlay').classList.remove('show');
+  if(level===1 && theatre.stage===0 && !introSeen){ showIntroStep(1); return; }
+  if(!overlay.classList.contains('show')){ try{ openMap(); }catch(e){} }
+}
 
 
 document.getElementById('newBtn').addEventListener('click',function(){ startLevel(1, true); showBanner('FEATURE PRESENTATION','Showing 1 — good luck in there',1200); });
@@ -2636,11 +2749,26 @@ document.getElementById('ovBtn').addEventListener('click',function(){
     if(bDef){ overlay.classList.remove('show'); launchBonus(bDef, level>=MAX_LEVEL? 1 : level+1); return; }
   }
   if(won && level>=MAX_LEVEL){ startLevel(1, true); autoSave(); showBanner('ENCORE!','All '+MAX_LEVEL+' showings beaten — back to Showing 1',1400); return; }
+  if(won && pendingTheatreAfterWin){
+    pendingTheatreAfterWin=false;
+    overlay.classList.remove('show');
+    theatreCoach='🎉 You beat Showing 1 — and earned your first Points! Spend them here: the auditorium needs a good sweep.';
+    pendingAdvanceAfterTheatre=true;
+    openTheatre();
+    return;
+  }
   if(won) startLevel(level+1); else startLevel(level);
   // Checkpoint the fresh showing (the next one after a win, or the retry
   // after a loss) so leaving now never loses the level you reached.
   autoSave();
   if(won) showBanner('SHOWING '+level,'Reel '+Math.ceil(level/10)+' of 50 — good luck in there',1200);
+  // v18 — after Showing 2 the player should know the theatre button by
+  // now; if not, the view drops to it and it pulses gold until opened.
+  if(won && level===3 && theatre.stage<4 && theatreLastVisit<2){
+    renderTheatreBtn();
+    comboEl.textContent='🎭 Your theatre is waiting — spend those Points and keep bringing the old place back to life.';
+    setTimeout(function(){ var b=document.getElementById('theatreBtn'); if(b && b.classList.contains('pulse')) b.scrollIntoView({behavior:'smooth', block:'center'}); },400);
+  }
 });
 document.getElementById('ovRestart').addEventListener('click',function(){
   // v7 — Token Continue: on a loss overlay, with 3+ Tokens and the
@@ -2817,6 +2945,13 @@ document.getElementById('galleryBtn').addEventListener('click',function(){ unloc
 document.getElementById('galleryClose').addEventListener('click',function(){ closeGallery(); });
 document.getElementById('theatreBtn').addEventListener('click',function(){ unlockAudio(); openTheatre(); });
 document.getElementById('theatreClose').addEventListener('click',function(){ closeTheatre(); });
+document.getElementById('splashBtn').addEventListener('click',function(){ enterGame(); });
+document.getElementById('introBtn').addEventListener('click',function(){
+  if(introStep===1){ showIntroStep(2); return; }
+  document.getElementById('introOverlay').classList.remove('show');
+  introSeen=true; autoSave();
+  if(!overlay.classList.contains('show')){ try{ openMap(); }catch(e){} }
+});
 document.getElementById('theatreBody').addEventListener('click',function(e){
   var t=e.target.closest? e.target.closest('[data-th]') : null;
   if(t) theatreBuy(t.getAttribute('data-th'));
@@ -3181,11 +3316,14 @@ if(!restored){
     levelConfig(1); newBoard(); render();
   }
 }
-// The Haunted Reel is the front door now: the game opens on the map, and
-// the player picks a showing from there — the current one, or any beaten
-// one to replay. Locked showings stay locked. If a win screen was
-// restored from the save, it stays in front instead.
-if(!overlay.classList.contains('show')){ try{ openMap(); }catch(e){} }
+// v18 — the splash is the front door now: it is already showing (the
+// markup carries the .show class), and its Enter button runs enterGame,
+// which opens the intro (fresh run) or the map (everyone else). The
+// Haunted Reel is still the front door after that — the player picks a
+// showing from there. If a win screen was restored from the save, it
+// stays in front instead. Wire the splash and intro art here — the
+// base64 lives in THEATRE_IMGS.
+try{ document.getElementById('splashImg').src=THEATRE_IMGS.marquee; document.getElementById('introImg').src=THEATRE_IMGS.dusty; }catch(e){}
 // Re-pin the square once the first frames have actually painted — the
 // startup render can run while the host pane is still sizing itself,
 // and this (with the ResizeObserver above) means the board settles
